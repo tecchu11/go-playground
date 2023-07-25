@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -25,10 +24,6 @@ func NewHealthHandler(log *zap.Logger) HealthHandler {
 
 func (hh *healthHandler) GetStatus() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(HealthStatus{Status: "OK"}); err != nil {
-			hh.log.Error("Failed to write response", zap.Error(err), zap.String("path", r.URL.Path))
-		}
+		JsonResponse(w, http.StatusOK, HealthStatus{Status: "OK"})
 	}
 }

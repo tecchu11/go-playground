@@ -1,7 +1,8 @@
 package handler
 
 import (
-	"encoding/json"
+	"fmt"
+	"go-playground/pkg/presentation/auth"
 	"go-playground/pkg/presentation/model"
 	"net/http"
 
@@ -13,32 +14,25 @@ type HelloHandler interface {
 }
 
 type helloHandler struct {
-	log *zap.Logger
+	logger *zap.Logger
 }
 
 func NewHelloHandler(log *zap.Logger) HelloHandler {
-	return &helloHandler{log: log}
+	return &helloHandler{logger: log}
 }
 
-func (hh *helloHandler) GetName() http.HandlerFunc {
+func (handler *helloHandler) GetName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		uname := r.Context().Value("user")
-		if uname == nil {
-			hh.log.Error("User name does not exsist in context", zap.String("path", r.URL.Path))
-			p := model.NewProblemDetail("You had requested invalid token", r.URL.Path, http.StatusUnauthorized)
-			w.WriteHeader(http.StatusUnauthorized)
-			w.Header().Set("Content-Type", "application/json")
-			if err := json.NewEncoder(w).Encode(p); err != nil {
-				hh.log.Error("Failed to write response", zap.Error(err), zap.String("path", r.URL.Path))
-			}
+		user, err := auth.GetAuthUser(r.Context())
+		if err != nil {
+			handler.logger.Error("Authenticated User does not exsist in the request context", zap.String("path", r.URL.Path))
+			problem := model.NewProblemDetail("You had requested invalid token", r.URL.Path, http.StatusUnauthorized)
+			JsonResponse(w, http.StatusUnauthorized, problem)
 			return
 		}
-		hello := model.HelloResponse{Message: "Hello !!", Name: uname.(string)}
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(hello); err != nil {
-			hh.log.Error("Failed to write response", zap.Error(err), zap.String("path", r.URL.Path))
-		}
+		message := fmt.Sprint("Hello!! ", user.Name, " role is ", user.Role.String())
+		hello := model.HelloResponse{Message: message}
+		JsonResponse(w, http.StatusOK, hello)
 	}
 
 }

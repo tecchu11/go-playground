@@ -1,23 +1,27 @@
 package presentation
 
 import (
-	"go-playground/pkg/presentation/handler"
-	"go-playground/pkg/presentation/middleware"
 	"net/http"
-
-	"go.uber.org/zap"
 )
 
-func BuildMux(mux *http.ServeMux, log *zap.Logger) *http.ServeMux {
-	mux.HandleFunc("/health", handler.NewHealthHandler(log).GetStatus())
-	mux.HandleFunc(
-		"/hello",
-		middleware.ContextMiddleWareFunc(
-			middleware.AuthMiddleWareFunc(
-				handler.NewHelloHandler(log).GetName(),
-				log,
-			),
-		),
-	)
-	return mux
+type MuxBuidler struct {
+	mux *http.ServeMux
+}
+
+func NewMuxBuilder() *MuxBuidler {
+	return &MuxBuidler{mux: &http.ServeMux{}}
+}
+
+func (builder *MuxBuidler) SetHandlerFunc(pattern string, handlerFunc http.HandlerFunc) *MuxBuidler {
+	builder.mux.HandleFunc(pattern, handlerFunc)
+	return builder
+}
+
+func (builder *MuxBuidler) SetHadler(pattern string, handler http.Handler) *MuxBuidler {
+	builder.mux.Handle(pattern, handler)
+	return builder
+}
+
+func (builder *MuxBuidler) Build() *http.ServeMux {
+	return builder.mux
 }

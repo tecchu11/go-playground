@@ -7,7 +7,7 @@ import (
 )
 
 func NewLogger() *zap.Logger {
-	logger, err := zap.NewProduction()
+	logger, err := zap.NewDevelopment()
 	if err != nil {
 		fmt.Println("Failed to create zap loggger")
 	}
