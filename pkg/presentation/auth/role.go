@@ -4,15 +4,29 @@ package auth
 type Role int
 
 const (
-	ADMIN Role = iota
+	UNDIFINED Role = iota
+	ADMIN
 	USER
 )
 
-var roleMap = map[Role]string{
+var mapByRole = map[Role]string{
 	ADMIN: "ADMIN",
 	USER:  "USER",
 }
 
+var mapByLiteral = map[string]Role{
+	"ADMIN": ADMIN,
+	"USER":  USER,
+}
+
 func (role Role) String() string {
-	return roleMap[role]
+	return mapByRole[role]
+}
+
+func RoleFrom(literal string) Role {
+	v, ok := mapByLiteral[literal]
+	if !ok {
+		return UNDIFINED
+	}
+	return v
 }

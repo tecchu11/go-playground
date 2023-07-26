@@ -9,13 +9,15 @@ import (
 
 // Properties is struct for application configuration.
 type Properties struct {
-	AppName string   `json:"app_name"`
-	DB      DbConfig `json:"db"`
+	AppName     string       `json:"app_name"`
+	AuthConfigs []AuthConfig `json:"auth"`
 }
 
-// DbConfig hold db configuration.
-type DbConfig struct {
-	Host string `json:"host"`
+// AuthConfig hold auth configuration.
+type AuthConfig struct {
+	Name    string `json:"name"`
+	RoleStr string `json:"role"`
+	Key     string `json:"key"`
 }
 
 // PropertiesLoader load configuration.
