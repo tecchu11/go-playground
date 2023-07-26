@@ -24,6 +24,6 @@ func NewHealthHandler(log *zap.Logger) HealthHandler {
 
 func (hh *healthHandler) GetStatus() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		JsonResponse(w, http.StatusOK, HealthStatus{Status: "OK"})
+		Ok(w, &HealthStatus{Status: "OK"})
 	}
 }

@@ -26,13 +26,11 @@ func (handler *helloHandler) GetName() http.HandlerFunc {
 		user, err := auth.GetAuthUser(r.Context())
 		if err != nil {
 			handler.logger.Error("Authenticated User does not exsist in the request context", zap.String("path", r.URL.Path))
-			problem := model.NewProblemDetail("You had requested invalid token", r.URL.Path, http.StatusUnauthorized)
-			JsonResponse(w, http.StatusUnauthorized, problem)
+			Unauthorized(w, "No token was found for your request", r.URL.Path)
 			return
 		}
 		message := fmt.Sprint("Hello!! ", user.Name, " role is ", user.Role.String())
-		hello := model.HelloResponse{Message: message}
-		JsonResponse(w, http.StatusOK, hello)
+		Ok(w, &model.HelloResponse{Message: message})
 	}
 
 }
