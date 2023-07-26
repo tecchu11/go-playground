@@ -29,7 +29,7 @@ func (handler *helloHandler) GetName() http.HandlerFunc {
 			Unauthorized(w, "No token was found for your request", r.URL.Path)
 			return
 		}
-		message := fmt.Sprint("Hello!! ", user.Name, " role is ", user.Role.String())
+		message := fmt.Sprintf("Hello %s!! You have %s role.", user.Name, user.Role.String())
 		Ok(w, &model.HelloResponse{Message: message})
 	}
 
