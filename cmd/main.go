@@ -8,25 +8,30 @@ import (
 	"go-playground/pkg/presentation/handler"
 	"go-playground/pkg/presentation/middleware"
 	"net/http"
+	"os"
 
 	"go.uber.org/zap"
 )
 
 func main() {
-	logger := config.NewLogger()
+	logger, err := zap.NewProduction()
+	if err != nil {
+		os.Exit(1)
+	}
 
 	configLocation := fmt.Sprintf("../config/config-%s.json", "local")
 	prop := config.NewPropertiesLoader(logger).Load(configLocation)
 	logger.Info("Success to load properties", zap.Any("prop", prop))
 
+	headMid := middleware.NewHeadMiddleWare()
 	ctxMid := middleware.NewContextMiddleWare()
 	authMid := middleware.NewAuthMiddleWare(logger, &auth.AuthenticationManager{})
 	health := handler.NewHealthHandler(logger).GetStatus()
 	hello := handler.NewHelloHandler(logger).GetName()
 
 	mux := presentation.NewMuxBuilder().
-		SetHandlerFunc("/health", health).
-		SetHadler("/hello", middleware.Composite(ctxMid.Handle, authMid.Handle)(hello)).
+		SetHadler("/health", middleware.Composite(headMid.Handle)(health)).
+		SetHadler("/hello", middleware.Composite(headMid.Handle, ctxMid.Handle, authMid.Handle)(hello)).
 		Build()
 
 	logger.Info("Server started ---(ﾟ∀ﾟ)---!!!")
