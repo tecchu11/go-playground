@@ -12,6 +12,8 @@ jobs:
         steps:
             - uses: actions/checkout@v3
             - uses: actions/setup-go@v4
+              with:
+                  go-version-file: "./go.mod"
             - name: test
               run: |
-                go test ./... --race
+                  go test ./... --race
