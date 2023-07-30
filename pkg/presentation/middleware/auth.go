@@ -12,11 +12,11 @@ const authHeader = "Authorization"
 
 type authMiddleWare struct {
 	logger      *zap.Logger
-	authManager *auth.AuthenticationManager
+	authManager auth.AuthenticationManager
 }
 
-func NewAuthMiddleWare(logger *zap.Logger, authManager *auth.AuthenticationManager) MiddleWare {
-	return &authMiddleWare{logger: logger, authManager: authManager}
+func NewAuthMiddleWare(logger *zap.Logger, authenticationManager auth.AuthenticationManager) MiddleWare {
+	return &authMiddleWare{logger: logger, authManager: authenticationManager}
 }
 
 func (mid *authMiddleWare) Handle(next http.Handler) http.Handler {

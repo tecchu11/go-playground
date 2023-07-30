@@ -10,8 +10,9 @@ const (
 )
 
 var mapByRole = map[Role]string{
-	ADMIN: "ADMIN",
-	USER:  "USER",
+	UNDIFINED: "",
+	ADMIN:     "ADMIN",
+	USER:      "USER",
 }
 
 var mapByLiteral = map[string]Role{

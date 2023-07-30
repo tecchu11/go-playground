@@ -26,7 +26,7 @@ func main() {
 
 	headMid := middleware.NewHeadMiddleWare()
 	ctxMid := middleware.NewContextMiddleWare()
-	authMid := middleware.NewAuthMiddleWare(appLogger, &auth.AuthenticationManager{Configs: prop.AuthConfigs})
+	authMid := middleware.NewAuthMiddleWare(appLogger, auth.NewAutheticatonManager(prop.AuthConfigs))
 	health := handler.NewHealthHandler(appLogger).GetStatus()
 	hello := handler.NewHelloHandler(appLogger).GetName()
 

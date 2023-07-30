@@ -10,7 +10,7 @@ func Ok[T any](w http.ResponseWriter, body *T) {
 	_ = json.NewEncoder(w).Encode(body)
 }
 
-type problemDetail struct {
+type ProblemDetail struct {
 	Type    string `json:"type"`
 	Title   string `json:"title"`
 	Detail  string `json:"detail"`
@@ -19,7 +19,7 @@ type problemDetail struct {
 
 func Unauthorized(w http.ResponseWriter, detail string, path string) {
 	w.WriteHeader(http.StatusUnauthorized)
-	body := &problemDetail{
+	body := &ProblemDetail{
 		Type:    "",
 		Title:   "Unauthorized",
 		Detail:  detail,
@@ -30,7 +30,7 @@ func Unauthorized(w http.ResponseWriter, detail string, path string) {
 
 func NotFound(w http.ResponseWriter, detail string, path string) {
 	w.WriteHeader(http.StatusNotFound)
-	body := &problemDetail{
+	body := &ProblemDetail{
 		Type:    "",
 		Title:   "Resource Not Found",
 		Detail:  detail,
@@ -41,7 +41,7 @@ func NotFound(w http.ResponseWriter, detail string, path string) {
 
 func InternalServerError(w http.ResponseWriter, detail string, path string) {
 	w.WriteHeader(http.StatusInternalServerError)
-	body := &problemDetail{
+	body := &ProblemDetail{
 		Type:    "",
 		Title:   "Internal Server Error",
 		Detail:  detail,

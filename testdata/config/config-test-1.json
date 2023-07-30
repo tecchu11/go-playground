@@ -1,0 +1,10 @@
+{
+    "app_name": "go-playground-test",
+    "auth": [
+        {
+            "name": "test",
+            "role": "ADMIN",
+            "key": "test-api-key"
+        }
+    ]
+}

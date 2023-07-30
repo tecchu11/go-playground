@@ -1,0 +1,10 @@
+{
+    "unexpected": "this filed is undefined in struct",
+    "app_name": "go-playground-test",
+    "auth": [
+        {
+            "name": "test",
+            "key": "test-api-key"
+        }
+    ]
+}
