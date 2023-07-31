@@ -1,11 +1,11 @@
-package handler
+package render
 
 import (
 	"encoding/json"
 	"net/http"
 )
 
-func Ok[T any](w http.ResponseWriter, body *T) {
+func Ok(w http.ResponseWriter, body any) {
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(body)
 }

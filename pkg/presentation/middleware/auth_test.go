@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go-playground/pkg/lib/render"
 	"go-playground/pkg/presentation/auth"
-	"go-playground/pkg/presentation/handler"
 	"go-playground/pkg/presentation/middleware"
 	"net/http"
 	"net/http/httptest"
@@ -14,19 +14,6 @@ import (
 
 	"go.uber.org/zap"
 )
-
-type mockAuthenticationManager struct{}
-
-func newMockAuthenticationManager() auth.AuthenticationManager {
-	return &mockAuthenticationManager{}
-}
-
-func (mock *mockAuthenticationManager) Authenticate(token string) (*auth.AuthenticatedUser, error) {
-	if token == "valid-token" {
-		return &auth.AuthenticatedUser{Name: "tecchu", Role: auth.ADMIN}, nil
-	}
-	return nil, errors.New("mock")
-}
 
 func TestAuthMiddleWare_Handle(t *testing.T) {
 	tests := []struct {
@@ -37,7 +24,7 @@ func TestAuthMiddleWare_Handle(t *testing.T) {
 		expectedResponse         string
 		expectErr                bool
 		expectedErrCode          int
-		expectedErrBody          handler.ProblemDetail
+		expectedErrBody          render.ProblemDetail
 	}{
 		{
 			name:                     "test of successful to authenticate and then set user to context",
@@ -54,7 +41,7 @@ func TestAuthMiddleWare_Handle(t *testing.T) {
 			inputAuthorizationHeader: "invalid",
 			expectErr:                true,
 			expectedErrCode:          401,
-			expectedErrBody: handler.ProblemDetail{
+			expectedErrBody: render.ProblemDetail{
 				Type:    "",
 				Title:   "Unauthorized",
 				Detail:  "You had failed to authenticate",
@@ -67,7 +54,8 @@ func TestAuthMiddleWare_Handle(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			test.inputRequest.Header.Set("Authorization", test.inputAuthorizationHeader)
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				user, _ := r.Context().Value("authUser").(*auth.AuthenticatedUser)
+				manager := middleware.AuthCtxManager{}
+				user, _ := manager.Get(r.Context())
 				_, _ = fmt.Fprintf(w, "user is %s and role is %s", user.Name, user.Role.String())
 			})
 			middleware.
@@ -76,13 +64,13 @@ func TestAuthMiddleWare_Handle(t *testing.T) {
 				ServeHTTP(test.inputResponseWriter, test.inputRequest)
 
 			if !test.expectErr {
-				actual := string(test.inputResponseWriter.Body.Bytes())
+				actual := test.inputResponseWriter.Body.String()
 				if actual != test.expectedResponse {
 					t.Errorf("request context has unexpected user (%v)", actual)
 				}
 			} else {
 				actualCode := test.inputResponseWriter.Code
-				var actualBody handler.ProblemDetail
+				var actualBody render.ProblemDetail
 				_ = json.Unmarshal(test.inputResponseWriter.Body.Bytes(), &actualBody)
 
 				if actualCode != test.expectedErrCode {
@@ -94,4 +82,17 @@ func TestAuthMiddleWare_Handle(t *testing.T) {
 			}
 		})
 	}
+}
+
+type mockAuthenticationManager struct{}
+
+func newMockAuthenticationManager() auth.AuthenticationManager {
+	return &mockAuthenticationManager{}
+}
+
+func (mock *mockAuthenticationManager) Authenticate(token string) (*auth.AuthenticatedUser, error) {
+	if token == "valid-token" {
+		return &auth.AuthenticatedUser{Name: "tecchu", Role: auth.ADMIN}, nil
+	}
+	return nil, errors.New("mock")
 }

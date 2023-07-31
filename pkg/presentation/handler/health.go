@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"go-playground/pkg/lib/render"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -24,6 +25,6 @@ func NewHealthHandler(log *zap.Logger) HealthHandler {
 
 func (hh *healthHandler) GetStatus() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		Ok(w, &HealthStatus{Status: "OK"})
+		render.Ok(w, &HealthStatus{Status: "OK"})
 	}
 }

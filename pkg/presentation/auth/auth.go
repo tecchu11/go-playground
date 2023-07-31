@@ -7,6 +7,12 @@ import (
 
 var ErrAuthentication = fmt.Errorf("no authenticated user had been requested")
 
+// AuthenticatedUser is represented authenticated user struct.
+type AuthenticatedUser struct {
+	Name string
+	Role Role
+}
+
 // AuthenticationManager perform to authenticate user.
 type AuthenticationManager interface {
 	Authenticate(token string) (*AuthenticatedUser, error)
@@ -21,8 +27,6 @@ func NewAutheticatonManager(configs []config.AuthConfig) AuthenticationManager {
 }
 
 // Authenticate user with passed token. Ant then, store AuthenticatedUser in context.Context.
-//
-// [TODO] Must to verify token.
 func (manager *authenticationManager) Authenticate(token string) (*AuthenticatedUser, error) {
 	var ok bool
 	var user AuthenticatedUser
