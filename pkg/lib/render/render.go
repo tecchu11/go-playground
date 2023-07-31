@@ -5,7 +5,13 @@ import (
 	"net/http"
 )
 
+const (
+	contentTypeKey   = "Content-Type"
+	contentTypeValue = "application/json; charset=utf-8"
+)
+
 func Ok(w http.ResponseWriter, body any) {
+	w.Header().Add(contentTypeKey, contentTypeValue)
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(body)
 }
@@ -18,6 +24,7 @@ type ProblemDetail struct {
 }
 
 func Unauthorized(w http.ResponseWriter, detail string, path string) {
+	w.Header().Add(contentTypeKey, contentTypeValue)
 	w.WriteHeader(http.StatusUnauthorized)
 	body := &ProblemDetail{
 		Type:    "",
@@ -29,6 +36,7 @@ func Unauthorized(w http.ResponseWriter, detail string, path string) {
 }
 
 func NotFound(w http.ResponseWriter, detail string, path string) {
+	w.Header().Add(contentTypeKey, contentTypeValue)
 	w.WriteHeader(http.StatusNotFound)
 	body := &ProblemDetail{
 		Type:    "",
@@ -40,6 +48,7 @@ func NotFound(w http.ResponseWriter, detail string, path string) {
 }
 
 func InternalServerError(w http.ResponseWriter, detail string, path string) {
+	w.Header().Add(contentTypeKey, contentTypeValue)
 	w.WriteHeader(http.StatusInternalServerError)
 	body := &ProblemDetail{
 		Type:    "",
