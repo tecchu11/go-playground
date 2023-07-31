@@ -38,16 +38,14 @@ func main() {
 	authCtxManager := middleware.AuthCtxManager{}
 
 	// initialize middleware
-	headMid := middleware.NewHeadMiddleWare()
 	authMid := middleware.NewAuthMiddleWare(appLogger, auth.NewAutheticatonManager(prop.AuthConfigs))
-	noAuthenticatedCompostionMiddleware := middleware.Composite(headMid.Handle)
-	authenticatedCompostionMiddleware := middleware.Composite(headMid.Handle, authMid.Handle)
+	authenticatedCompostionMiddleware := middleware.Composite(authMid.Handle)
 	// initialize handler
 	health := handler.NewHealthHandler(appLogger).GetStatus()
 	hello := handler.NewHelloHandler(appLogger, &authCtxManager).GetName()
 
 	mux := presentation.NewMuxBuilder().
-		SetHadler("/health", noAuthenticatedCompostionMiddleware(health)).
+		SetHadler("/health", health).
 		SetHadler("/hello", authenticatedCompostionMiddleware(hello)).
 		Build()
 
