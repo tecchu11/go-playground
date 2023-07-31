@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go-playground/pkg/lib/render"
 	"go-playground/pkg/presentation/auth"
-	"go-playground/pkg/presentation/handler"
 	"go-playground/pkg/presentation/middleware"
 	"net/http"
 	"net/http/httptest"
@@ -37,7 +37,7 @@ func TestAuthMiddleWare_Handle(t *testing.T) {
 		expectedResponse         string
 		expectErr                bool
 		expectedErrCode          int
-		expectedErrBody          handler.ProblemDetail
+		expectedErrBody          render.ProblemDetail
 	}{
 		{
 			name:                     "test of successful to authenticate and then set user to context",
@@ -54,7 +54,7 @@ func TestAuthMiddleWare_Handle(t *testing.T) {
 			inputAuthorizationHeader: "invalid",
 			expectErr:                true,
 			expectedErrCode:          401,
-			expectedErrBody: handler.ProblemDetail{
+			expectedErrBody: render.ProblemDetail{
 				Type:    "",
 				Title:   "Unauthorized",
 				Detail:  "You had failed to authenticate",
@@ -76,13 +76,13 @@ func TestAuthMiddleWare_Handle(t *testing.T) {
 				ServeHTTP(test.inputResponseWriter, test.inputRequest)
 
 			if !test.expectErr {
-				actual := string(test.inputResponseWriter.Body.Bytes())
+				actual := test.inputResponseWriter.Body.String()
 				if actual != test.expectedResponse {
 					t.Errorf("request context has unexpected user (%v)", actual)
 				}
 			} else {
 				actualCode := test.inputResponseWriter.Code
-				var actualBody handler.ProblemDetail
+				var actualBody render.ProblemDetail
 				_ = json.Unmarshal(test.inputResponseWriter.Body.Bytes(), &actualBody)
 
 				if actualCode != test.expectedErrCode {

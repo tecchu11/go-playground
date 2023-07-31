@@ -1,8 +1,8 @@
 package middleware
 
 import (
+	"go-playground/pkg/lib/render"
 	"go-playground/pkg/presentation/auth"
-	"go-playground/pkg/presentation/handler"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -24,7 +24,7 @@ func (mid *authMiddleWare) Handle(next http.Handler) http.Handler {
 		user, err := mid.authManager.Authenticate(r.Header.Get(authHeader))
 		if err != nil {
 			mid.logger.Warn("No authenticated request had recieved.", zap.String("path", r.URL.Path), zap.Error(err))
-			handler.Unauthorized(w, "You had failed to authenticate", r.URL.Path)
+			render.Unauthorized(w, "You had failed to authenticate", r.URL.Path)
 		} else {
 			ctx := user.SetContext(r.Context())
 			next.ServeHTTP(w, r.WithContext(ctx))

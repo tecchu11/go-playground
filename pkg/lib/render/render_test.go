@@ -1,14 +1,14 @@
-package handler_test
+package render_test
 
 import (
 	"encoding/json"
-	"go-playground/pkg/presentation/handler"
+	"go-playground/pkg/lib/render"
 	"net/http/httptest"
 	"reflect"
 	"testing"
 )
 
-type testRespone struct {
+type testResponse struct {
 	Msg string `json:"msg"`
 }
 
@@ -16,26 +16,26 @@ func TestOk(t *testing.T) {
 	tests := []struct {
 		name                string
 		inputResponseWriter *httptest.ResponseRecorder
-		inputBody           testRespone
+		inputBody           testResponse
 		expectedCode        int
-		expectedBody        testRespone
+		expectedBody        testResponse
 	}{
 		{
 			name:                "test Ok returns 200 and expected body",
 			inputResponseWriter: httptest.NewRecorder(),
-			inputBody:           testRespone{Msg: "this is test response"},
+			inputBody:           testResponse{Msg: "this is test response"},
 			expectedCode:        200,
-			expectedBody:        testRespone{Msg: "this is test response"},
+			expectedBody:        testResponse{Msg: "this is test response"},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			handler.Ok(test.inputResponseWriter, &test.inputBody)
+			render.Ok(test.inputResponseWriter, &test.inputBody)
 			if test.inputResponseWriter.Code != test.expectedCode {
 				t.Errorf("unexpected status code(%v) was returned", test.inputResponseWriter.Code)
 			}
-			var actualBody testRespone
+			var actualBody testResponse
 			_ = json.Unmarshal(test.inputResponseWriter.Body.Bytes(), &actualBody)
 			if !reflect.DeepEqual(actualBody, test.expectedBody) {
 				t.Errorf("unmarshled response body was unexpected value (%v)", actualBody)
@@ -52,16 +52,16 @@ func TestAllStatusFailuer(t *testing.T) {
 		inputDetail         string
 		inputPath           string
 		expectedCode        int
-		expectedBody        handler.ProblemDetail
+		expectedBody        render.ProblemDetail
 	}{
 		{
 			name:                "test Unauthorized returns 401 and expected body",
-			testFunc:            reflect.ValueOf(handler.Unauthorized),
+			testFunc:            reflect.ValueOf(render.Unauthorized),
 			inputResponseWriter: httptest.NewRecorder(),
 			inputDetail:         "authentication failed",
 			inputPath:           "/foos",
 			expectedCode:        401,
-			expectedBody: handler.ProblemDetail{
+			expectedBody: render.ProblemDetail{
 				Type:    "",
 				Title:   "Unauthorized",
 				Detail:  "authentication failed",
@@ -70,12 +70,12 @@ func TestAllStatusFailuer(t *testing.T) {
 		},
 		{
 			name:                "test NotFound returns 404 and expected body",
-			testFunc:            reflect.ValueOf(handler.NotFound),
+			testFunc:            reflect.ValueOf(render.NotFound),
 			inputResponseWriter: httptest.NewRecorder(),
 			inputDetail:         "no resources",
 			inputPath:           "/bars",
 			expectedCode:        404,
-			expectedBody: handler.ProblemDetail{
+			expectedBody: render.ProblemDetail{
 				Type:    "",
 				Title:   "Resource Not Found",
 				Detail:  "no resources",
@@ -84,12 +84,12 @@ func TestAllStatusFailuer(t *testing.T) {
 		},
 		{
 			name:                "test InternalServerError returns 500 and expected body",
-			testFunc:            reflect.ValueOf(handler.InternalServerError),
+			testFunc:            reflect.ValueOf(render.InternalServerError),
 			inputResponseWriter: httptest.NewRecorder(),
 			inputDetail:         "server error",
 			inputPath:           "/bazs",
 			expectedCode:        500,
-			expectedBody: handler.ProblemDetail{
+			expectedBody: render.ProblemDetail{
 				Type:    "",
 				Title:   "Internal Server Error",
 				Detail:  "server error",
@@ -107,7 +107,7 @@ func TestAllStatusFailuer(t *testing.T) {
 			if test.inputResponseWriter.Code != test.expectedCode {
 				t.Errorf("unexpected status code(%v) was returned", test.inputResponseWriter.Code)
 			}
-			var actualBody handler.ProblemDetail
+			var actualBody render.ProblemDetail
 			_ = json.Unmarshal(test.inputResponseWriter.Body.Bytes(), &actualBody)
 			if !reflect.DeepEqual(actualBody, test.expectedBody) {
 				t.Errorf("unmarshled response body was unexpected value (%v)", actualBody)

@@ -3,6 +3,7 @@ package handler_test
 import (
 	"context"
 	"encoding/json"
+	"go-playground/pkg/lib/render"
 	"go-playground/pkg/presentation/auth"
 	"go-playground/pkg/presentation/handler"
 	"go-playground/pkg/presentation/model"
@@ -23,7 +24,7 @@ func TestHelloHandler_GetName(t *testing.T) {
 		expectedCode        int
 		expectErr           bool
 		expectedBody        model.HelloResponse
-		expectedProblem     handler.ProblemDetail
+		expectedProblem     render.ProblemDetail
 	}{
 		{
 			name:                "test GetName returns 200 and expected body",
@@ -39,7 +40,7 @@ func TestHelloHandler_GetName(t *testing.T) {
 			inputRequest:        httptest.NewRequest("GET", "http://example.com/hello", nil),
 			expectedCode:        401,
 			expectErr:           true,
-			expectedProblem: handler.ProblemDetail{
+			expectedProblem: render.ProblemDetail{
 				Type:    "",
 				Title:   "Unauthorized",
 				Detail:  "No token was found for your request",
@@ -58,7 +59,7 @@ func TestHelloHandler_GetName(t *testing.T) {
 			}
 
 			if test.expectErr {
-				var actualBody handler.ProblemDetail
+				var actualBody render.ProblemDetail
 				_ = json.Unmarshal(test.inputResponseWriter.Body.Bytes(), &actualBody)
 				if !reflect.DeepEqual(actualBody, test.expectedProblem) {
 					t.Errorf("unexpected body (%v) was recieved", actualBody)
