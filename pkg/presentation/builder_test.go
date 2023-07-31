@@ -19,8 +19,8 @@ func TestMuxBuidler_SetHadler(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "http://example.com/foos", nil)
 	builder.Build().ServeHTTP(w, r)
-	if string(w.Body.Bytes()) != "test" {
-		t.Errorf("unexpected body(%v) was recived", string(w.Body.Bytes()))
+	if w.Body.String() != "test" {
+		t.Errorf("unexpected body(%v) was recived", w.Body.String())
 	}
 }
 
@@ -35,7 +35,7 @@ func TestMuxBuidler_SetHandlerFunc(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "http://example.com/bars", nil)
 	builder.Build().ServeHTTP(w, r)
-	if string(w.Body.Bytes()) != "test" {
-		t.Errorf("unexpected body(%v) was recived", string(w.Body.Bytes()))
+	if w.Body.String() != "test" {
+		t.Errorf("unexpected body(%v) was recived", w.Body.String())
 	}
 }
