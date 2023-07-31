@@ -24,15 +24,19 @@ func main() {
 	appLogger := logger.With(zap.String("appName", prop.AppName))
 	appLogger.Info("Success to load properties")
 
+	// initialize middleware
 	headMid := middleware.NewHeadMiddleWare()
 	ctxMid := middleware.NewContextMiddleWare()
 	authMid := middleware.NewAuthMiddleWare(appLogger, auth.NewAutheticatonManager(prop.AuthConfigs))
+	noAuthenticatedCompostionMiddleware := middleware.Composite(headMid.Handle)
+	authenticatedCompostionMiddleware := middleware.Composite(headMid.Handle, ctxMid.Handle, authMid.Handle)
+	// initialize handler
 	health := handler.NewHealthHandler(appLogger).GetStatus()
 	hello := handler.NewHelloHandler(appLogger).GetName()
 
 	mux := presentation.NewMuxBuilder().
-		SetHadler("/health", middleware.Composite(headMid.Handle)(health)).
-		SetHadler("/hello", middleware.Composite(headMid.Handle, ctxMid.Handle, authMid.Handle)(hello)).
+		SetHadler("/health", noAuthenticatedCompostionMiddleware(health)).
+		SetHadler("/hello", authenticatedCompostionMiddleware(hello)).
 		Build()
 
 	appLogger.Info("Server started ---(ﾟ∀ﾟ)---!!!")
