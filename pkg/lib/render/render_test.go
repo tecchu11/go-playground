@@ -18,6 +18,7 @@ func TestOk(t *testing.T) {
 		inputResponseWriter *httptest.ResponseRecorder
 		inputBody           testResponse
 		expectedCode        int
+		expectedContentType string
 		expectedBody        testResponse
 	}{
 		{
@@ -25,6 +26,7 @@ func TestOk(t *testing.T) {
 			inputResponseWriter: httptest.NewRecorder(),
 			inputBody:           testResponse{Msg: "this is test response"},
 			expectedCode:        200,
+			expectedContentType: "application/json; charset=utf-8",
 			expectedBody:        testResponse{Msg: "this is test response"},
 		},
 	}
@@ -34,6 +36,9 @@ func TestOk(t *testing.T) {
 			render.Ok(test.inputResponseWriter, &test.inputBody)
 			if test.inputResponseWriter.Code != test.expectedCode {
 				t.Errorf("unexpected status code(%v) was returned", test.inputResponseWriter.Code)
+			}
+			if test.inputResponseWriter.Header().Get("Content-Type") != test.expectedContentType {
+				t.Errorf("unexpected conten type(%s) was recived", test.inputResponseWriter.Header().Get("Content-Type"))
 			}
 			var actualBody testResponse
 			_ = json.Unmarshal(test.inputResponseWriter.Body.Bytes(), &actualBody)
@@ -52,6 +57,7 @@ func TestAllStatusFailuer(t *testing.T) {
 		inputDetail         string
 		inputPath           string
 		expectedCode        int
+		expectedContentType string
 		expectedBody        render.ProblemDetail
 	}{
 		{
@@ -61,6 +67,7 @@ func TestAllStatusFailuer(t *testing.T) {
 			inputDetail:         "authentication failed",
 			inputPath:           "/foos",
 			expectedCode:        401,
+			expectedContentType: "application/json; charset=utf-8",
 			expectedBody: render.ProblemDetail{
 				Type:    "",
 				Title:   "Unauthorized",
@@ -75,6 +82,7 @@ func TestAllStatusFailuer(t *testing.T) {
 			inputDetail:         "no resources",
 			inputPath:           "/bars",
 			expectedCode:        404,
+			expectedContentType: "application/json; charset=utf-8",
 			expectedBody: render.ProblemDetail{
 				Type:    "",
 				Title:   "Resource Not Found",
@@ -89,6 +97,7 @@ func TestAllStatusFailuer(t *testing.T) {
 			inputDetail:         "server error",
 			inputPath:           "/bazs",
 			expectedCode:        500,
+			expectedContentType: "application/json; charset=utf-8",
 			expectedBody: render.ProblemDetail{
 				Type:    "",
 				Title:   "Internal Server Error",
@@ -106,6 +115,9 @@ func TestAllStatusFailuer(t *testing.T) {
 
 			if test.inputResponseWriter.Code != test.expectedCode {
 				t.Errorf("unexpected status code(%v) was returned", test.inputResponseWriter.Code)
+			}
+			if test.inputResponseWriter.Header().Get("Content-Type") != test.expectedContentType {
+				t.Errorf("unexpected conten type(%s) was recived", test.inputResponseWriter.Header().Get("Content-Type"))
 			}
 			var actualBody render.ProblemDetail
 			_ = json.Unmarshal(test.inputResponseWriter.Body.Bytes(), &actualBody)
