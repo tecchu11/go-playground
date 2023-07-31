@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"go-playground/pkg/lib/contextutil"
 	"go-playground/pkg/lib/render"
 	"go-playground/pkg/presentation/auth"
 	"go-playground/pkg/presentation/model"
@@ -15,16 +16,20 @@ type HelloHandler interface {
 }
 
 type helloHandler struct {
-	logger *zap.Logger
+	logger         *zap.Logger
+	contextManager contextutil.ContextManager[*auth.AuthenticatedUser]
 }
 
-func NewHelloHandler(log *zap.Logger) HelloHandler {
-	return &helloHandler{logger: log}
+func NewHelloHandler(
+	logger *zap.Logger,
+	contextManager contextutil.ContextManager[*auth.AuthenticatedUser],
+) HelloHandler {
+	return &helloHandler{logger, contextManager}
 }
 
 func (handler *helloHandler) GetName() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user, err := auth.GetAuthUser(r.Context())
+		user, err := handler.contextManager.Get(r.Context())
 		if err != nil {
 			handler.logger.Error("Authenticated User does not exsist in the request context", zap.String("path", r.URL.Path))
 			render.Unauthorized(w, "No token was found for your request", r.URL.Path)

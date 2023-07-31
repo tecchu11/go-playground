@@ -7,32 +7,44 @@ import (
 	"go-playground/pkg/presentation/auth"
 	"go-playground/pkg/presentation/handler"
 	"go-playground/pkg/presentation/middleware"
+	"log"
 	"net/http"
 	"os"
 
 	"go.uber.org/zap"
 )
 
+var env string
+
+func init() {
+	env = os.Getenv("APP_ENV")
+	if env == "" {
+		log.Fatal("APP_ENV is not stored in evirioment variables")
+	}
+}
+
 func main() {
 	logger, err := zap.NewProduction()
 	if err != nil {
-		os.Exit(1)
+		log.Fatalf("zap logger is failed to init because of %s", err)
 	}
 
-	configLocation := fmt.Sprintf("../config/config-%s.json", "local")
+	configLocation := fmt.Sprintf("../config/config-%s.json", env)
 	prop := config.NewPropertiesLoader(logger).Load(configLocation)
 	appLogger := logger.With(zap.String("appName", prop.AppName))
 	appLogger.Info("Success to load properties")
 
+	// initialze misc
+	authCtxManager := middleware.AuthCtxManager{}
+
 	// initialize middleware
 	headMid := middleware.NewHeadMiddleWare()
-	ctxMid := middleware.NewContextMiddleWare()
 	authMid := middleware.NewAuthMiddleWare(appLogger, auth.NewAutheticatonManager(prop.AuthConfigs))
 	noAuthenticatedCompostionMiddleware := middleware.Composite(headMid.Handle)
-	authenticatedCompostionMiddleware := middleware.Composite(headMid.Handle, ctxMid.Handle, authMid.Handle)
+	authenticatedCompostionMiddleware := middleware.Composite(headMid.Handle, authMid.Handle)
 	// initialize handler
 	health := handler.NewHealthHandler(appLogger).GetStatus()
-	hello := handler.NewHelloHandler(appLogger).GetName()
+	hello := handler.NewHelloHandler(appLogger, &authCtxManager).GetName()
 
 	mux := presentation.NewMuxBuilder().
 		SetHadler("/health", noAuthenticatedCompostionMiddleware(health)).

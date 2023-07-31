@@ -3,6 +3,7 @@ package handler_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"go-playground/pkg/lib/render"
 	"go-playground/pkg/presentation/auth"
 	"go-playground/pkg/presentation/handler"
@@ -51,8 +52,10 @@ func TestHelloHandler_GetName(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx := context.WithValue(test.inputRequest.Context(), "authUser", test.inputUser)
-			handler.NewHelloHandler(zap.NewExample()).GetName().ServeHTTP(test.inputResponseWriter, test.inputRequest.WithContext(ctx))
+			handler.
+				NewHelloHandler(zap.NewExample(), &mockCtxManager{test.expectErr}).
+				GetName().
+				ServeHTTP(test.inputResponseWriter, test.inputRequest)
 
 			if test.inputResponseWriter.Code != test.expectedCode {
 				t.Errorf("unexpected code(%d) was recived", test.inputResponseWriter.Code)
@@ -73,4 +76,15 @@ func TestHelloHandler_GetName(t *testing.T) {
 			}
 		})
 	}
+}
+
+type mockCtxManager struct {
+	isErr bool
+}
+
+func (m *mockCtxManager) Get(ctx context.Context) (*auth.AuthenticatedUser, error) {
+	if m.isErr {
+		return nil, fmt.Errorf("no user")
+	}
+	return &auth.AuthenticatedUser{Name: "tecchu", Role: auth.ADMIN}, nil
 }

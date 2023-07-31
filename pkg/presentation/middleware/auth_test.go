@@ -15,19 +15,6 @@ import (
 	"go.uber.org/zap"
 )
 
-type mockAuthenticationManager struct{}
-
-func newMockAuthenticationManager() auth.AuthenticationManager {
-	return &mockAuthenticationManager{}
-}
-
-func (mock *mockAuthenticationManager) Authenticate(token string) (*auth.AuthenticatedUser, error) {
-	if token == "valid-token" {
-		return &auth.AuthenticatedUser{Name: "tecchu", Role: auth.ADMIN}, nil
-	}
-	return nil, errors.New("mock")
-}
-
 func TestAuthMiddleWare_Handle(t *testing.T) {
 	tests := []struct {
 		name                     string
@@ -67,7 +54,8 @@ func TestAuthMiddleWare_Handle(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			test.inputRequest.Header.Set("Authorization", test.inputAuthorizationHeader)
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				user, _ := r.Context().Value("authUser").(*auth.AuthenticatedUser)
+				manager := middleware.AuthCtxManager{}
+				user, _ := manager.Get(r.Context())
 				_, _ = fmt.Fprintf(w, "user is %s and role is %s", user.Name, user.Role.String())
 			})
 			middleware.
@@ -94,4 +82,17 @@ func TestAuthMiddleWare_Handle(t *testing.T) {
 			}
 		})
 	}
+}
+
+type mockAuthenticationManager struct{}
+
+func newMockAuthenticationManager() auth.AuthenticationManager {
+	return &mockAuthenticationManager{}
+}
+
+func (mock *mockAuthenticationManager) Authenticate(token string) (*auth.AuthenticatedUser, error) {
+	if token == "valid-token" {
+		return &auth.AuthenticatedUser{Name: "tecchu", Role: auth.ADMIN}, nil
+	}
+	return nil, errors.New("mock")
 }
