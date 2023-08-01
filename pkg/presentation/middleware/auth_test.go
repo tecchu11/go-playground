@@ -42,7 +42,7 @@ func TestAuthMiddleWare_Handle(t *testing.T) {
 			expectErr:                true,
 			expectedErrCode:          401,
 			expectedErrBody: render.ProblemDetail{
-				Type:    "",
+				Type:    "https://github.com/tecchu11/go-playground",
 				Title:   "Unauthorized",
 				Detail:  "You had failed to authenticate",
 				Instant: "/anys",

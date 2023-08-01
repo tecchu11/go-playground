@@ -42,7 +42,7 @@ func TestHelloHandler_GetName(t *testing.T) {
 			expectErr:           true,
 			expectedCode:        401,
 			expectedProblem: render.ProblemDetail{
-				Type:    "",
+				Type:    "https://github.com/tecchu11/go-playground",
 				Title:   "Unauthorized",
 				Detail:  "No token was found for your request",
 				Instant: "/hello",
