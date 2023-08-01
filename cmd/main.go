@@ -14,13 +14,16 @@ import (
 	"go.uber.org/zap"
 )
 
-var env string
+var (
+	configFile string
+)
 
 func init() {
-	env = os.Getenv("APP_ENV")
+	env := os.Getenv("APP_ENV")
 	if env == "" {
 		log.Fatal("APP_ENV is not stored in evirioment variables")
 	}
+	configFile = fmt.Sprintf("config-%s.json", env)
 }
 
 func main() {
@@ -29,14 +32,12 @@ func main() {
 		log.Fatalf("zap logger is failed to init because of %s", err)
 	}
 
-	configLocation := fmt.Sprintf("../config/config-%s.json", env)
-	prop := config.NewPropertiesLoader(logger).Load(configLocation)
+	prop := config.NewPropertiesLoader(logger).Load(configFile)
 	appLogger := logger.With(zap.String("appName", prop.AppName))
 	appLogger.Info("Success to load properties")
 
 	// initialze misc
 	authCtxManager := middleware.AuthCtxManager{}
-
 	// initialize middleware
 	authMid := middleware.NewAuthMiddleWare(appLogger, auth.NewAutheticatonManager(prop.AuthConfigs))
 	authenticatedCompostionMiddleware := middleware.Composite(authMid.Handle)
