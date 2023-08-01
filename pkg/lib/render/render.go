@@ -1,3 +1,4 @@
+// render is helper functions for rendering json repsonse with status code.
 package render
 
 import (
@@ -8,14 +9,26 @@ import (
 const (
 	contentTypeKey   = "Content-Type"
 	contentTypeValue = "application/json; charset=utf-8"
+	title            = "https://github.com/tecchu11/go-playground"
 )
 
+var (
+	statusMap = map[int]string{
+		http.StatusUnauthorized:        "Unauthorized",
+		http.StatusNotFound:            "Resource Not Found",
+		http.StatusInternalServerError: "Internal Server Error",
+	}
+)
+
+// Ok return 200 and passed body.
 func Ok(w http.ResponseWriter, body any) {
 	w.Header().Add(contentTypeKey, contentTypeValue)
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(body)
 }
 
+// ProblemDetail indicates the respose body in accordance with RFC7807.
+// Please see detail bellow. https://datatracker.ietf.org/doc/html/rfc7807
 type ProblemDetail struct {
 	Type    string `json:"type"`
 	Title   string `json:"title"`
@@ -23,36 +36,27 @@ type ProblemDetail struct {
 	Instant string `json:"instant"`
 }
 
+// Unauthorized return 401 and respose body in accordance with ProblemDetail.
 func Unauthorized(w http.ResponseWriter, detail string, path string) {
-	w.Header().Add(contentTypeKey, contentTypeValue)
-	w.WriteHeader(http.StatusUnauthorized)
-	body := &ProblemDetail{
-		Type:    "",
-		Title:   "Unauthorized",
-		Detail:  detail,
-		Instant: path,
-	}
-	_ = json.NewEncoder(w).Encode(body)
+	error(w, detail, path, http.StatusUnauthorized)
 }
 
+// NotFound return 401 and respose body in accordance with ProblemDetail.
 func NotFound(w http.ResponseWriter, detail string, path string) {
-	w.Header().Add(contentTypeKey, contentTypeValue)
-	w.WriteHeader(http.StatusNotFound)
-	body := &ProblemDetail{
-		Type:    "",
-		Title:   "Resource Not Found",
-		Detail:  detail,
-		Instant: path,
-	}
-	_ = json.NewEncoder(w).Encode(body)
+	error(w, detail, path, http.StatusNotFound)
 }
 
+// InternalServerError return 401 and respose body in accordance with ProblemDetail.
 func InternalServerError(w http.ResponseWriter, detail string, path string) {
+	error(w, detail, path, http.StatusInternalServerError)
+}
+
+func error(w http.ResponseWriter, detail string, path string, code int) {
 	w.Header().Add(contentTypeKey, contentTypeValue)
-	w.WriteHeader(http.StatusInternalServerError)
+	w.WriteHeader(code)
 	body := &ProblemDetail{
-		Type:    "",
-		Title:   "Internal Server Error",
+		Type:    title,
+		Title:   statusMap[code],
 		Detail:  detail,
 		Instant: path,
 	}

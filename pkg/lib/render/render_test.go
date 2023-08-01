@@ -12,6 +12,10 @@ type testResponse struct {
 	Msg string `json:"msg"`
 }
 
+const (
+	testTitle = "https://github.com/tecchu11/go-playground"
+)
+
 func TestOk(t *testing.T) {
 	tests := []struct {
 		name                string
@@ -69,7 +73,7 @@ func TestAllStatusFailuer(t *testing.T) {
 			expectedCode:        401,
 			expectedContentType: "application/json; charset=utf-8",
 			expectedBody: render.ProblemDetail{
-				Type:    "",
+				Type:    testTitle,
 				Title:   "Unauthorized",
 				Detail:  "authentication failed",
 				Instant: "/foos",
@@ -84,7 +88,7 @@ func TestAllStatusFailuer(t *testing.T) {
 			expectedCode:        404,
 			expectedContentType: "application/json; charset=utf-8",
 			expectedBody: render.ProblemDetail{
-				Type:    "",
+				Type:    testTitle,
 				Title:   "Resource Not Found",
 				Detail:  "no resources",
 				Instant: "/bars",
@@ -99,7 +103,7 @@ func TestAllStatusFailuer(t *testing.T) {
 			expectedCode:        500,
 			expectedContentType: "application/json; charset=utf-8",
 			expectedBody: render.ProblemDetail{
-				Type:    "",
+				Type:    testTitle,
 				Title:   "Internal Server Error",
 				Detail:  "server error",
 				Instant: "/bazs",
