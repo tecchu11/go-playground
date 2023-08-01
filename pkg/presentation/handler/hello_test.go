@@ -7,6 +7,7 @@ import (
 	"go-playground/pkg/lib/render"
 	"go-playground/pkg/presentation/auth"
 	"go-playground/pkg/presentation/handler"
+	"go-playground/pkg/presentation/middleware"
 	"go-playground/pkg/presentation/model"
 	"net/http"
 	"net/http/httptest"
@@ -21,9 +22,8 @@ func TestHelloHandler_GetName(t *testing.T) {
 		name                string
 		inputResponseWriter *httptest.ResponseRecorder
 		inputRequest        *http.Request
-		inputUser           *auth.AuthenticatedUser
-		expectedCode        int
 		expectErr           bool
+		expectedCode        int
 		expectedBody        model.HelloResponse
 		expectedProblem     render.ProblemDetail
 	}{
@@ -31,7 +31,7 @@ func TestHelloHandler_GetName(t *testing.T) {
 			name:                "test GetName returns 200 and expected body",
 			inputResponseWriter: httptest.NewRecorder(),
 			inputRequest:        httptest.NewRequest("GET", "http://example.com/hello", nil),
-			inputUser:           &auth.AuthenticatedUser{Name: "tecchu", Role: auth.ADMIN},
+			expectErr:           false,
 			expectedCode:        200,
 			expectedBody:        model.HelloResponse{Message: "Hello tecchu!! You have ADMIN role."},
 		},
@@ -39,8 +39,8 @@ func TestHelloHandler_GetName(t *testing.T) {
 			name:                "test GetName returns 401 and expected body",
 			inputResponseWriter: httptest.NewRecorder(),
 			inputRequest:        httptest.NewRequest("GET", "http://example.com/hello", nil),
-			expectedCode:        401,
 			expectErr:           true,
+			expectedCode:        401,
 			expectedProblem: render.ProblemDetail{
 				Type:    "",
 				Title:   "Unauthorized",
@@ -52,8 +52,15 @@ func TestHelloHandler_GetName(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			// mocking middleware.GetAuthenticatedUser
+			middleware.GetAutenticatedUser = func(ctx context.Context) (*auth.AuthenticatedUser, error) {
+				if test.expectErr {
+					return nil, fmt.Errorf("no user")
+				}
+				return &auth.AuthenticatedUser{Name: "tecchu", Role: auth.ADMIN}, nil
+			}
 			handler.
-				NewHelloHandler(zap.NewExample(), &mockCtxManager{test.expectErr}).
+				NewHelloHandler(zap.NewExample()).
 				GetName().
 				ServeHTTP(test.inputResponseWriter, test.inputRequest)
 
@@ -76,15 +83,4 @@ func TestHelloHandler_GetName(t *testing.T) {
 			}
 		})
 	}
-}
-
-type mockCtxManager struct {
-	isErr bool
-}
-
-func (m *mockCtxManager) Get(ctx context.Context) (*auth.AuthenticatedUser, error) {
-	if m.isErr {
-		return nil, fmt.Errorf("no user")
-	}
-	return &auth.AuthenticatedUser{Name: "tecchu", Role: auth.ADMIN}, nil
 }

@@ -37,9 +37,13 @@ func (mid *authMiddleWare) Handle(next http.Handler) http.Handler {
 	})
 }
 
+// GetAuthenticatedUser retrive authenticated user from context.
+// This variable useful for mocking behavior.
+var GetAutenticatedUser = getAuthenticatedUserFromContext
+
 // GetAuthenticatedUserFromContext retrive authenticated user information from context.
 // If errro is not nil, this indicates request is not authenticated.
-func GetAuthenticatedUserFromContext(ctx context.Context) (*auth.AuthenticatedUser, error) {
+func getAuthenticatedUserFromContext(ctx context.Context) (*auth.AuthenticatedUser, error) {
 	u, ok := ctx.Value(authCtxKey{}).(*auth.AuthenticatedUser)
 	if !ok || u == nil {
 		return nil, fmt.Errorf("user does not exist context")
@@ -49,16 +53,3 @@ func GetAuthenticatedUserFromContext(ctx context.Context) (*auth.AuthenticatedUs
 
 // authCtxKey is context key storeed AuthenticateUser.
 type authCtxKey struct{}
-
-// AuthCtxManager implemented contextutil.ContextManger
-type AuthCtxManager struct{}
-
-// Get *AuthenticatedUser from context.
-// If errro is not nil, this indicates request is not authenticated.
-func (manager *AuthCtxManager) Get(ctx context.Context) (*auth.AuthenticatedUser, error) {
-	u, ok := ctx.Value(authCtxKey{}).(*auth.AuthenticatedUser)
-	if !ok || u == nil {
-		return nil, fmt.Errorf("user does not exist context")
-	}
-	return u, nil
-}

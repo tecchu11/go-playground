@@ -54,8 +54,7 @@ func TestAuthMiddleWare_Handle(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			test.inputRequest.Header.Set("Authorization", test.inputAuthorizationHeader)
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				manager := middleware.AuthCtxManager{}
-				user, _ := manager.Get(r.Context())
+				user, _ := middleware.GetAutenticatedUser(r.Context())
 				_, _ = fmt.Fprintf(w, "user is %s and role is %s", user.Name, user.Role.String())
 			})
 			middleware.
