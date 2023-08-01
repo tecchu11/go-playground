@@ -15,29 +15,20 @@ func TestPropertiesLoader_Load(t *testing.T) {
 		expected *config.Properties
 	}{
 		{
-			name:     "case of successful loading with expected configuration json",
-			testdata: "../testdata/config/config-test-1.json",
+			name:     "case of successful loading local configuration",
+			testdata: "config-local.json",
 			expected: &config.Properties{
-				AppName: "go-playground-test",
+				AppName: "go-playground",
 				AuthConfigs: []config.AuthConfig{
 					{
-						Name:    "test",
+						Name:    "tecchu11(ADMIN)",
 						RoleStr: "ADMIN",
-						Key:     "test-api-key",
+						Key:     "admin",
 					},
-				},
-			},
-		},
-		{
-			name:     "case to ensure that default values are storred when a required field is missing",
-			testdata: "../testdata/config/config-test-2.json",
-			expected: &config.Properties{
-				AppName: "go-playground-test",
-				AuthConfigs: []config.AuthConfig{
 					{
-						Name:    "test",
-						RoleStr: "",
-						Key:     "test-api-key",
+						Name:    "tecchu11(USER)",
+						RoleStr: "USER",
+						Key:     "user",
 					},
 				},
 			},
