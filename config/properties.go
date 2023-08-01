@@ -1,8 +1,8 @@
 package config
 
 import (
+	"embed"
 	"encoding/json"
-	"os"
 
 	"go.uber.org/zap"
 )
@@ -22,8 +22,8 @@ type AuthConfig struct {
 
 // PropertiesLoader load configuration.
 type PropertiesLoader interface {
-	// Load retrive configuration from configLocation, and then decode to Properties.
-	Load(configLocation string) *Properties
+	// Load retrive configuration from config file, and then decode to Properties.
+	Load(configFile string) *Properties
 }
 
 type propertiesLoader struct {
@@ -35,14 +35,18 @@ func NewPropertiesLoader(logger *zap.Logger) PropertiesLoader {
 	return &propertiesLoader{logger: logger}
 }
 
-func (pl *propertiesLoader) Load(configLocation string) *Properties {
-	f, err := os.ReadFile(configLocation)
+//go:embed *.json
+var configs embed.FS
+
+func (pl *propertiesLoader) Load(configFile string) *Properties {
+
+	f, err := configs.ReadFile(configFile)
 	if err != nil {
-		pl.logger.Fatal("Failed to read condiguration", zap.Error(err), zap.String("fileName", configLocation))
+		pl.logger.Fatal("Failed to read condiguration", zap.Error(err), zap.String("fileName", configFile))
 	}
 	var prop Properties
 	if err := json.Unmarshal(f, &prop); err != nil {
-		pl.logger.Fatal("Failed to decode confugiration", zap.Error(err), zap.String("fileName", configLocation))
+		pl.logger.Fatal("Failed to decode confugiration", zap.Error(err), zap.String("fileName", configFile))
 	}
 	return &prop
 }
