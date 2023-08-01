@@ -36,14 +36,12 @@ func main() {
 	appLogger := logger.With(zap.String("appName", prop.AppName))
 	appLogger.Info("Success to load properties")
 
-	// initialze misc
-	authCtxManager := middleware.AuthCtxManager{}
 	// initialize middleware
 	authMid := middleware.NewAuthMiddleWare(appLogger, auth.NewAutheticatonManager(prop.AuthConfigs))
 	authenticatedCompostionMiddleware := middleware.Composite(authMid.Handle)
 	// initialize handler
 	health := handler.NewHealthHandler(appLogger).GetStatus()
-	hello := handler.NewHelloHandler(appLogger, &authCtxManager).GetName()
+	hello := handler.NewHelloHandler(appLogger).GetName()
 
 	mux := presentation.NewMuxBuilder().
 		SetHadler("/health", health).
