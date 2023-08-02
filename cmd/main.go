@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"go-playground/config"
 	"go-playground/pkg/presentation"
-	"go-playground/pkg/presentation/auth"
 	"go-playground/pkg/presentation/handler"
 	"go-playground/pkg/presentation/middleware"
+	"go-playground/pkg/presentation/preauth"
 	"log"
 	"net/http"
 	"os"
@@ -37,7 +37,7 @@ func main() {
 	appLogger.Info("Success to load properties")
 
 	// initialize middleware
-	authMid := middleware.NewAuthenticationMiddleWare(appLogger, auth.NewAutheticatonManager(prop.AuthConfigs))
+	authMid := middleware.NewAuthenticationMiddleWare(appLogger, preauth.NewAutheticatonManager(prop.AuthConfigs))
 	authenticatedCompostionMiddleware := middleware.Composite(authMid.Handle)
 	// initialize handler
 	health := handler.NewHealthHandler(appLogger).GetStatus()

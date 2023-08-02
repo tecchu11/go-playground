@@ -1,8 +1,8 @@
-package auth_test
+package preauth_test
 
 import (
 	"go-playground/config"
-	"go-playground/pkg/presentation/auth"
+	"go-playground/pkg/presentation/preauth"
 	"reflect"
 	"testing"
 )
@@ -20,17 +20,17 @@ func TestAuthenticationManager_Authenticate(t *testing.T) {
 			Key:     "test-api-key-2",
 		},
 	}
-	manager := auth.NewAutheticatonManager(configs)
+	manager := preauth.NewAutheticatonManager(configs)
 	cases := []struct {
 		name         string
 		token        string
-		expectedUser *auth.AuthenticatedUser
+		expectedUser *preauth.AuthenticatedUser
 		expectErr    bool
 	}{
 		{
 			name:         "case of successful to authentication",
 			token:        "test-api-key-2",
-			expectedUser: &auth.AuthenticatedUser{Name: "test-user-2", Role: auth.USER},
+			expectedUser: &preauth.AuthenticatedUser{Name: "test-user-2", Role: preauth.USER},
 		},
 		{
 			name:      "case of failuer to authentication",
