@@ -12,19 +12,19 @@ import (
 
 const authHeader = "Authorization"
 
-type authMiddleWare struct {
+type authenticationMiddleWare struct {
 	logger      *zap.Logger
 	authManager auth.AuthenticationManager
 }
 
-// NewAuthMiddleWare init Middleware interface.
-func NewAuthMiddleWare(logger *zap.Logger, authenticationManager auth.AuthenticationManager) MiddleWare {
-	return &authMiddleWare{logger, authenticationManager}
+// NewAuthenticationMiddleWare init Middleware interface.
+func NewAuthenticationMiddleWare(logger *zap.Logger, authenticationManager auth.AuthenticationManager) MiddleWare {
+	return &authenticationMiddleWare{logger, authenticationManager}
 }
 
 // Handle to store authenticated user info in context when user request is authenticated.
 // If requests is not authenticated, return 401 staus code to client.
-func (mid *authMiddleWare) Handle(next http.Handler) http.Handler {
+func (mid *authenticationMiddleWare) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, err := mid.authManager.Authenticate(r.Header.Get(authHeader))
 		if err != nil {
