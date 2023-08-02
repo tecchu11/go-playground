@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go-playground/pkg/lib/render"
-	"go-playground/pkg/presentation/auth"
+	"go-playground/pkg/presentation/preauth"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -14,11 +14,11 @@ const authHeader = "Authorization"
 
 type authenticationMiddleWare struct {
 	logger      *zap.Logger
-	authManager auth.AuthenticationManager
+	authManager preauth.AuthenticationManager
 }
 
 // NewAuthenticationMiddleWare init Middleware interface.
-func NewAuthenticationMiddleWare(logger *zap.Logger, authenticationManager auth.AuthenticationManager) MiddleWare {
+func NewAuthenticationMiddleWare(logger *zap.Logger, authenticationManager preauth.AuthenticationManager) MiddleWare {
 	return &authenticationMiddleWare{logger, authenticationManager}
 }
 
@@ -43,8 +43,8 @@ var GetAutenticatedUser = getAuthenticatedUserFromContext
 
 // GetAuthenticatedUserFromContext retrive authenticated user information from context.
 // If errro is not nil, this indicates request is not authenticated.
-func getAuthenticatedUserFromContext(ctx context.Context) (*auth.AuthenticatedUser, error) {
-	u, ok := ctx.Value(authCtxKey{}).(*auth.AuthenticatedUser)
+func getAuthenticatedUserFromContext(ctx context.Context) (*preauth.AuthenticatedUser, error) {
+	u, ok := ctx.Value(authCtxKey{}).(*preauth.AuthenticatedUser)
 	if !ok || u == nil {
 		return nil, fmt.Errorf("user does not exist context")
 	}

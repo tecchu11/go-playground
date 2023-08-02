@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"go-playground/pkg/lib/render"
-	"go-playground/pkg/presentation/auth"
 	"go-playground/pkg/presentation/middleware"
+	"go-playground/pkg/presentation/preauth"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -85,13 +85,13 @@ func TestAuthenticationMiddleWare_Handle(t *testing.T) {
 
 type mockAuthenticationManager struct{}
 
-func newMockAuthenticationManager() auth.AuthenticationManager {
+func newMockAuthenticationManager() preauth.AuthenticationManager {
 	return &mockAuthenticationManager{}
 }
 
-func (mock *mockAuthenticationManager) Authenticate(token string) (*auth.AuthenticatedUser, error) {
+func (mock *mockAuthenticationManager) Authenticate(token string) (*preauth.AuthenticatedUser, error) {
 	if token == "valid-token" {
-		return &auth.AuthenticatedUser{Name: "tecchu", Role: auth.ADMIN}, nil
+		return &preauth.AuthenticatedUser{Name: "tecchu", Role: preauth.ADMIN}, nil
 	}
 	return nil, errors.New("mock")
 }

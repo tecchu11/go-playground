@@ -1,12 +1,21 @@
-package auth
+package preauth
 
 import (
 	"errors"
 	"fmt"
 )
 
+type AuthorizationManager interface {
+	Authorize(Role) error
+}
+
 // AuthiorizedList roles to perform API.
 type AuthorizedList []Role
+
+func NewAuthorizationManager(permittedRoles []Role) AuthorizationManager {
+	var list AuthorizedList = permittedRoles
+	return list
+}
 
 // Authorize with passsed role by AuthorizedList
 func (list AuthorizedList) Authorize(role Role) error {

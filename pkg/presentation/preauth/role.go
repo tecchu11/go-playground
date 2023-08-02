@@ -1,4 +1,4 @@
-package auth
+package preauth
 
 // Role for performing API.
 type Role int

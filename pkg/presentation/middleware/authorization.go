@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"go-playground/pkg/lib/render"
-	"go-playground/pkg/presentation/auth"
+	"go-playground/pkg/presentation/preauth"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -10,11 +10,11 @@ import (
 
 type authorizationMiddleWare struct {
 	logger         *zap.Logger
-	authorizedList auth.AuthorizedList
+	authorizedList preauth.AuthorizedList
 }
 
-func NewAuthorizationMiddleWare(logger *zap.Logger, permitedRoles []auth.Role) MiddleWare {
-	var list auth.AuthorizedList = permitedRoles
+func NewAuthorizationMiddleWare(logger *zap.Logger, permitedRoles []preauth.Role) MiddleWare {
+	var list preauth.AuthorizedList = permitedRoles
 	return &authorizationMiddleWare{logger, list}
 }
 
