@@ -16,6 +16,7 @@ var (
 	statusMap = map[int]string{
 		http.StatusUnauthorized:        "Unauthorized",
 		http.StatusNotFound:            "Resource Not Found",
+		http.StatusForbidden:           "Forbidden",
 		http.StatusInternalServerError: "Internal Server Error",
 	}
 )
@@ -39,6 +40,10 @@ type ProblemDetail struct {
 // Unauthorized return 401 and respose body in accordance with ProblemDetail.
 func Unauthorized(w http.ResponseWriter, detail string, path string) {
 	error(w, detail, path, http.StatusUnauthorized)
+}
+
+func Forbidden(w http.ResponseWriter, detail string, path string) {
+	error(w, detail, path, http.StatusForbidden)
 }
 
 // NotFound return 401 and respose body in accordance with ProblemDetail.

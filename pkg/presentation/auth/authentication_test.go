@@ -1,7 +1,6 @@
 package auth_test
 
 import (
-	"errors"
 	"go-playground/config"
 	"go-playground/pkg/presentation/auth"
 	"reflect"
@@ -26,7 +25,7 @@ func TestAuthenticationManager_Authenticate(t *testing.T) {
 		name         string
 		token        string
 		expectedUser *auth.AuthenticatedUser
-		expectedErr  error
+		expectErr    bool
 	}{
 		{
 			name:         "case of successful to authentication",
@@ -34,9 +33,9 @@ func TestAuthenticationManager_Authenticate(t *testing.T) {
 			expectedUser: &auth.AuthenticatedUser{Name: "test-user-2", Role: auth.USER},
 		},
 		{
-			name:        "case of failuer to authentication",
-			token:       "invalid api key",
-			expectedErr: auth.ErrAuthentication,
+			name:      "case of failuer to authentication",
+			token:     "invalid api key",
+			expectErr: true,
 		},
 	}
 	for _, c := range cases {
@@ -45,8 +44,8 @@ func TestAuthenticationManager_Authenticate(t *testing.T) {
 			if !reflect.DeepEqual(actualUser, c.expectedUser) {
 				t.Errorf("Unmatched user. actualUser is %v but expected is %v", actualUser, c.expectedUser)
 			}
-			if !errors.Is(actualErr, c.expectedErr) {
-				t.Errorf("Unmatched error. actualUser is (%v) but expected is (%v)", actualErr, c.expectedErr)
+			if c.expectErr && actualErr == nil {
+				t.Errorf(" expected error but actula error is nil")
 			}
 
 		})

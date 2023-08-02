@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestAuthMiddleWare_Handle(t *testing.T) {
+func TestAuthenticationMiddleWare_Handle(t *testing.T) {
 	tests := []struct {
 		name                     string
 		inputResponseWriter      *httptest.ResponseRecorder
@@ -58,7 +58,7 @@ func TestAuthMiddleWare_Handle(t *testing.T) {
 				_, _ = fmt.Fprintf(w, "user is %s and role is %s", user.Name, user.Role.String())
 			})
 			middleware.
-				NewAuthMiddleWare(zap.NewExample(), newMockAuthenticationManager()).
+				NewAuthenticationMiddleWare(zap.NewExample(), newMockAuthenticationManager()).
 				Handle(next).
 				ServeHTTP(test.inputResponseWriter, test.inputRequest)
 

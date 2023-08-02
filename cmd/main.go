@@ -37,7 +37,7 @@ func main() {
 	appLogger.Info("Success to load properties")
 
 	// initialize middleware
-	authMid := middleware.NewAuthMiddleWare(appLogger, auth.NewAutheticatonManager(prop.AuthConfigs))
+	authMid := middleware.NewAuthenticationMiddleWare(appLogger, auth.NewAutheticatonManager(prop.AuthConfigs))
 	authenticatedCompostionMiddleware := middleware.Composite(authMid.Handle)
 	// initialize handler
 	health := handler.NewHealthHandler(appLogger).GetStatus()

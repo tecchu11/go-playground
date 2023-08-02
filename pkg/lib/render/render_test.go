@@ -80,6 +80,21 @@ func TestAllStatusFailuer(t *testing.T) {
 			},
 		},
 		{
+			name:                "test Forbidden returns 403 and expected body",
+			testFunc:            reflect.ValueOf(render.Forbidden),
+			inputResponseWriter: httptest.NewRecorder(),
+			inputDetail:         "authorization failed",
+			inputPath:           "/fuzs",
+			expectedCode:        403,
+			expectedContentType: "application/json; charset=utf-8",
+			expectedBody: render.ProblemDetail{
+				Type:    testTitle,
+				Title:   "Forbidden",
+				Detail:  "authorization failed",
+				Instant: "/fuzs",
+			},
+		},
+		{
 			name:                "test NotFound returns 404 and expected body",
 			testFunc:            reflect.ValueOf(render.NotFound),
 			inputResponseWriter: httptest.NewRecorder(),

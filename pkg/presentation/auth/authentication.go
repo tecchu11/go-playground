@@ -1,11 +1,9 @@
 package auth
 
 import (
-	"fmt"
+	"errors"
 	"go-playground/config"
 )
-
-var ErrAuthentication = fmt.Errorf("no authenticated user had been requested")
 
 // AuthenticatedUser is represented authenticated user struct.
 type AuthenticatedUser struct {
@@ -22,6 +20,7 @@ type authenticationManager struct {
 	configs []config.AuthConfig
 }
 
+// NewAuthenticationManager is factory method for AuthenticationManager.
 func NewAutheticatonManager(configs []config.AuthConfig) AuthenticationManager {
 	return &authenticationManager{configs: configs}
 }
@@ -38,7 +37,7 @@ func (manager *authenticationManager) Authenticate(token string) (*Authenticated
 		}
 	}
 	if !ok {
-		return nil, ErrAuthentication
+		return nil, errors.New("no authenticated user had been requested")
 	}
 	return &user, nil
 }
