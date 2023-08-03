@@ -110,6 +110,21 @@ func TestAllStatusFailuer(t *testing.T) {
 			},
 		},
 		{
+			name:                "test MethodNotAllowed returns 405 and expected body",
+			testFunc:            reflect.ValueOf(render.MethodNotAllowed),
+			inputResponseWriter: httptest.NewRecorder(),
+			inputDetail:         "method not allowed",
+			inputPath:           "/bars",
+			expectedCode:        405,
+			expectedContentType: "application/json; charset=utf-8",
+			expectedBody: render.ProblemDetail{
+				Type:    testTitle,
+				Title:   "Method Not Allowed",
+				Detail:  "method not allowed",
+				Instant: "/bars",
+			},
+		},
+		{
 			name:                "test InternalServerError returns 500 and expected body",
 			testFunc:            reflect.ValueOf(render.InternalServerError),
 			inputResponseWriter: httptest.NewRecorder(),

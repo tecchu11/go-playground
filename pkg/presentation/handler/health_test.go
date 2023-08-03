@@ -7,8 +7,6 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
-
-	"go.uber.org/zap"
 )
 
 func TestHealthHandler_GetStatus(t *testing.T) {
@@ -17,21 +15,21 @@ func TestHealthHandler_GetStatus(t *testing.T) {
 		inputResponseWriter *httptest.ResponseRecorder
 		inputRequest        *http.Request
 		expectedCode        int
-		expectedBody        handler.HealthStatus
+		expectedBody        map[string]string
 	}{
 		name:                "test GetStatus returns 200 and expected body",
 		inputResponseWriter: httptest.NewRecorder(),
 		inputRequest:        httptest.NewRequest("GET", "http://example.com/health", nil),
 		expectedCode:        200,
-		expectedBody:        handler.HealthStatus{Status: "OK"},
+		expectedBody:        map[string]string{"status": "ok"},
 	}
 
 	t.Run(test.name, func(t *testing.T) {
-		handler.NewHealthHandler(zap.NewExample()).GetStatus().ServeHTTP(test.inputResponseWriter, test.inputRequest)
+		handler.StatusHandler().ServeHTTP(test.inputResponseWriter, test.inputRequest)
 		if test.inputResponseWriter.Code != test.expectedCode {
 			t.Errorf("unexpected status code(%d) was recieved", test.inputResponseWriter.Code)
 		}
-		var actualBody handler.HealthStatus
+		var actualBody map[string]string
 		_ = json.Unmarshal(test.inputResponseWriter.Body.Bytes(), &actualBody)
 		if !reflect.DeepEqual(actualBody, test.expectedBody) {
 			t.Errorf("unexpected body(%v) was recieved", actualBody)
