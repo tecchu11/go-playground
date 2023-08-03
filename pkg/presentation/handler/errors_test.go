@@ -52,14 +52,10 @@ func Test_NotFoundHandler(t *testing.T) {
 				t.Errorf("actual code %d is difference from expected code", actual)
 			}
 			var actual render.ProblemDetail
-			json.Unmarshal(v.inputWriter.Body.Bytes(), &actual)
+			_ = json.Unmarshal(v.inputWriter.Body.Bytes(), &actual)
 			if !reflect.DeepEqual(actual, v.expectedBody) {
 				t.Errorf("actual response body (%v) is different from expected", actual)
 			}
 		})
 	}
-}
-
-func Test_MethodNotAllowedHandler(t *testing.T) {
-
 }
