@@ -51,7 +51,7 @@ func Test_RecoverMiddleWare_Handle(t *testing.T) {
 						panic("test panic!!")
 					}
 					w.WriteHeader(http.StatusOK)
-					json.NewEncoder(w).Encode(map[string]string{"hello": "world"})
+					_ = json.NewEncoder(w).Encode(map[string]string{"hello": "world"})
 				})).
 				ServeHTTP(v.inputWriter, v.inputRequest)
 
@@ -60,7 +60,7 @@ func Test_RecoverMiddleWare_Handle(t *testing.T) {
 					t.Errorf("actual status code %d is unexpected. expected is %d", actual, v.expectedCode)
 				}
 				var actual render.ProblemDetail
-				json.Unmarshal(v.inputWriter.Body.Bytes(), &actual)
+				_ = json.Unmarshal(v.inputWriter.Body.Bytes(), &actual)
 				if !reflect.DeepEqual(actual, v.expectedErrBody) {
 					t.Errorf("actual body (%v) is unexpected. expected is (%v)", actual, v.expectedErrBody)
 				}
@@ -71,7 +71,7 @@ func Test_RecoverMiddleWare_Handle(t *testing.T) {
 				t.Errorf("actual status code %d is unexpected. expected is %d", actual, v.expectedCode)
 			}
 			var actual map[string]string
-			json.Unmarshal(v.inputWriter.Body.Bytes(), &actual)
+			_ = json.Unmarshal(v.inputWriter.Body.Bytes(), &actual)
 			if !reflect.DeepEqual(actual, v.expectedBody) {
 				t.Errorf("actual body (%v) is unexpected. expected is (%v)", actual, v.expectedBody)
 			}
