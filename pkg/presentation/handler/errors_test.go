@@ -59,7 +59,3 @@ func Test_NotFoundHandler(t *testing.T) {
 		})
 	}
 }
-
-func Test_MethodNotAllowedHandler(t *testing.T) {
-
-}
