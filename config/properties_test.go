@@ -4,15 +4,14 @@ import (
 	"go-playground/config"
 	"reflect"
 	"testing"
-
-	"go.uber.org/zap"
 )
 
 func TestPropertiesLoader_Load(t *testing.T) {
 	cases := []struct {
-		name     string
-		testdata string
-		expected *config.Properties
+		name      string
+		testdata  string
+		expected  *config.Properties
+		expectErr bool
 	}{
 		{
 			name:     "case of successful loading local configuration",
@@ -34,11 +33,10 @@ func TestPropertiesLoader_Load(t *testing.T) {
 			},
 		},
 	}
-	loader := config.NewPropertiesLoader(zap.NewExample())
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			actual := loader.Load(c.testdata)
-			if ok := reflect.DeepEqual(c.expected, actual); !ok {
+			actual, _ := config.LoadConfigWith(c.testdata)
+			if !reflect.DeepEqual(c.expected, actual) {
 				t.Errorf("Failed to match between expected = %v and actual = %v with testdata = %v", c.expected, actual, c.testdata)
 			}
 		})

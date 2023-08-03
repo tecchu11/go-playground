@@ -3,8 +3,7 @@ package config
 import (
 	"embed"
 	"encoding/json"
-
-	"go.uber.org/zap"
+	"fmt"
 )
 
 // Properties is struct for application configuration.
@@ -20,33 +19,17 @@ type AuthConfig struct {
 	Key     string `json:"key"`
 }
 
-// PropertiesLoader load configuration.
-type PropertiesLoader interface {
-	// Load retrive configuration from config file, and then decode to Properties.
-	Load(configFile string) *Properties
-}
-
-type propertiesLoader struct {
-	logger *zap.Logger
-}
-
-// NewPropertiesLoader initialize PropertiesLoader implementation.
-func NewPropertiesLoader(logger *zap.Logger) PropertiesLoader {
-	return &propertiesLoader{logger: logger}
-}
-
 //go:embed *.json
 var configs embed.FS
 
-func (pl *propertiesLoader) Load(configFile string) *Properties {
-
-	f, err := configs.ReadFile(configFile)
+func LoadConfigWith(key string) (*Properties, error) {
+	f, err := configs.ReadFile(key)
 	if err != nil {
-		pl.logger.Fatal("Failed to read condiguration", zap.Error(err), zap.String("fileName", configFile))
+		return nil, fmt.Errorf("failed read configuration properties by %s because %s", key, err.Error())
 	}
 	var prop Properties
 	if err := json.Unmarshal(f, &prop); err != nil {
-		pl.logger.Fatal("Failed to decode confugiration", zap.Error(err), zap.String("fileName", configFile))
+		return nil, fmt.Errorf("failed to unmarashal to Properties from config %s because %s", key, err.Error())
 	}
-	return &prop
+	return &prop, nil
 }
