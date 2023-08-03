@@ -44,6 +44,7 @@ func main() {
 	}
 
 	// initialize middleware
+	recoverMid := middleware.NewRecoverMiddleWare(appLogger)
 	authMid := middleware.NewAuthenticationMiddleWare(appLogger, preauth.NewAutheticatonManager(prop.AuthConfigs))
 	newrelicTxnMid := middleware.NewNewrelicTransactionMidleware(app)
 	// initialize handler
@@ -53,6 +54,7 @@ func main() {
 	mux.MethodNotAllowed(handler.MethodNotAllowedHandler())
 	mux.NotFound(handler.NotFoundHandler())
 	mux.Use(newrelicTxnMid.Handle)
+	mux.Use(recoverMid.Handle)
 	mux.Route("/statuses", func(r chi.Router) {
 		r.Get("/", handler.StatusHandler())
 	})
