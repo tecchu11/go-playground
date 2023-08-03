@@ -22,7 +22,7 @@ var (
 
 func init() {
 	env = os.Getenv("APP_ENV")
-	if env != "" {
+	if env == "" {
 		log.Fatal("APP_ENV is not stored in evirioment variables")
 	}
 	var err error
@@ -47,13 +47,14 @@ func main() {
 	authMid := middleware.NewAuthenticationMiddleWare(appLogger, preauth.NewAutheticatonManager(prop.AuthConfigs))
 	newrelicTxnMid := middleware.NewNewrelicTransactionMidleware(app)
 	// initialize handler
-	health := handler.NewHealthHandler(appLogger).GetStatus()
 	hello := handler.NewHelloHandler(appLogger).GetName()
 
 	mux := chi.NewRouter()
+	mux.MethodNotAllowed(handler.MethodNotAllowedHandler())
+	mux.NotFound(handler.NotFoundHandler())
 	mux.Use(newrelicTxnMid.Handle)
-	mux.Route("/health", func(r chi.Router) {
-		r.Get("/", health)
+	mux.Route("/statuses", func(r chi.Router) {
+		r.Get("/", handler.StatusHandler())
 	})
 	mux.Route("/hello", func(r chi.Router) {
 		r.Use(authMid.Handle)

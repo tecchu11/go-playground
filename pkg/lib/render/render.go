@@ -15,8 +15,9 @@ const (
 var (
 	statusMap = map[int]string{
 		http.StatusUnauthorized:        "Unauthorized",
-		http.StatusNotFound:            "Resource Not Found",
 		http.StatusForbidden:           "Forbidden",
+		http.StatusNotFound:            "Resource Not Found",
+		http.StatusMethodNotAllowed:    "Method Not Allowed",
 		http.StatusInternalServerError: "Internal Server Error",
 	}
 )
@@ -42,16 +43,22 @@ func Unauthorized(w http.ResponseWriter, detail string, path string) {
 	error(w, detail, path, http.StatusUnauthorized)
 }
 
+// Forbidden return 403 and respose body in accordance with ProblemDetail.
 func Forbidden(w http.ResponseWriter, detail string, path string) {
 	error(w, detail, path, http.StatusForbidden)
 }
 
-// NotFound return 401 and respose body in accordance with ProblemDetail.
+// NotFound return 404 and respose body in accordance with ProblemDetail.
 func NotFound(w http.ResponseWriter, detail string, path string) {
 	error(w, detail, path, http.StatusNotFound)
 }
 
-// InternalServerError return 401 and respose body in accordance with ProblemDetail.
+// MethodNotAllowed return 405 and respose body in accordance with ProblemDetail.
+func MethodNotAllowed(w http.ResponseWriter, detail string, path string) {
+	error(w, detail, path, http.StatusMethodNotAllowed)
+}
+
+// InternalServerError return 500 and respose body in accordance with ProblemDetail.
 func InternalServerError(w http.ResponseWriter, detail string, path string) {
 	error(w, detail, path, http.StatusInternalServerError)
 }
