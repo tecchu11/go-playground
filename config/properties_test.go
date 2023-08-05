@@ -9,14 +9,14 @@ import (
 func TestPropertiesLoader_Load(t *testing.T) {
 	cases := []struct {
 		name      string
-		testdata  string
-		expected  *config.Properties
+		env       string
+		expected  *config.ApplicationProperties
 		expectErr bool
 	}{
 		{
-			name:     "case of successful loading local configuration",
-			testdata: "config-local.json",
-			expected: &config.Properties{
+			name: "case of successful loading local configuration",
+			env:  "local",
+			expected: &config.ApplicationProperties{
 				AppName: "go-playground",
 				AuthConfigs: []config.AuthConfig{
 					{
@@ -35,9 +35,9 @@ func TestPropertiesLoader_Load(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			actual, _ := config.LoadConfigWith(c.testdata)
+			actual, _ := config.Load(c.env)
 			if !reflect.DeepEqual(c.expected, actual) {
-				t.Errorf("Failed to match between expected = %v and actual = %v with testdata = %v", c.expected, actual, c.testdata)
+				t.Errorf("Failed to match between expected = %v and actual = %v with testdata = %v", c.expected, actual, c.env)
 			}
 		})
 	}
