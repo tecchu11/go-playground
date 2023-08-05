@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -30,8 +31,18 @@ func (mid *newrelicTransactionMiddleWare) Handle(next http.Handler) http.Handler
 		w = txn.SetWebResponse(w)
 		ctx := newrelic.NewContext(r.Context(), txn)
 		next.ServeHTTP(w, r.WithContext(ctx))
-
-		// chi define roter patter after handle request and response, so set transaction name after serve http
-		txn.SetName(r.Method + " " + chi.RouteContext(ctx).RoutePattern())
+		txn.SetName(txnName(ctx, r.Method))
 	})
+}
+
+
+// txnName return transaction name. Transaction name format is "(MethodName) (Pattern)".
+// chi defines pattern after handled request and response, so please call this func after serve http.
+// Transaction name is "ErrorHandler" when handled by the hadler registered with chi.Mux.NotFound.
+func txnName(ctx context.Context, method string) string {
+	p := chi.RouteContext(ctx).RoutePattern()
+	if p == "" {
+		return "ErrorHadnler"
+	}
+	return method + " " + p
 }
