@@ -4,6 +4,7 @@ import (
 	"go-playground/configs"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestPropertiesLoader_Load(t *testing.T) {
@@ -18,6 +19,12 @@ func TestPropertiesLoader_Load(t *testing.T) {
 			env:  "local",
 			expected: &configs.ApplicationProperties{
 				AppName: "go-playground",
+				ServerConfig: configs.ServerConfig{
+					Address:      ":8080",
+					ReadTimeout:  10 * time.Second,
+					WriteTimeout: 10 * time.Second,
+					IdleTimeout:  120 * time.Second,
+				},
 				AuthConfigs: []configs.AuthConfig{
 					{
 						Name:    "tecchu11(ADMIN)",

@@ -4,14 +4,24 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 // ApplicationProperties is struct for application configuration.
 type ApplicationProperties struct {
-	AppName     string       `yaml:"app_name"`
-	AuthConfigs []AuthConfig `yaml:"auth"`
+	AppName      string       `yaml:"app_name"`
+	ServerConfig ServerConfig `yaml:"server"`
+	AuthConfigs  []AuthConfig `yaml:"auth"`
+}
+
+// ServerConfig properties for http.Server.
+type ServerConfig struct {
+	Address      string        `yaml:"address"`
+	ReadTimeout  time.Duration `yaml:"read_timeout"`
+	WriteTimeout time.Duration `yaml:"write_timeout"`
+	IdleTimeout  time.Duration `yaml:"idle_timeout"`
 }
 
 // AuthConfig hold auth configuration.
