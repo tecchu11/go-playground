@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"go-playground/cmd/service"
-	"go-playground/config"
+	"go-playground/configs"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
@@ -18,7 +18,7 @@ func main() {
 	if env == "" {
 		log.Fatal("Missing APP_ENV in environment variables")
 	}
-	prop, err := config.Load(env)
+	prop, err := configs.Load(env)
 	if err != nil {
 		log.Fatalf("Failed to load configuration with %s because %v", env, err)
 	}

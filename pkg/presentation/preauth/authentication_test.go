@@ -1,14 +1,14 @@
 package preauth_test
 
 import (
-	"go-playground/config"
+	"go-playground/configs"
 	"go-playground/pkg/presentation/preauth"
 	"reflect"
 	"testing"
 )
 
 func TestAuthenticationManager_Authenticate(t *testing.T) {
-	configs := []config.AuthConfig{
+	configs := []configs.AuthConfig{
 		{
 			Name:    "test-user-1",
 			RoleStr: "ADMIN",

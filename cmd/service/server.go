@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/newrelic/go-agent/v3/newrelic"
-	"go-playground/config"
+	"go-playground/configs"
 	"go-playground/pkg/presentation/handler"
 	"go-playground/pkg/presentation/middleware"
 	"go-playground/pkg/presentation/preauth"
@@ -17,7 +17,7 @@ var (
 )
 
 // New returns configured chi.mux.
-func New(env string, logger *zap.Logger, prop *config.ApplicationProperties) (*chi.Mux, error) {
+func New(env string, logger *zap.Logger, prop *configs.ApplicationProperties) (*chi.Mux, error) {
 	if env == "" {
 		return nil, ErrInvalidEnv
 	}
