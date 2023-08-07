@@ -1,24 +1,31 @@
-package config_test
+package configs_test
 
 import (
-	"go-playground/config"
+	"go-playground/configs"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestPropertiesLoader_Load(t *testing.T) {
 	cases := []struct {
 		name      string
 		env       string
-		expected  *config.ApplicationProperties
+		expected  *configs.ApplicationProperties
 		expectErr bool
 	}{
 		{
 			name: "case of successful loading local configuration",
 			env:  "local",
-			expected: &config.ApplicationProperties{
+			expected: &configs.ApplicationProperties{
 				AppName: "go-playground",
-				AuthConfigs: []config.AuthConfig{
+				ServerConfig: configs.ServerConfig{
+					Address:      ":8080",
+					ReadTimeout:  10 * time.Second,
+					WriteTimeout: 10 * time.Second,
+					IdleTimeout:  120 * time.Second,
+				},
+				AuthConfigs: []configs.AuthConfig{
 					{
 						Name:    "tecchu11(ADMIN)",
 						RoleStr: "ADMIN",
@@ -35,7 +42,7 @@ func TestPropertiesLoader_Load(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			actual, _ := config.Load(c.env)
+			actual, _ := configs.Load(c.env)
 			if !reflect.DeepEqual(c.expected, actual) {
 				t.Errorf("Failed to match between expected = %v and actual = %v with testdata = %v", c.expected, actual, c.env)
 			}

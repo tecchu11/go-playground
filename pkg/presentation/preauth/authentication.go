@@ -2,7 +2,7 @@ package preauth
 
 import (
 	"errors"
-	"go-playground/config"
+	"go-playground/configs"
 )
 
 // AuthenticatedUser is represented authenticated user struct.
@@ -17,11 +17,11 @@ type AuthenticationManager interface {
 }
 
 type authenticationManager struct {
-	configs []config.AuthConfig
+	configs []configs.AuthConfig
 }
 
 // NewAuthenticationManager is factory method for AuthenticationManager.
-func NewAutheticatonManager(configs []config.AuthConfig) AuthenticationManager {
+func NewAutheticatonManager(configs []configs.AuthConfig) AuthenticationManager {
 	return &authenticationManager{configs: configs}
 }
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"go-playground/cmd/service"
-	"go-playground/config"
+	"go-playground/configs"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
@@ -18,7 +18,7 @@ func main() {
 	if env == "" {
 		log.Fatal("Missing APP_ENV in environment variables")
 	}
-	prop, err := config.Load(env)
+	prop, err := configs.Load(env)
 	if err != nil {
 		log.Fatalf("Failed to load configuration with %s because %v", env, err)
 	}
@@ -34,7 +34,13 @@ func main() {
 		log.Fatal("Failed to init service mux", err)
 	}
 
-	svr := &http.Server{Addr: ":8080", Handler: mux}
+	svr := &http.Server{
+		Addr:         prop.ServerConfig.Address,
+		ReadTimeout:  prop.ServerConfig.ReadTimeout,
+		WriteTimeout: prop.ServerConfig.WriteTimeout,
+		IdleTimeout:  prop.ServerConfig.IdleTimeout,
+		Handler:      mux,
+	}
 	logger.Info("Server starting ---(ﾟ∀ﾟ)---!!!")
 	go func() {
 		if err := svr.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
