@@ -6,6 +6,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/newrelic/go-agent/v3 v3.24.0
 	go.uber.org/zap v1.25.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

@@ -1,0 +1,8 @@
+app_name: go-playground
+auth:
+  - name: tecchu11(ADMIN)
+    role: ADMIN
+    key: admin
+  - name: tecchu11(USER)
+    role: USER
+    key: user

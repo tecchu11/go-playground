@@ -2,22 +2,23 @@ package config
 
 import (
 	"embed"
-	"encoding/json"
 	"errors"
 	"fmt"
+
+	"gopkg.in/yaml.v3"
 )
 
 // ApplicationProperties is struct for application configuration.
 type ApplicationProperties struct {
-	AppName     string       `json:"app_name"`
-	AuthConfigs []AuthConfig `json:"auth"`
+	AppName     string       `yaml:"app_name"`
+	AuthConfigs []AuthConfig `yaml:"auth"`
 }
 
 // AuthConfig hold auth configuration.
 type AuthConfig struct {
-	Name    string `json:"name"`
-	RoleStr string `json:"role"`
-	Key     string `json:"key"`
+	Name    string `yaml:"name"`
+	RoleStr string `yaml:"role"`
+	Key     string `yaml:"key"`
 }
 
 var (
@@ -25,17 +26,17 @@ var (
 	ErrConfigUnmarshal = errors.New("failed to unmarshal to ApplicationProperties")
 )
 
-//go:embed *.json
+//go:embed *.yaml
 var configs embed.FS
 
 func Load(env string) (*ApplicationProperties, error) {
-	key := fmt.Sprintf("config-%s.json", env)
+	key := fmt.Sprintf("config-%s.yaml", env)
 	f, err := configs.ReadFile(key)
 	if err != nil {
 		return nil, errors.Join(ErrConfigNotFound, err)
 	}
 	var prop ApplicationProperties
-	if err := json.Unmarshal(f, &prop); err != nil {
+	if err := yaml.Unmarshal(f, &prop); err != nil {
 		return nil, errors.Join(ErrConfigUnmarshal, err)
 	}
 	return &prop, nil
