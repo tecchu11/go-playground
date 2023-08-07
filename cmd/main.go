@@ -1,23 +1,22 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"go-playground/cmd/service"
 	"go-playground/config"
-	"go-playground/pkg/presentation/handler"
-	"go-playground/pkg/presentation/middleware"
-	"go-playground/pkg/presentation/preauth"
+	"go.uber.org/zap"
 	"log"
 	"net/http"
 	"os"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/newrelic/go-agent/v3/newrelic"
-	"go.uber.org/zap"
+	"os/signal"
+	"time"
 )
 
 func main() {
 	env := os.Getenv("APP_ENV")
 	if env == "" {
-		log.Fatal("Missing APP_ENV in enviroment variables")
+		log.Fatal("Missing APP_ENV in environment variables")
 	}
 	prop, err := config.Load(env)
 	if err != nil {
@@ -27,34 +26,33 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to init zap logger", err)
 	}
-	app, err := newrelicApp(env)
+	defer func(logger *zap.Logger) {
+		_ = logger.Sync() // ignore sync error.
+	}(logger)
+	mux, err := service.New(env, logger, prop)
 	if err != nil {
-		logger.Fatal("failed to init newrelic application", zap.Error(err))
+		log.Fatal("Failed to init service mux", err)
 	}
 
-	// initialize middleware
-	recoverMid := middleware.NewRecoverMiddleWare(logger)
-	authMid := middleware.NewAuthenticationMiddleWare(logger, preauth.NewAutheticatonManager(prop.AuthConfigs))
-	newrelicTxnMid := middleware.NewNewrelicTransactionMidleware(app)
-	// initialize handler
-	hello := handler.NewHelloHandler(logger).GetName()
+	svr := &http.Server{Addr: ":8080", Handler: mux}
+	logger.Info("Server starting ---(ﾟ∀ﾟ)---!!!")
+	go func() {
+		if err := svr.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Fatal("failed to start up server", zap.Error(err))
+		}
+	}()
 
-	mux := chi.NewRouter()
-	mux.MethodNotAllowed(handler.MethodNotAllowedHandler())
-	mux.NotFound(handler.NotFoundHandler())
-	mux.Use(newrelicTxnMid.Handle)
-	mux.Use(recoverMid.Handle)
-	mux.Route("/statuses", func(r chi.Router) {
-		r.Get("/", handler.StatusHandler())
-	})
-	mux.Route("/hello", func(r chi.Router) {
-		r.Use(authMid.Handle)
-		r.Get("/", hello)
-	})
-
-	logger.Info("Server started ---(ﾟ∀ﾟ)---!!!")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
-		logger.Fatal("Failed to start server", zap.Error(err))
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	logger.Info("Termination signal was caught. So attempt to terminate server with gracefully...")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer func(cancel context.CancelFunc) {
+		logger.Info("Bye!!")
+		cancel()
+	}(cancel)
+	if err := svr.Shutdown(ctx); err != nil {
+		logger.Fatal("Failed to terminate server with gracefully. So force terminating ...", zap.Error(err))
 	}
 }
 
@@ -68,14 +66,4 @@ func zapLogger(env string, appName string) (*zap.Logger, error) {
 		return zap.NewDevelopment(opt)
 	}
 	return zap.NewProduction(opt)
-}
-
-// newrelicApp init newrelic.Application. When env is local, app is returned nil.
-func newrelicApp(env string) (*newrelic.Application, error) {
-	if env == "local" {
-		return nil, nil
-	}
-	return newrelic.NewApplication(
-		newrelic.ConfigFromEnvironment(),
-	)
 }
