@@ -35,14 +35,13 @@ func (mid *newrelicTransactionMiddleWare) Handle(next http.Handler) http.Handler
 	})
 }
 
-
 // txnName return transaction name. Transaction name format is "(MethodName) (Pattern)".
 // chi defines pattern after handled request and response, so please call this func after serve http.
 // Transaction name is "ErrorHandler" when handled by the hadler registered with chi.Mux.NotFound.
 func txnName(ctx context.Context, method string) string {
 	p := chi.RouteContext(ctx).RoutePattern()
 	if p == "" {
-		return "ErrorHadnler"
+		return "ErrorHandler"
 	}
 	return method + " " + p
 }
