@@ -29,7 +29,7 @@ func Test_RecoverMiddleWare_Handle(t *testing.T) {
 			expectedErrBody: render.ProblemDetail{
 				Type:    "https://github.com/tecchu11/go-playground",
 				Title:   "Internal Server Error",
-				Detail:  "unexpected error was happened, so plese report this error you have checked.",
+				Detail:  "Unexpected error was happened. Plese report this error you have checked.",
 				Instant: "/foos",
 			},
 		},
@@ -44,16 +44,15 @@ func Test_RecoverMiddleWare_Handle(t *testing.T) {
 
 	for k, v := range tests {
 		t.Run(k, func(t *testing.T) {
-			middleware.
-				NewRecoverMiddleWare(zap.NewExample()).
-				Handle(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if v.expectErr {
-						panic("test panic!!")
-					}
-					w.WriteHeader(http.StatusOK)
-					_ = json.NewEncoder(w).Encode(map[string]string{"hello": "world"})
-				})).
-				ServeHTTP(v.inputWriter, v.inputRequest)
+			rec := middleware.Recover(zap.NewExample())
+			fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if v.expectErr {
+					panic("test panic!!")
+				}
+				w.WriteHeader(http.StatusOK)
+				_ = json.NewEncoder(w).Encode(map[string]string{"hello": "world"})
+			})
+			rec(fn).ServeHTTP(v.inputWriter, v.inputRequest)
 
 			if v.expectErr {
 				if actual := v.inputWriter.Code; actual != v.expectedCode {

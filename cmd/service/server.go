@@ -29,7 +29,7 @@ func New(env string, logger *zap.Logger, prop *configs.ApplicationProperties) (*
 		return nil, errors.Join(ErrInitNRApp, err)
 	}
 	mux.Use(middleware.NewNewrelicTransactionMidleware(nrApp).Handle)
-	mux.Use(middleware.NewRecoverMiddleWare(logger).Handle)
+	mux.Use(middleware.Recover(logger))
 
 	authMid := middleware.NewAuthenticationMiddleWare(logger, preauth.NewAutheticatonManager(prop.AuthConfigs))
 	hello := handler.NewHelloHandler(logger).GetName()
