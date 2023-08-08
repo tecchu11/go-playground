@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"time"
 )
 
 func main() {
@@ -34,32 +33,37 @@ func main() {
 		log.Fatal("Failed to init service mux", err)
 	}
 
-	svr := &http.Server{
+	srv := &http.Server{
 		Addr:         prop.ServerConfig.Address,
 		ReadTimeout:  prop.ServerConfig.ReadTimeout,
 		WriteTimeout: prop.ServerConfig.WriteTimeout,
 		IdleTimeout:  prop.ServerConfig.IdleTimeout,
 		Handler:      mux,
 	}
-	logger.Info("Server starting ---(ﾟ∀ﾟ)---!!!")
+
+	idleConnsClosed := make(chan struct{})
 	go func() {
-		if err := svr.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Fatal("failed to start up server", zap.Error(err))
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt)
+		<-sigint
+
+		logger.Info("We received an interrupt signal,so attempt to shut down with gracefully")
+		ctx, cancel := context.WithTimeout(context.Background(), prop.ServerConfig.GraceTimeout)
+		defer func(logger *zap.Logger) {
+			logger.Info("Bye!!")
+			cancel()
+		}(logger)
+		if err := srv.Shutdown(ctx); err != nil {
+			logger.Error("Failed to terminate server with gracefully. So force terminating ...", zap.Error(err))
 		}
+		close(idleConnsClosed)
 	}()
 
-	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt)
-	<-quit
-	logger.Info("Termination signal was caught. So attempt to terminate server with gracefully...")
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer func(cancel context.CancelFunc) {
-		logger.Info("Bye!!")
-		cancel()
-	}(cancel)
-	if err := svr.Shutdown(ctx); err != nil {
-		logger.Fatal("Failed to terminate server with gracefully. So force terminating ...", zap.Error(err))
+	logger.Info("Server starting ---(ﾟ∀ﾟ)---!!!")
+	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		logger.Fatal("Failed to start up server", zap.Error(err))
 	}
+	<-idleConnsClosed
 }
 
 // zapLogger init development or production logger with zap filed of env, appName.

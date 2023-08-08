@@ -24,6 +24,7 @@ func TestPropertiesLoader_Load(t *testing.T) {
 					ReadTimeout:  10 * time.Second,
 					WriteTimeout: 10 * time.Second,
 					IdleTimeout:  120 * time.Second,
+					GraceTimeout: 20 * time.Second,
 				},
 				AuthConfigs: []configs.AuthConfig{
 					{
