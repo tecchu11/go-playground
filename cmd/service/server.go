@@ -28,16 +28,16 @@ func New(env string, logger *zap.Logger, prop *configs.ApplicationProperties) (*
 	if err != nil {
 		return nil, errors.Join(ErrInitNRApp, err)
 	}
-	mux.Use(middleware.NewNewrelicTransactionMidleware(nrApp).Handle)
-	mux.Use(middleware.NewRecoverMiddleWare(logger).Handle)
+	mux.Use(middleware.NewrelicTxn(nrApp))
+	mux.Use(middleware.Recover(logger))
 
-	authMid := middleware.NewAuthenticationMiddleWare(logger, preauth.NewAutheticatonManager(prop.AuthConfigs))
+	authMid := middleware.Autheticator(logger, preauth.NewAutheticatonManager(prop.AuthConfigs))
 	hello := handler.NewHelloHandler(logger).GetName()
 	mux.Route("/statuses", func(r chi.Router) {
 		r.Get("/", handler.StatusHandler())
 	})
 	mux.Route("/hello", func(r chi.Router) {
-		r.Use(authMid.Handle)
+		r.Use(authMid)
 		r.Get("/", hello)
 	})
 	return mux, nil
