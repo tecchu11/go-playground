@@ -8,4 +8,3 @@ import (
 type MiddleWare interface {
 	Handle(next http.Handler) http.Handler
 }
-

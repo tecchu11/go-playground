@@ -8,31 +8,27 @@ import (
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
-type newrelicTransactionMiddleWare struct {
-	app *newrelic.Application
-}
+// NewrelicTxn start transaction if newrelic.Application is not nil.
+// If newrelic.Applcation is nil, this middleware nothing to do.
+func NewrelicTxn(app *newrelic.Application) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if app != nil {
+				next.ServeHTTP(w, r)
+				return
+			}
 
-func NewNewrelicTransactionMidleware(app *newrelic.Application) MiddleWare {
-	return &newrelicTransactionMiddleWare{app}
-}
+			txn := app.StartTransaction("")
+			defer txn.End()
 
-func (mid *newrelicTransactionMiddleWare) Handle(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if mid.app == nil {
-			// app is nil means running in local env.
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		txn := mid.app.StartTransaction("")
-		defer txn.End()
-
-		txn.SetWebRequestHTTP(r)
-		w = txn.SetWebResponse(w)
-		ctx := newrelic.NewContext(r.Context(), txn)
-		next.ServeHTTP(w, r.WithContext(ctx))
-		txn.SetName(txnName(ctx, r.Method))
-	})
+			txn.SetWebRequestHTTP(r)
+			w = txn.SetWebResponse(w)
+			ctx := newrelic.NewContext(r.Context(), txn)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			txn.SetName(txnName(ctx, r.Method))
+		})
+		return fn
+	}
 }
 
 // txnName return transaction name. Transaction name format is "(MethodName) (Pattern)".
