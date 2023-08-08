@@ -57,10 +57,8 @@ func TestAuthenticationMiddleWare_Handle(t *testing.T) {
 				user, _ := middleware.GetAutenticatedUser(r.Context())
 				_, _ = fmt.Fprintf(w, "user is %s and role is %s", user.Name, user.Role.String())
 			})
-			middleware.
-				NewAuthenticationMiddleWare(zap.NewExample(), newMockAuthenticationManager()).
-				Handle(next).
-				ServeHTTP(test.inputResponseWriter, test.inputRequest)
+			auth := middleware.Autheticator(zap.NewExample(), newMockAuthenticationManager())
+			auth(next).ServeHTTP(test.inputResponseWriter, test.inputRequest)
 
 			if !test.expectErr {
 				actual := test.inputResponseWriter.Body.String()
