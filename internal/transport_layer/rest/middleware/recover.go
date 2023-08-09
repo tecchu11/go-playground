@@ -13,6 +13,7 @@ const (
 )
 
 // Recover handle un-recovered panic when handling request.
+// If panic have not happened, this middleware nothing to do.
 func Recover(logger *zap.Logger, failure renderer.Failure) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

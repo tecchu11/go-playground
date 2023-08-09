@@ -40,6 +40,7 @@ var (
 //go:embed *.yaml
 var configs embed.FS
 
+// Load loads config of env.
 func Load(env string) (*ApplicationProperties, error) {
 	key := fmt.Sprintf("config-%s.yaml", env)
 	f, err := configs.ReadFile(key)
