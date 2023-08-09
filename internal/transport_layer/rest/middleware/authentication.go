@@ -3,7 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"go-playground/internal/interactor/rest/preauth"
+	"go-playground/internal/transport_layer/rest/preauth"
 	"go-playground/pkg/render"
 	"net/http"
 

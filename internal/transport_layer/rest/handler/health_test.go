@@ -2,7 +2,7 @@ package handler_test
 
 import (
 	"encoding/json"
-	"go-playground/internal/interactor/rest/handler"
+	"go-playground/internal/transport_layer/rest/handler"
 	"net/http"
 	"net/http/httptest"
 	"reflect"

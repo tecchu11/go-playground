@@ -2,8 +2,8 @@ package handler
 
 import (
 	"fmt"
-	"go-playground/internal/interactor/rest/middleware"
-	"go-playground/internal/interactor/rest/model"
+	"go-playground/internal/transport_layer/rest/middleware"
+	"go-playground/internal/transport_layer/rest/model"
 	"go-playground/pkg/render"
 	"net/http"
 
