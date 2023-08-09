@@ -2,7 +2,7 @@ package render_test
 
 import (
 	"encoding/json"
-	"go-playground/pkg/lib/render"
+	"go-playground/pkg/render"
 	"net/http/httptest"
 	"reflect"
 	"testing"

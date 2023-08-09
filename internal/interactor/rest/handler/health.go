@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"go-playground/pkg/lib/render"
+	"go-playground/pkg/render"
 	"net/http"
 )
 

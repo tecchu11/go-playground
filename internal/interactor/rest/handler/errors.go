@@ -2,7 +2,7 @@ package handler
 
 import (
 	"fmt"
-	"go-playground/pkg/lib/render"
+	"go-playground/pkg/render"
 	"net/http"
 )
 

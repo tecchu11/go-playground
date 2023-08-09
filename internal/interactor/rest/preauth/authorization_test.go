@@ -1,7 +1,7 @@
 package preauth_test
 
 import (
-	"go-playground/pkg/presentation/preauth"
+	"go-playground/internal/interactor/rest/preauth"
 	"testing"
 )
 

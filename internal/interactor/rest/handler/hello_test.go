@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go-playground/pkg/lib/render"
-	"go-playground/pkg/presentation/handler"
-	"go-playground/pkg/presentation/middleware"
-	"go-playground/pkg/presentation/model"
-	"go-playground/pkg/presentation/preauth"
+	"go-playground/internal/interactor/rest/handler"
+	"go-playground/internal/interactor/rest/middleware"
+	"go-playground/internal/interactor/rest/model"
+	"go-playground/internal/interactor/rest/preauth"
+	"go-playground/pkg/render"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -59,8 +59,7 @@ func TestHelloHandler_GetName(t *testing.T) {
 				}
 				return &preauth.AuthenticatedUser{Name: "tecchu", Role: preauth.ADMIN}, nil
 			}
-			handler.
-				NewHelloHandler(zap.NewExample()).
+			handler.NewHelloHandler(zap.NewExample()).
 				GetName().
 				ServeHTTP(test.inputResponseWriter, test.inputRequest)
 

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"go-playground/pkg/lib/render"
+	"go-playground/pkg/render"
 	"net/http"
 
 	"go.uber.org/zap"
