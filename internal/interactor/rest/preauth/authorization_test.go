@@ -1,30 +1,30 @@
 package preauth_test
 
 import (
-	preauth2 "go-playground/internal/interactor/rest/preauth"
+	"go-playground/internal/interactor/rest/preauth"
 	"testing"
 )
 
 func Test_Authorize(t *testing.T) {
 	tests := map[string]struct {
-		authorizedList []preauth2.Role
-		inputRole      preauth2.Role
+		authorizedList []preauth.Role
+		inputRole      preauth.Role
 		expectedErr    bool
 	}{
-		"test permited admin only":                               {[]preauth2.Role{preauth2.ADMIN}, preauth2.ADMIN, false},
-		"test permited admin only and then passed user":          {[]preauth2.Role{preauth2.ADMIN}, preauth2.USER, true},
-		"test permited user only":                                {[]preauth2.Role{preauth2.USER}, preauth2.USER, false},
-		"test permited user only and then passed admin":          {[]preauth2.Role{preauth2.USER}, preauth2.ADMIN, true},
-		"test permited user and admin and then passed user":      {[]preauth2.Role{preauth2.USER, preauth2.ADMIN}, preauth2.USER, false},
-		"test permited user and admin and then passed admin":     {[]preauth2.Role{preauth2.USER, preauth2.ADMIN}, preauth2.ADMIN, false},
-		"test permited admin only and then passed undifined":     {[]preauth2.Role{preauth2.ADMIN}, preauth2.UNDIFINED, true},
-		"test permited user only and then passed undifined":      {[]preauth2.Role{preauth2.USER}, preauth2.UNDIFINED, true},
-		"test permited user and admin and then passed undifined": {[]preauth2.Role{preauth2.USER, preauth2.ADMIN}, preauth2.UNDIFINED, true},
+		"test permited admin only":                               {[]preauth.Role{preauth.ADMIN}, preauth.ADMIN, false},
+		"test permited admin only and then passed user":          {[]preauth.Role{preauth.ADMIN}, preauth.USER, true},
+		"test permited user only":                                {[]preauth.Role{preauth.USER}, preauth.USER, false},
+		"test permited user only and then passed admin":          {[]preauth.Role{preauth.USER}, preauth.ADMIN, true},
+		"test permited user and admin and then passed user":      {[]preauth.Role{preauth.USER, preauth.ADMIN}, preauth.USER, false},
+		"test permited user and admin and then passed admin":     {[]preauth.Role{preauth.USER, preauth.ADMIN}, preauth.ADMIN, false},
+		"test permited admin only and then passed undifined":     {[]preauth.Role{preauth.ADMIN}, preauth.UNDIFINED, true},
+		"test permited user only and then passed undifined":      {[]preauth.Role{preauth.USER}, preauth.UNDIFINED, true},
+		"test permited user and admin and then passed undifined": {[]preauth.Role{preauth.USER, preauth.ADMIN}, preauth.UNDIFINED, true},
 	}
 
 	for k, v := range tests {
 		t.Run(k, func(t *testing.T) {
-			authorizationManager := preauth2.NewAuthorizationManager(v.authorizedList)
+			authorizationManager := preauth.NewAuthorizationManager(v.authorizedList)
 			err := authorizationManager.Authorize(v.inputRole)
 			if v.expectedErr && err == nil {
 				t.Error("err is nil but expect err")

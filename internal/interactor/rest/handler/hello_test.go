@@ -7,7 +7,7 @@ import (
 	"go-playground/internal/interactor/rest/handler"
 	"go-playground/internal/interactor/rest/middleware"
 	"go-playground/internal/interactor/rest/model"
-	preauth2 "go-playground/internal/interactor/rest/preauth"
+	"go-playground/internal/interactor/rest/preauth"
 	"go-playground/pkg/render"
 	"net/http"
 	"net/http/httptest"
@@ -53,11 +53,11 @@ func TestHelloHandler_GetName(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// mocking middleware.GetAuthenticatedUser
-			middleware.GetAutenticatedUser = func(ctx context.Context) (*preauth2.AuthenticatedUser, error) {
+			middleware.GetAutenticatedUser = func(ctx context.Context) (*preauth.AuthenticatedUser, error) {
 				if test.expectErr {
 					return nil, fmt.Errorf("no user")
 				}
-				return &preauth2.AuthenticatedUser{Name: "tecchu", Role: preauth2.ADMIN}, nil
+				return &preauth.AuthenticatedUser{Name: "tecchu", Role: preauth.ADMIN}, nil
 			}
 			handler.NewHelloHandler(zap.NewExample()).
 				GetName().

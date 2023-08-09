@@ -5,8 +5,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"go-playground/configs"
-	handler2 "go-playground/internal/interactor/rest/handler"
-	middleware2 "go-playground/internal/interactor/rest/middleware"
+	"go-playground/internal/interactor/rest/handler"
+	"go-playground/internal/interactor/rest/middleware"
 	"go-playground/internal/interactor/rest/preauth"
 	"go.uber.org/zap"
 )
@@ -22,19 +22,19 @@ func New(env string, logger *zap.Logger, prop *configs.ApplicationProperties) (*
 		return nil, ErrInvalidEnv
 	}
 	mux := chi.NewRouter()
-	mux.MethodNotAllowed(handler2.MethodNotAllowedHandler())
-	mux.NotFound(handler2.NotFoundHandler())
+	mux.MethodNotAllowed(handler.MethodNotAllowedHandler())
+	mux.NotFound(handler.NotFoundHandler())
 	nrApp, err := newrelicApp(env)
 	if err != nil {
 		return nil, errors.Join(ErrInitNRApp, err)
 	}
-	mux.Use(middleware2.NewrelicTxn(nrApp))
-	mux.Use(middleware2.Recover(logger))
+	mux.Use(middleware.NewrelicTxn(nrApp))
+	mux.Use(middleware.Recover(logger))
 
-	authMid := middleware2.Autheticator(logger, preauth.NewAutheticatonManager(prop.AuthConfigs))
-	hello := handler2.NewHelloHandler(logger).GetName()
+	authMid := middleware.Autheticator(logger, preauth.NewAutheticatonManager(prop.AuthConfigs))
+	hello := handler.NewHelloHandler(logger).GetName()
 	mux.Route("/statuses", func(r chi.Router) {
-		r.Get("/", handler2.StatusHandler())
+		r.Get("/", handler.StatusHandler())
 	})
 	mux.Route("/hello", func(r chi.Router) {
 		r.Use(authMid)
