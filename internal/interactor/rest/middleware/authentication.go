@@ -3,8 +3,8 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"go-playground/pkg/lib/render"
-	"go-playground/pkg/presentation/preauth"
+	"go-playground/internal/interactor/rest/preauth"
+	"go-playground/pkg/render"
 	"net/http"
 
 	"go.uber.org/zap"

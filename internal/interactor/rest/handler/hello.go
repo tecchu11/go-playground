@@ -2,9 +2,9 @@ package handler
 
 import (
 	"fmt"
-	"go-playground/pkg/lib/render"
-	"go-playground/pkg/presentation/middleware"
-	"go-playground/pkg/presentation/model"
+	"go-playground/internal/interactor/rest/middleware"
+	"go-playground/internal/interactor/rest/model"
+	"go-playground/pkg/render"
 	"net/http"
 
 	"go.uber.org/zap"

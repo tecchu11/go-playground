@@ -2,8 +2,8 @@ package handler_test
 
 import (
 	"encoding/json"
-	"go-playground/pkg/lib/render"
-	"go-playground/pkg/presentation/handler"
+	"go-playground/internal/interactor/rest/handler"
+	"go-playground/pkg/render"
 	"net/http"
 	"net/http/httptest"
 	"reflect"

@@ -2,8 +2,8 @@ package middleware_test
 
 import (
 	"encoding/json"
-	"go-playground/pkg/lib/render"
-	"go-playground/pkg/presentation/middleware"
+	"go-playground/internal/interactor/rest/middleware"
+	"go-playground/pkg/render"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
