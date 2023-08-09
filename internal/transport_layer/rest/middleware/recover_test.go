@@ -2,7 +2,7 @@ package middleware_test
 
 import (
 	"encoding/json"
-	"go-playground/internal/interactor/rest/middleware"
+	"go-playground/internal/transport_layer/rest/middleware"
 	"go-playground/pkg/render"
 	"net/http"
 	"net/http/httptest"

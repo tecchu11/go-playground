@@ -5,9 +5,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"go-playground/configs"
-	"go-playground/internal/interactor/rest/handler"
-	"go-playground/internal/interactor/rest/middleware"
-	"go-playground/internal/interactor/rest/preauth"
+	"go-playground/internal/transport_layer/rest/handler"
+	"go-playground/internal/transport_layer/rest/middleware"
+	"go-playground/internal/transport_layer/rest/preauth"
 	"go.uber.org/zap"
 )
 
