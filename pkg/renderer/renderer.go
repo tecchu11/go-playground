@@ -6,6 +6,18 @@ import (
 	"net/http"
 )
 
+const (
+	contentTypeKey   = "Content-Type"
+	contentTypeValue = "application/json; charset=utf-8"
+)
+
+// Ok return 200 and passed body.
+func Ok(w http.ResponseWriter, body any) {
+	w.Header().Add(contentTypeKey, contentTypeValue)
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(body)
+}
+
 type (
 	// Failure interface for error response.
 	Failure interface {
