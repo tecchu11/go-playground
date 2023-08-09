@@ -3,87 +3,59 @@ package middleware_test
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"go-playground/internal/transport_layer/rest/middleware"
 	"go-playground/internal/transport_layer/rest/preauth"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 )
 
-func TestAuthenticationMiddleWare_Handle(t *testing.T) {
-	tests := []struct {
-		name                     string
-		inputResponseWriter      *httptest.ResponseRecorder
-		inputRequest             *http.Request
-		inputAuthorizationHeader string
-		expectedResponse         string
-		expectErr                bool
-		expectedErrCode          int
-		expectedErrBody          map[string]string
+func TestAuthenticator(t *testing.T) {
+	mockManager := &mockAuthenticationManager{}
+	tests := map[string]struct {
+		token        string
+		doMock       *mock.Call
+		expectedCode int
+		expectedBody map[string]string
 	}{
-		{
-			name:                     "test of successful to authenticate and then set user to context",
-			inputResponseWriter:      httptest.NewRecorder(),
-			inputRequest:             httptest.NewRequest("GET", "http://example.com/anys", nil),
-			inputAuthorizationHeader: "valid-token",
-			expectedResponse:         "user is tecchu and role is ADMIN",
-			expectErr:                false,
+		"sucess to authenticate": {
+			token:        "valid-token",
+			doMock:       mockManager.On("Authenticate", "valid-token").Return(&preauth.AuthenticatedUser{Name: "tecchu", Role: preauth.ADMIN}, nil),
+			expectedCode: 200,
+			expectedBody: map[string]string{"name": "tecchu", "role": "ADMIN"},
 		},
-		{
-			name:                     "test that requests having invalid token will be handled to 401",
-			inputResponseWriter:      httptest.NewRecorder(),
-			inputRequest:             httptest.NewRequest("GET", "http://example.com/anys", nil),
-			inputAuthorizationHeader: "invalid",
-			expectErr:                true,
-			expectedErrCode:          401,
-			expectedErrBody:          map[string]string{"title": "Request With No Authentication", "detail": "Request token was not found in your request header"},
+		"rejected request and then response 401": {
+			token:        "invalid-token",
+			doMock:       mockManager.On("Authenticate", "invalid-token").Return(&preauth.AuthenticatedUser{}, errors.New("No Authenticated")),
+			expectedCode: 401,
+			expectedBody: map[string]string{"title": "Request With No Authentication", "detail": "Request token was not found in your request header"},
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			test.inputRequest.Header.Set("Authorization", test.inputAuthorizationHeader)
-			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	for k, v := range tests {
+		t.Run(k, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "/foos", nil)
+			r.Header.Set("Authorization", v.token)
+			nextFunc := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				user, _ := middleware.CurrentUser(r.Context())
-				_, _ = fmt.Fprintf(w, "user is %s and role is %s", user.Name, user.Role.String())
+				body := map[string]string{"name": user.Name, "role": user.Role.String()}
+				_ = json.NewEncoder(w).Encode(&body)
 			})
-			auth := middleware.Authenticator(zap.NewExample(), newMockAuthenticationManager(), &mockFailure{})
-			auth(next).ServeHTTP(test.inputResponseWriter, test.inputRequest)
+			_ = v.doMock
+			middleware.Authenticator(zap.NewExample(), mockManager, &mockFailure{})(nextFunc).ServeHTTP(w, r)
 
-			if !test.expectErr {
-				actual := test.inputResponseWriter.Body.String()
-				if actual != test.expectedResponse {
-					t.Errorf("request context has unexpected user (%v)", actual)
-				}
-			} else {
-				actualCode := test.inputResponseWriter.Code
-				var actualBody map[string]string
-				_ = json.Unmarshal(test.inputResponseWriter.Body.Bytes(), &actualBody)
+			actualCode := w.Code
+			var actualBody map[string]string
+			err := json.Unmarshal(w.Body.Bytes(), &actualBody)
 
-				if actualCode != test.expectedErrCode {
-					t.Errorf("unexpected code (%d) was recived", actualCode)
-				}
-				if !reflect.DeepEqual(actualBody, test.expectedErrBody) {
-					t.Errorf("unexpected body (%v) was recieved", actualBody)
-				}
-			}
+			assert.NoError(t, err, "json unmarshal should not be err")
+			assert.Equal(t, v.expectedCode, actualCode, "status code should be equal")
+			assert.Equal(t, v.expectedBody, actualBody, "response body should be equal")
 		})
 	}
-}
-
-type mockAuthenticationManager struct{}
-
-func newMockAuthenticationManager() preauth.AuthenticationManager {
-	return &mockAuthenticationManager{}
-}
-
-func (mock *mockAuthenticationManager) Authenticate(token string) (*preauth.AuthenticatedUser, error) {
-	if token == "valid-token" {
-		return &preauth.AuthenticatedUser{Name: "tecchu", Role: preauth.ADMIN}, nil
-	}
-	return nil, errors.New("mock")
 }
