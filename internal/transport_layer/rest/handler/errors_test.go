@@ -3,48 +3,44 @@ package handler_test
 import (
 	"encoding/json"
 	"go-playground/internal/transport_layer/rest/handler"
-	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func Test_NotFoundHandler(t *testing.T) {
-	tests := map[string]struct {
-		testTarget   reflect.Value
-		inputWriter  *httptest.ResponseRecorder
-		inputRequest *http.Request
-		expectedCode int
-		expectedBody map[string]string
-	}{
-		"return 404 and expected body": {
-			reflect.ValueOf(handler.NotFoundHandler(&mockFailure{}).ServeHTTP),
-			httptest.NewRecorder(),
-			httptest.NewRequest("GET", "http://example.com/foos", nil),
-			404,
-			map[string]string{"title": "Resource Not Found", "detail": "/foos resource does not exist"},
-		},
-		"return 405 and expected body": {
-			reflect.ValueOf(handler.MethodNotAllowedHandler(&mockFailure{}).ServeHTTP),
-			httptest.NewRecorder(),
-			httptest.NewRequest("GET", "http://example.com/foos", nil),
-			405,
-			map[string]string{"title": "Method Not Allowed", "detail": "Http method GET is not allowed for /foos resource"},
-		},
-	}
-	for k, v := range tests {
-		t.Run(k, func(t *testing.T) {
-			arg1 := reflect.ValueOf(v.inputWriter)
-			arg2 := reflect.ValueOf(v.inputRequest)
-			v.testTarget.Call([]reflect.Value{arg1, arg2})
-			if actual := v.inputWriter.Code; actual != v.expectedCode {
-				t.Errorf("actual code %d is difference from expected code", actual)
-			}
-			var actual map[string]string
-			_ = json.Unmarshal(v.inputWriter.Body.Bytes(), &actual)
-			if !reflect.DeepEqual(actual, v.expectedBody) {
-				t.Errorf("actual response body (%v) is different from expected", actual)
-			}
-		})
-	}
+func TestNotFoundHanlder(t *testing.T) {
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/foos", nil)
+
+	handler.NotFoundHandler(&mockFailure{}).ServeHTTP(w, r)
+
+	expectedCode := 404
+	expectedBody := map[string]string{"title": "Resource Not Found", "detail": "/foos resource does not exist"}
+
+	actualCode := w.Code
+	var actualBody map[string]string
+	err := json.Unmarshal(w.Body.Bytes(), &actualBody)
+
+	assert.NoError(t, err, "json unmarshal should be no err")
+	assert.Equal(t, expectedBody, actualBody, "response body should be equal")
+	assert.Equal(t, expectedCode, actualCode, "status code should be equal")
+}
+
+func TestMehodNotAllowedHandler(t *testing.T) {
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("POST", "/foos", nil)
+
+	handler.MethodNotAllowedHandler(&mockFailure{}).ServeHTTP(w, r)
+
+	expectedCode := 405
+	expectedBody := map[string]string{"title": "Method Not Allowed", "detail": "Http method POST is not allowed for /foos resource"}
+
+	actualCode := w.Code
+	var actualBody map[string]string
+	err := json.Unmarshal(w.Body.Bytes(), &actualBody)
+
+	assert.NoError(t, err, "json unmarshal should not be err")
+	assert.Equal(t, expectedBody, actualBody, "response body should be equal")
+	assert.Equal(t, expectedCode, actualCode, "status code should be equal")
 }
