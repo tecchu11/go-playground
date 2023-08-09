@@ -10,7 +10,7 @@ type (
 	// Failure interface for error response.
 	Failure interface {
 		// Response send to client error response body with status code.
-		// Error response body is ProblemDetail.
+		// Error response body is problemDetail.
 		Response(w http.ResponseWriter, r *http.Request, code int, title string, detail string)
 	}
 	// RequestIDFunc retrieve request id from context.
@@ -19,10 +19,10 @@ type (
 	failure struct {
 		requestID RequestIDFunc
 	}
-	// ProblemDetail indicates the response body in accordance with RFC7807.
+	// problemDetail indicates the response body in accordance with RFC7807.
 	// Please see detail bellow. https://datatracker.ietf.org/doc/html/rfc7807
-	// ProblemDetail exposed for test purpose.
-	ProblemDetail struct {
+	// problemDetail exposed for test purpose.
+	problemDetail struct {
 		Type      string `json:"type"`
 		Title     string `json:"title"`
 		Detail    string `json:"detail"`
@@ -37,10 +37,10 @@ func NewFailure(requestID func(ctx context.Context) string) Failure {
 }
 
 // Response send to client error response body with status code.
-// Error response body is ProblemDetail.
+// Error response body is problemDetail.
 func (f *failure) Response(w http.ResponseWriter, r *http.Request, code int, title string, detail string) {
 	reqID := f.requestID(r.Context())
-	body := &ProblemDetail{Type: "not:blank", Title: title, Detail: detail, Instant: r.URL.Path, RequestID: reqID}
+	body := &problemDetail{Type: "not:blank", Title: title, Detail: detail, Instant: r.URL.Path, RequestID: reqID}
 	w.Header().Add(contentTypeKey, contentTypeValue)
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(body)
