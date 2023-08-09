@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"go-playground/pkg/render"
+	"go-playground/pkg/renderer"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -12,8 +12,8 @@ const (
 	connectionHeaderValue = "Upgrade"
 )
 
-// Recover handle unrecovered panic wher handle request.
-func Recover(logger *zap.Logger) func(http.Handler) http.Handler {
+// Recover handle un-recovered panic when handling request.
+func Recover(logger *zap.Logger, failure renderer.Failure) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
@@ -21,9 +21,9 @@ func Recover(logger *zap.Logger) func(http.Handler) http.Handler {
 					if rec == http.ErrAbortHandler {
 						panic(rec)
 					}
-					logger.Error("Panic was happend. So check detail as soon as possible the reason why happened pacnic.")
+					logger.Error("Panic was happened. So check detail as soon as possible the reason why happened panic.")
 					if r.Header.Get(connectionHeader) != connectionHeaderValue {
-						render.InternalServerError(w, "Unexpected error was happened. Plese report this error you have checked.", r.URL.Path)
+						failure.Response(w, r, http.StatusInternalServerError, "Internal Server Error", "Unexpected error was happened. Please report this error you have checked.")
 					}
 				}
 			}()

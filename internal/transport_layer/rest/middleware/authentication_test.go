@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"go-playground/internal/transport_layer/rest/middleware"
 	"go-playground/internal/transport_layer/rest/preauth"
-	"go-playground/pkg/render"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -24,7 +23,7 @@ func TestAuthenticationMiddleWare_Handle(t *testing.T) {
 		expectedResponse         string
 		expectErr                bool
 		expectedErrCode          int
-		expectedErrBody          render.ProblemDetail
+		expectedErrBody          map[string]string
 	}{
 		{
 			name:                     "test of successful to authenticate and then set user to context",
@@ -41,12 +40,7 @@ func TestAuthenticationMiddleWare_Handle(t *testing.T) {
 			inputAuthorizationHeader: "invalid",
 			expectErr:                true,
 			expectedErrCode:          401,
-			expectedErrBody: render.ProblemDetail{
-				Type:    "https://github.com/tecchu11/go-playground",
-				Title:   "Unauthorized",
-				Detail:  "You had failed to authenticate",
-				Instant: "/anys",
-			},
+			expectedErrBody:          map[string]string{"title": "Request With No Authentication", "detail": "Request token was not found in your request header"},
 		},
 	}
 
@@ -54,10 +48,10 @@ func TestAuthenticationMiddleWare_Handle(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			test.inputRequest.Header.Set("Authorization", test.inputAuthorizationHeader)
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				user, _ := middleware.GetAutenticatedUser(r.Context())
+				user, _ := middleware.CurrentUser(r.Context())
 				_, _ = fmt.Fprintf(w, "user is %s and role is %s", user.Name, user.Role.String())
 			})
-			auth := middleware.Autheticator(zap.NewExample(), newMockAuthenticationManager())
+			auth := middleware.Authenticator(zap.NewExample(), newMockAuthenticationManager(), &mockFailure{})
 			auth(next).ServeHTTP(test.inputResponseWriter, test.inputRequest)
 
 			if !test.expectErr {
@@ -67,7 +61,7 @@ func TestAuthenticationMiddleWare_Handle(t *testing.T) {
 				}
 			} else {
 				actualCode := test.inputResponseWriter.Code
-				var actualBody render.ProblemDetail
+				var actualBody map[string]string
 				_ = json.Unmarshal(test.inputResponseWriter.Body.Bytes(), &actualBody)
 
 				if actualCode != test.expectedErrCode {

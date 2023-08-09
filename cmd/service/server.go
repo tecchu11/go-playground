@@ -8,6 +8,7 @@ import (
 	"go-playground/internal/transport_layer/rest/handler"
 	"go-playground/internal/transport_layer/rest/middleware"
 	"go-playground/internal/transport_layer/rest/preauth"
+	"go-playground/pkg/renderer"
 	"go.uber.org/zap"
 )
 
@@ -21,18 +22,19 @@ func New(env string, logger *zap.Logger, prop *configs.ApplicationProperties) (*
 	if env == "" {
 		return nil, ErrInvalidEnv
 	}
+	failure := renderer.NewFailure(middleware.RequestID)
 	mux := chi.NewRouter()
-	mux.MethodNotAllowed(handler.MethodNotAllowedHandler())
-	mux.NotFound(handler.NotFoundHandler())
+	mux.MethodNotAllowed(handler.MethodNotAllowedHandler(failure))
+	mux.NotFound(handler.NotFoundHandler(failure))
 	nrApp, err := newrelicApp(env)
 	if err != nil {
 		return nil, errors.Join(ErrInitNRApp, err)
 	}
 	mux.Use(middleware.NewrelicTxn(nrApp))
-	mux.Use(middleware.Recover(logger))
+	mux.Use(middleware.Recover(logger, failure))
 
-	authMid := middleware.Autheticator(logger, preauth.NewAutheticatonManager(prop.AuthConfigs))
-	hello := handler.NewHelloHandler(logger).GetName()
+	authMid := middleware.Authenticator(logger, preauth.NewAutheticatonManager(prop.AuthConfigs), failure)
+	hello := handler.NewHelloHandler(logger, failure).GetName()
 	mux.Route("/statuses", func(r chi.Router) {
 		r.Get("/", handler.StatusHandler())
 	})

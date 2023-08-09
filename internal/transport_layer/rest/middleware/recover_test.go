@@ -3,7 +3,6 @@ package middleware_test
 import (
 	"encoding/json"
 	"go-playground/internal/transport_layer/rest/middleware"
-	"go-playground/pkg/render"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -19,19 +18,14 @@ func Test_RecoverMiddleWare_Handle(t *testing.T) {
 		expectErr       bool
 		expectedCode    int
 		expectedBody    map[string]string
-		expectedErrBody render.ProblemDetail
+		expectedErrBody map[string]string
 	}{
 		"return 500 and expect body when panic": {
-			inputWriter:  httptest.NewRecorder(),
-			inputRequest: httptest.NewRequest("GET", "http://example.com/foos", nil),
-			expectErr:    true,
-			expectedCode: 500,
-			expectedErrBody: render.ProblemDetail{
-				Type:    "https://github.com/tecchu11/go-playground",
-				Title:   "Internal Server Error",
-				Detail:  "Unexpected error was happened. Plese report this error you have checked.",
-				Instant: "/foos",
-			},
+			inputWriter:     httptest.NewRecorder(),
+			inputRequest:    httptest.NewRequest("GET", "http://example.com/foos", nil),
+			expectErr:       true,
+			expectedCode:    500,
+			expectedErrBody: map[string]string{"title": "Internal Server Error", "detail": "Unexpected error was happened. Please report this error you have checked."},
 		},
 		"recover middleware nothing to do": {
 			inputWriter:  httptest.NewRecorder(),
@@ -44,7 +38,7 @@ func Test_RecoverMiddleWare_Handle(t *testing.T) {
 
 	for k, v := range tests {
 		t.Run(k, func(t *testing.T) {
-			rec := middleware.Recover(zap.NewExample())
+			rec := middleware.Recover(zap.NewExample(), &mockFailure{})
 			fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if v.expectErr {
 					panic("test panic!!")
@@ -58,7 +52,7 @@ func Test_RecoverMiddleWare_Handle(t *testing.T) {
 				if actual := v.inputWriter.Code; actual != v.expectedCode {
 					t.Errorf("actual status code %d is unexpected. expected is %d", actual, v.expectedCode)
 				}
-				var actual render.ProblemDetail
+				var actual map[string]string
 				_ = json.Unmarshal(v.inputWriter.Body.Bytes(), &actual)
 				if !reflect.DeepEqual(actual, v.expectedErrBody) {
 					t.Errorf("actual body (%v) is unexpected. expected is (%v)", actual, v.expectedErrBody)

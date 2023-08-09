@@ -8,7 +8,6 @@ import (
 	"go-playground/internal/transport_layer/rest/middleware"
 	"go-playground/internal/transport_layer/rest/model"
 	"go-playground/internal/transport_layer/rest/preauth"
-	"go-playground/pkg/render"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -25,7 +24,7 @@ func TestHelloHandler_GetName(t *testing.T) {
 		expectErr           bool
 		expectedCode        int
 		expectedBody        model.HelloResponse
-		expectedProblem     render.ProblemDetail
+		expectedProblem     map[string]string
 	}{
 		{
 			name:                "test GetName returns 200 and expected body",
@@ -41,25 +40,20 @@ func TestHelloHandler_GetName(t *testing.T) {
 			inputRequest:        httptest.NewRequest("GET", "http://example.com/hello", nil),
 			expectErr:           true,
 			expectedCode:        401,
-			expectedProblem: render.ProblemDetail{
-				Type:    "https://github.com/tecchu11/go-playground",
-				Title:   "Unauthorized",
-				Detail:  "No token was found for your request",
-				Instant: "/hello",
-			},
+			expectedProblem:     map[string]string{"title": "Request With No Authentication", "detail": "Request token was not found in your request header"},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			// mocking middleware.GetAuthenticatedUser
-			middleware.GetAutenticatedUser = func(ctx context.Context) (*preauth.AuthenticatedUser, error) {
+			middleware.CurrentUser = func(ctx context.Context) (*preauth.AuthenticatedUser, error) {
 				if test.expectErr {
 					return nil, fmt.Errorf("no user")
 				}
 				return &preauth.AuthenticatedUser{Name: "tecchu", Role: preauth.ADMIN}, nil
 			}
-			handler.NewHelloHandler(zap.NewExample()).
+			handler.NewHelloHandler(zap.NewExample(), &mockFailure{}).
 				GetName().
 				ServeHTTP(test.inputResponseWriter, test.inputRequest)
 
@@ -68,7 +62,7 @@ func TestHelloHandler_GetName(t *testing.T) {
 			}
 
 			if test.expectErr {
-				var actualBody render.ProblemDetail
+				var actualBody map[string]string
 				_ = json.Unmarshal(test.inputResponseWriter.Body.Bytes(), &actualBody)
 				if !reflect.DeepEqual(actualBody, test.expectedProblem) {
 					t.Errorf("unexpected body (%v) was recieved", actualBody)
