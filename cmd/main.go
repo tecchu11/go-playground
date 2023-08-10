@@ -5,11 +5,13 @@ import (
 	"errors"
 	"go-playground/cmd/service"
 	"go-playground/configs"
-	"go.uber.org/zap"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+
+	"github.com/newrelic/go-agent/v3/newrelic"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -28,11 +30,12 @@ func main() {
 	defer func(logger *zap.Logger) {
 		_ = logger.Sync() // ignore sync error.
 	}(logger)
-	mux, err := service.New(env, logger, prop)
+	nrApp, err := newrelicApp(env)
 	if err != nil {
-		log.Fatal("Failed to init service mux", err)
+		log.Fatal("Failed to init newrelic Application", err)
 	}
 
+	mux := service.New(env, logger, prop, nrApp)
 	srv := &http.Server{
 		Addr:         prop.ServerConfig.Address,
 		ReadTimeout:  prop.ServerConfig.ReadTimeout,
@@ -76,4 +79,11 @@ func zapLogger(env string, appName string) (*zap.Logger, error) {
 		return zap.NewDevelopment(opt)
 	}
 	return zap.NewProduction(opt)
+}
+
+func newrelicApp(env string) (*newrelic.Application, error) {
+	if env == "local" {
+		return nil, nil
+	}
+	return newrelic.NewApplication(newrelic.ConfigFromEnvironment())
 }
