@@ -8,7 +8,7 @@ import (
 var status = map[string]string{"status": "ok"}
 
 func StatusHandler() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		renderer.Ok(w, status)
-	})
+	}
 }

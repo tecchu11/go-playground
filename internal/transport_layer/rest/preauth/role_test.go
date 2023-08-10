@@ -15,7 +15,7 @@ func TestString(t *testing.T) {
 	}{
 		{name: "case ADMIN role", role: preauth.ADMIN, expected: "ADMIN"},
 		{name: "case USER role", role: preauth.USER, expected: "USER"},
-		{name: "case UNDIFINED role", role: preauth.UNDIFINED, expected: ""},
+		{name: "case UNDEFINED role", role: preauth.UNDEFINED, expected: ""},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -34,7 +34,7 @@ func TestRoleFrom(t *testing.T) {
 	}{
 		{name: "case of ADMIN", literal: "ADMIN", expected: preauth.ADMIN},
 		{name: "case of USER", literal: "USER", expected: preauth.USER},
-		{name: "case of invalid", literal: "Invalid role", expected: preauth.UNDIFINED},
+		{name: "case of invalid", literal: "Invalid role", expected: preauth.UNDEFINED},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNotFoundHanlder(t *testing.T) {
+func TestNotFoundHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/foos", nil)
 
@@ -27,7 +27,7 @@ func TestNotFoundHanlder(t *testing.T) {
 	assert.Equal(t, expectedCode, actualCode, "status code should be equal")
 }
 
-func TestMehodNotAllowedHandler(t *testing.T) {
+func TestMethodNotAllowedHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("POST", "/foos", nil)
 

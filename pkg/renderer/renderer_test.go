@@ -22,7 +22,7 @@ func TestOk(t *testing.T) {
 	var actualBody map[string]string
 	_ = json.Unmarshal(w.Body.Bytes(), &actualBody)
 	assert.Equal(t, actualBody, expectedBody, "response body should be equal")
-	assert.Equal(t, w.Code, expectedCode, "status code should be equalt to 200")
+	assert.Equal(t, w.Code, expectedCode, "status code should be equal to 200")
 }
 
 func TestFailure_Response(t *testing.T) {
@@ -45,6 +45,6 @@ func TestFailure_Response(t *testing.T) {
 	_ = json.Unmarshal(w.Body.Bytes(), &actualBody)
 
 	assert.Equal(t, actualBody, expectedBody, "response body should be equal")
-	assert.Equal(t, actualCode, expectedCode, "statsus code should be equal")
+	assert.Equal(t, actualCode, expectedCode, "statuses code should be equal")
 
 }

@@ -4,13 +4,13 @@ package preauth
 type Role int
 
 const (
-	UNDIFINED Role = iota
+	UNDEFINED Role = iota
 	ADMIN
 	USER
 )
 
 var mapByRole = map[Role]string{
-	UNDIFINED: "",
+	UNDEFINED: "",
 	ADMIN:     "ADMIN",
 	USER:      "USER",
 }
@@ -27,7 +27,7 @@ func (role Role) String() string {
 func RoleFrom(literal string) Role {
 	v, ok := mapByLiteral[literal]
 	if !ok {
-		return UNDIFINED
+		return UNDEFINED
 	}
 	return v
 }

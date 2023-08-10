@@ -33,7 +33,7 @@ type AuthConfig struct {
 }
 
 var (
-	ErrConfigNotFound  = errors.New("cofiguration not found by env")
+	ErrConfigNotFound  = errors.New("configuration not found by env")
 	ErrConfigUnmarshal = errors.New("failed to unmarshal to ApplicationProperties")
 )
 
