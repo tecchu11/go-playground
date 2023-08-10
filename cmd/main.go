@@ -81,6 +81,7 @@ func zapLogger(env string, appName string) (*zap.Logger, error) {
 	return zap.NewProduction(opt)
 }
 
+// newrelicApp init *newrelic.Application. If env is local, *newrelic.Application is nil.
 func newrelicApp(env string) (*newrelic.Application, error) {
 	if env == "local" {
 		return nil, nil
