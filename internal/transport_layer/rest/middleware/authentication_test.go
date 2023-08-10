@@ -22,7 +22,7 @@ func TestAuthenticator(t *testing.T) {
 		expectedCode int
 		expectedBody map[string]string
 	}{
-		"sucess to authenticate": {
+		"success to authenticate": {
 			token:        "valid-token",
 			doMock:       mockManager.On("Authenticate", "valid-token").Return(&preauth.AuthenticatedUser{Name: "tecchu", Role: preauth.ADMIN}, nil),
 			expectedCode: 200,
@@ -30,7 +30,7 @@ func TestAuthenticator(t *testing.T) {
 		},
 		"rejected request and then response 401": {
 			token:        "invalid-token",
-			doMock:       mockManager.On("Authenticate", "invalid-token").Return(&preauth.AuthenticatedUser{}, errors.New("No Authenticated")),
+			doMock:       mockManager.On("Authenticate", "invalid-token").Return(&preauth.AuthenticatedUser{}, errors.New("no authenticated")),
 			expectedCode: 401,
 			expectedBody: map[string]string{"title": "Request With No Authentication", "detail": "Request token was not found in your request header"},
 		},

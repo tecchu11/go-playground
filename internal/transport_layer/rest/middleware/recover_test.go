@@ -47,7 +47,7 @@ func Test_RecoverMiddleWare_Handle(t *testing.T) {
 			err := json.Unmarshal(w.Body.Bytes(), &actual)
 
 			assert.Equal(t, v.expectedCode, actualCode, "status code should be equal")
-			assert.NoError(t, err, "json unmmarshal should not be err")
+			assert.NoError(t, err, "json unmarshal should not be err")
 			assert.Equal(t, v.expectedBody, actual, "error response body should be equal")
 		})
 	}

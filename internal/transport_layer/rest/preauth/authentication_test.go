@@ -9,11 +9,11 @@ import (
 )
 
 func TestAuthenticationManager_Authenticate(t *testing.T) {
-	configs := []configs.AuthConfig{
+	confs := []configs.AuthConfig{
 		{Name: "test-user-1", RoleStr: "ADMIN", Key: "test-api-key-1"},
 		{Name: "test-user-2", RoleStr: "USER", Key: "test-api-key-2"},
 	}
-	manager := preauth.NewAutheticatonManager(configs)
+	manager := preauth.NewAuthenticationManager(confs)
 	cases := []struct {
 		name         string
 		token        string
@@ -21,7 +21,7 @@ func TestAuthenticationManager_Authenticate(t *testing.T) {
 		expectErr    bool
 	}{
 		{name: "case of successful to authentication", token: "test-api-key-2", expectedUser: &preauth.AuthenticatedUser{Name: "test-user-2", Role: preauth.USER}},
-		{name: "case of failuer to authentication", token: "invalid api key", expectErr: true},
+		{name: "case of failure to authentication", token: "invalid api key", expectErr: true},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

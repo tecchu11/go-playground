@@ -21,7 +21,7 @@ type authenticationManager struct {
 }
 
 // NewAuthenticationManager is factory method for AuthenticationManager.
-func NewAutheticatonManager(configs []configs.AuthConfig) AuthenticationManager {
+func NewAuthenticationManager(configs []configs.AuthConfig) AuthenticationManager {
 	return &authenticationManager{configs: configs}
 }
 

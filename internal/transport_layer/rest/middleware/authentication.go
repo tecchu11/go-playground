@@ -33,7 +33,7 @@ func Authenticator(logger *zap.Logger, manager preauth.AuthenticationManager, fa
 // This variable useful for mocking behavior.
 var CurrentUser = getAuthenticatedUserFromContext
 
-// GetAuthenticatedUserFromContext retrive authenticated user information from context.
+// GetAuthenticatedUserFromContext retrieve authenticated user information from context.
 // If error is not nil, this indicates request is not authenticated.
 func getAuthenticatedUserFromContext(ctx context.Context) (*preauth.AuthenticatedUser, error) {
 	u, ok := ctx.Value(authCtxKey{}).(*preauth.AuthenticatedUser)

@@ -33,7 +33,7 @@ func New(env string, logger *zap.Logger, prop *configs.ApplicationProperties) (*
 	mux.Use(middleware.NewrelicTxn(nrApp))
 	mux.Use(middleware.Recover(logger, failure))
 
-	authMid := middleware.Authenticator(logger, preauth.NewAutheticatonManager(prop.AuthConfigs), failure)
+	authMid := middleware.Authenticator(logger, preauth.NewAuthenticationManager(prop.AuthConfigs), failure)
 	hello := handler.NewHelloHandler(logger, failure).GetName()
 	mux.Route("/statuses", func(r chi.Router) {
 		r.Get("/", handler.StatusHandler())
