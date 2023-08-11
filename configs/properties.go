@@ -37,19 +37,25 @@ var (
 	ErrConfigUnmarshal = errors.New("failed to unmarshal to ApplicationProperties")
 )
 
-//go:embed *.yaml
-var configs embed.FS
+var (
+	//go:embed *.yaml
+	configs      embed.FS
+	envs = map[string]string{"local": "config-local.yaml"}
+)
 
 // Load loads config of env.
 func Load(env string) (*ApplicationProperties, error) {
-	key := fmt.Sprintf("config-%s.yaml", env)
+	key, ok := envs[env]
+	if !ok {
+		return nil, fmt.Errorf("not found config by given env %s", env)
+	}
 	f, err := configs.ReadFile(key)
 	if err != nil {
-		return nil, errors.Join(ErrConfigNotFound, err)
+		return nil, fmt.Errorf("not found config by given env %s because %w", env, err)
 	}
 	var prop ApplicationProperties
 	if err := yaml.Unmarshal(f, &prop); err != nil {
-		return nil, errors.Join(ErrConfigUnmarshal, err)
+		return nil, fmt.Errorf("failed to unmarshal of %s because %w", f, err)
 	}
 	return &prop, nil
 }

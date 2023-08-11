@@ -10,8 +10,9 @@ import (
 
 func TestLoad(t *testing.T) {
 	tests := map[string]struct {
-		env      string
-		expected *configs.ApplicationProperties
+		env       string
+		expectErr bool
+		expected  *configs.ApplicationProperties
 	}{
 		"local config mapping exactly": {
 			env: "local",
@@ -24,10 +25,18 @@ func TestLoad(t *testing.T) {
 				},
 			},
 		},
+		"error is not nil when given env is invalid": {
+			env:       "none",
+			expectErr: true,
+		},
 	}
 	for k, v := range tests {
 		t.Run(k, func(t *testing.T) {
 			actual, err := configs.Load(v.env)
+			if v.expectErr {
+				assert.NotNil(t, err, "expect error is not nil when given env is invalid")
+				return
+			}
 			assert.NoError(t, err, "config mapping exactly so no err")
 			assert.Equal(t, v.expected, actual, "config mapping exactly")
 		})
