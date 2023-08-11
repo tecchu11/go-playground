@@ -16,9 +16,6 @@ import (
 
 func main() {
 	env := os.Getenv("APP_ENV")
-	if env == "" {
-		log.Fatal("Missing APP_ENV in environment variables")
-	}
 	prop, err := configs.Load(env)
 	if err != nil {
 		log.Fatalf("Failed to load configuration with %s because %v", env, err)
