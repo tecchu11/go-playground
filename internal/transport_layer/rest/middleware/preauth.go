@@ -72,7 +72,7 @@ func (u PreAuthenticatedUsers) Auth(logger *zap.Logger, failure renderer.Failure
 			}
 			_, ok = permitRoles[user.Role]
 			if !ok {
-				failure.Response(w, r, http.StatusUnauthorized, "Request With No Authorization", fmt.Sprintf("Your role(%s) was not performing to action", user.Role.String()))
+				failure.Response(w, r, http.StatusForbidden, "Request With No Authorization", fmt.Sprintf("Your role(%s) was not performing to action", user.Role.String()))
 				return
 			}
 			next.ServeHTTP(w, r.WithContext(user.Set(r.Context())))
