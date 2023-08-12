@@ -7,8 +7,8 @@ server:
   grace_timeout: 20s
 auth:
   - name: tecchu11(ADMIN)
-    role: ADMIN
+    role: Admin
     key: admin
   - name: tecchu11(USER)
-    role: USER
+    role: User
     key: user
