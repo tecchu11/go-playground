@@ -3,7 +3,6 @@ package handler
 import (
 	"fmt"
 	"go-playground/internal/transport_layer/rest/middleware"
-	"go-playground/internal/transport_layer/rest/model"
 	"go-playground/pkg/renderer"
 	"net/http"
 
@@ -32,7 +31,10 @@ func (handler *helloHandler) GetName() http.HandlerFunc {
 			return
 		}
 		message := fmt.Sprintf("Hello %s!! You have %s role.", user.Name, user.Role.String())
-		renderer.Ok(w, &model.HelloResponse{Message: message})
+		renderer.Ok(w, &HelloResponse{message})
 	}
+}
 
+type HelloResponse struct {
+	Message string `json:"message"`
 }
