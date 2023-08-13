@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"go-playground/internal/transport_layer/rest/handler"
 	"go-playground/internal/transport_layer/rest/middleware"
-	"go-playground/internal/transport_layer/rest/model"
 	"net/http/httptest"
 	"testing"
 
@@ -17,14 +16,14 @@ func TestHelloHandler_GetName(t *testing.T) {
 		requestUser     middleware.AuthUser
 		expectErr       bool
 		expectedCode    int
-		expectedBody    model.HelloResponse
+		expectedBody    handler.HelloResponse
 		expectedErrBody map[string]string
 	}{
 		"status 200": {
 			requestUser:  middleware.AuthUser{Name: "tecchu", Role: middleware.Admin},
 			expectErr:    false,
 			expectedCode: 200,
-			expectedBody: model.HelloResponse{Message: "Hello tecchu!! You have Admin role."},
+			expectedBody: handler.HelloResponse{Message: "Hello tecchu!! You have Admin role."},
 		},
 		"status 401 when no current user": {
 			requestUser:     middleware.NoUser,
@@ -52,7 +51,7 @@ func TestHelloHandler_GetName(t *testing.T) {
 				return
 			}
 
-			var actualBody model.HelloResponse
+			var actualBody handler.HelloResponse
 			err := json.Unmarshal(w.Body.Bytes(), &actualBody)
 			assert.NoError(t, err, "json unmarshal should not be err")
 			assert.Equal(t, v.expectedBody, actualBody, "response body should be equal")
