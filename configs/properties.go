@@ -39,8 +39,8 @@ var (
 
 var (
 	//go:embed *.yaml
-	configs      embed.FS
-	envs = map[string]string{"local": "config-local.yaml"}
+	configs embed.FS
+	envs    = map[string]string{"local": "config-local.yaml"}
 )
 
 // Load loads config of env.

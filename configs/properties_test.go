@@ -20,8 +20,8 @@ func TestLoad(t *testing.T) {
 				AppName:      "go-playground",
 				ServerConfig: configs.ServerConfig{Address: ":8080", ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 120 * time.Second, GraceTimeout: 20 * time.Second},
 				AuthConfigs: []configs.AuthConfig{
-					{Name: "tecchu11(ADMIN)", RoleStr: "ADMIN", Key: "admin"},
-					{Name: "tecchu11(USER)", RoleStr: "USER", Key: "user"},
+					{Name: "tecchu11(ADMIN)", RoleStr: "Admin", Key: "admin"},
+					{Name: "tecchu11(USER)", RoleStr: "User", Key: "user"},
 				},
 			},
 		},

@@ -1,13 +1,10 @@
 package handler_test
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"go-playground/internal/transport_layer/rest/handler"
 	"go-playground/internal/transport_layer/rest/middleware"
 	"go-playground/internal/transport_layer/rest/model"
-	"go-playground/internal/transport_layer/rest/preauth"
 	"net/http/httptest"
 	"testing"
 
@@ -17,17 +14,20 @@ import (
 
 func TestHelloHandler_GetName(t *testing.T) {
 	tests := map[string]struct {
+		requestUser     middleware.AuthUser
 		expectErr       bool
 		expectedCode    int
 		expectedBody    model.HelloResponse
 		expectedErrBody map[string]string
 	}{
 		"status 200": {
+			requestUser:  middleware.AuthUser{Name: "tecchu", Role: middleware.Admin},
 			expectErr:    false,
 			expectedCode: 200,
-			expectedBody: model.HelloResponse{Message: "Hello tecchu!! You have ADMIN role."},
+			expectedBody: model.HelloResponse{Message: "Hello tecchu!! You have Admin role."},
 		},
 		"status 401 when no current user": {
+			requestUser:     middleware.NoUser,
 			expectErr:       true,
 			expectedCode:    401,
 			expectedErrBody: map[string]string{"title": "Request With No Authentication", "detail": "Request token was not found in your request header"},
@@ -36,16 +36,10 @@ func TestHelloHandler_GetName(t *testing.T) {
 
 	for k, v := range tests {
 		t.Run(k, func(t *testing.T) {
-			// mocking middleware.CurrentUser
-			middleware.CurrentUser = func(ctx context.Context) (*preauth.AuthenticatedUser, error) {
-				if v.expectErr {
-					return nil, fmt.Errorf("no user")
-				}
-				return &preauth.AuthenticatedUser{Name: "tecchu", Role: preauth.ADMIN}, nil
-			}
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/hello", nil)
-			handler.NewHelloHandler(zap.NewExample(), &mockFailure{}).GetName().ServeHTTP(w, r)
+			ctx := v.requestUser.Set(r.Context())
+			handler.NewHelloHandler(zap.NewExample(), &mockFailure{}).GetName().ServeHTTP(w, r.WithContext(ctx))
 
 			actualCode := w.Code
 			assert.Equal(t, v.expectedCode, actualCode, "status code should be equal")
