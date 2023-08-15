@@ -32,7 +32,7 @@ func Test_RecoverMiddleWare_Handle(t *testing.T) {
 		t.Run(k, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/foos", nil)
-			rec := middleware.Recover(zap.NewExample(), &mockFailure{})
+			rec := middleware.Recover(zap.NewExample(), &mockJSON{})
 			panicHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if v.expectErr {
 					panic("test panic!!")

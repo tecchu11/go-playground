@@ -14,11 +14,11 @@ type HelloHandler interface {
 }
 
 type helloHandler struct {
-	logger  *zap.Logger
-	failure renderer.Failure
+	logger *zap.Logger
+	rj     renderer.JSON
 }
 
-func NewHelloHandler(logger *zap.Logger, failure renderer.Failure) HelloHandler {
+func NewHelloHandler(logger *zap.Logger, failure renderer.JSON) HelloHandler {
 	return &helloHandler{logger, failure}
 }
 
@@ -27,11 +27,11 @@ func (handler *helloHandler) GetName() http.HandlerFunc {
 		user, err := middleware.CurrentUser(r.Context())
 		if err != nil {
 			handler.logger.Error("Authenticated User does not exist in the request context", zap.String("path", r.URL.Path))
-			handler.failure.Response(w, r, http.StatusUnauthorized, "Request With No Authentication", "Request token was not found in your request header")
+			handler.rj.Failure(w, r, http.StatusUnauthorized, "Request With No Authentication", "Request token was not found in your request header")
 			return
 		}
 		message := fmt.Sprintf("Hello %s!! You have %s role.", user.Name, user.Role.String())
-		renderer.Ok(w, &HelloResponse{message})
+		handler.rj.Success(w, 200, &HelloResponse{message})
 	}
 }
 

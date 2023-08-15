@@ -75,11 +75,12 @@ func TestPreAuthenticatedUsers_Auth_AdminOnly(t *testing.T) {
 			})
 			users := middleware.PreAuthenticatedUsers(map[string]middleware.AuthUser{"user-token": {Name: "tecchu", Role: middleware.User}, "admin-token": {Name: "tecchu", Role: middleware.Admin}})
 
-			adminOnly := users.Auth(zap.NewExample(), &mockFailure{}, map[middleware.UserRole]struct{}{middleware.Admin: {}})
+			adminOnly := users.Auth(zap.NewExample(), &mockJSON{}, map[middleware.UserRole]struct{}{middleware.Admin: {}})
 			adminOnly(nextHandler).ServeHTTP(w, r)
 
 			var gotBody map[string]string
-			json.Unmarshal(w.Body.Bytes(), &gotBody)
+			err := json.Unmarshal(w.Body.Bytes(), &gotBody)
+			assert.NoError(t, err)
 			assert.Equal(t, v.wantCode, w.Code)
 			assert.Equal(t, v.wantBody, gotBody)
 		})

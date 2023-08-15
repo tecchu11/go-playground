@@ -14,7 +14,7 @@ const (
 
 // Recover handle un-recovered panic when handling request.
 // If panic have not happened, this middleware nothing to do.
-func Recover(logger *zap.Logger, failure renderer.Failure) func(http.Handler) http.Handler {
+func Recover(logger *zap.Logger, failure renderer.JSON) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
@@ -24,7 +24,7 @@ func Recover(logger *zap.Logger, failure renderer.Failure) func(http.Handler) ht
 					}
 					logger.Error("Panic was happened. So check detail as soon as possible the reason why happened panic.")
 					if r.Header.Get(connectionHeader) != connectionHeaderValue {
-						failure.Response(w, r, http.StatusInternalServerError, "Internal Server Error", "Unexpected error was happened. Please report this error you have checked.")
+						failure.Failure(w, r, http.StatusInternalServerError, "Internal Server Error", "Unexpected error was happened. Please report this error you have checked.")
 					}
 				}
 			}()

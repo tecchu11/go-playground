@@ -62,17 +62,17 @@ var (
 )
 
 // Auth middleware for authentication and authorization by pre-authenticated token and given permitRoles.
-func (u PreAuthenticatedUsers) Auth(logger *zap.Logger, failure renderer.Failure, permitRoles map[UserRole]struct{}) func(http.Handler) http.Handler {
+func (u PreAuthenticatedUsers) Auth(logger *zap.Logger, failure renderer.JSON, permitRoles map[UserRole]struct{}) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			user, ok := u[r.Header.Get(authHeader)]
 			if !ok {
-				failure.Response(w, r, http.StatusUnauthorized, "Request With No Authentication", "Request token was not found in your request header")
+				failure.Failure(w, r, http.StatusUnauthorized, "Request With No Authentication", "Request token was not found in your request header")
 				return
 			}
 			_, ok = permitRoles[user.Role]
 			if !ok {
-				failure.Response(w, r, http.StatusForbidden, "Request With No Authorization", fmt.Sprintf("Your role(%s) was not performing to action", user.Role.String()))
+				failure.Failure(w, r, http.StatusForbidden, "Request With No Authorization", fmt.Sprintf("Your role(%s) was not performing to action", user.Role.String()))
 				return
 			}
 			next.ServeHTTP(w, r.WithContext(user.Set(r.Context())))

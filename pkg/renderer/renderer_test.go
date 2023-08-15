@@ -11,25 +11,48 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestOk(t *testing.T) {
-	w := httptest.NewRecorder()
-	input := map[string]string{"message": "hello"}
-	renderer.Ok(w, input)
+func TestJsonResponse_Success(t *testing.T) {
+	tests := map[string]struct {
+		inW         *httptest.ResponseRecorder
+		inCode      int
+		inBody      map[string]string
+		exceptEmpty bool
+		wantCode    int
+		wantBody    map[string]string
+	}{
+		"success with status code 200": {inW: httptest.NewRecorder(), inCode: 200, inBody: map[string]string{"message": "hello"}, wantCode: 200, wantBody: map[string]string{"message": "hello"}},
+		"success with status code 204": {inW: httptest.NewRecorder(), inCode: 204, inBody: map[string]string{"message": "hello"}, exceptEmpty: true, wantCode: 204},
+		"success with status code 205": {inW: httptest.NewRecorder(), inCode: 205, inBody: map[string]string{"message": "hello"}, exceptEmpty: true, wantCode: 205},
+	}
+	fn := func(ctx context.Context) string {
+		return ""
+	}
+	success := renderer.NewJSON(fn).Success
 
-	expectedCode := 200
-	expectedBody := input
+	for k, v := range tests {
+		t.Run(k, func(t *testing.T) {
+			success(v.inW, v.inCode, v.inBody)
 
-	var actualBody map[string]string
-	_ = json.Unmarshal(w.Body.Bytes(), &actualBody)
-	assert.Equal(t, actualBody, expectedBody, "response body should be equal")
-	assert.Equal(t, w.Code, expectedCode, "status code should be equal to 200")
+			gotCode := v.inW.Code
+			assert.Equal(t, v.wantCode, gotCode)
+			if v.exceptEmpty {
+				gotBody := v.inW.Body.Bytes()
+				assert.Emptyf(t, gotBody, "")
+				return
+			}
+			var gotBody map[string]string
+			err := json.NewDecoder(v.inW.Body).Decode(&gotBody)
+			assert.NoError(t, err)
+			assert.Equal(t, v.inBody, gotBody)
+		})
+	}
 }
 
-func TestFailure_Response(t *testing.T) {
+func TestJsonResponse_Failure(t *testing.T) {
 	req := renderer.RequestIDFunc(func(_ context.Context) string {
 		return "request_id"
 	})
-	fn := renderer.NewFailure(req).Response
+	fn := renderer.NewJSON(req).Failure
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/foos", nil)
 	title := "this is title"

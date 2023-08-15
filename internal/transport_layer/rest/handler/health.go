@@ -7,8 +7,8 @@ import (
 
 var status = map[string]string{"status": "ok"}
 
-func StatusHandler() http.HandlerFunc {
+func StatusHandler(rj renderer.JSON) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		renderer.Ok(w, status)
+		rj.Success(w, 200, status)
 	}
 }

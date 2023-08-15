@@ -13,7 +13,7 @@ func TestStatusHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/statuses", nil)
 
-	handler.StatusHandler().ServeHTTP(w, r)
+	handler.StatusHandler(&mockJSON{}).ServeHTTP(w, r)
 
 	expectedCode := 200
 	expectedBody := handler.Status
