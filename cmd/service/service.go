@@ -12,7 +12,7 @@ import (
 )
 
 // New returns configured chi.mux.
-func New(env string, logger *zap.Logger, prop *configs.ApplicationProperties, nrApp *newrelic.Application) *chi.Mux {
+func New(logger *zap.Logger, prop *configs.ApplicationProperties, nrApp *newrelic.Application) *chi.Mux {
 	// init misc
 	jsonResponse := renderer.NewJSON(middleware.RequestID)
 	preAuth := middleware.PreAuthenticatedUsers(make(map[string]middleware.AuthUser))
@@ -21,7 +21,7 @@ func New(env string, logger *zap.Logger, prop *configs.ApplicationProperties, nr
 		preAuth[v.Key] = middleware.AuthUser{Name: v.Name, Role: r}
 	}
 	// init middleware
-	generalAuth := preAuth.Auth(logger, jsonResponse, map[middleware.UserRole]struct{}{middleware.Admin: {}, middleware.User: {}})
+	generalAuth := preAuth.Auth(jsonResponse, map[middleware.UserRole]struct{}{middleware.Admin: {}, middleware.User: {}})
 	// init handler
 	helloHandler := handler.NewHelloHandler(logger, jsonResponse)
 	// init mux
