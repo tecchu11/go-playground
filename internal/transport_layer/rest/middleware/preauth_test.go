@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func TestUserRole_String(t *testing.T) {
@@ -75,7 +74,7 @@ func TestPreAuthenticatedUsers_Auth_AdminOnly(t *testing.T) {
 			})
 			users := middleware.PreAuthenticatedUsers(map[string]middleware.AuthUser{"user-token": {Name: "tecchu", Role: middleware.User}, "admin-token": {Name: "tecchu", Role: middleware.Admin}})
 
-			adminOnly := users.Auth(zap.NewExample(), &mockJSON{}, map[middleware.UserRole]struct{}{middleware.Admin: {}})
+			adminOnly := users.Auth(&mockJSON{}, map[middleware.UserRole]struct{}{middleware.Admin: {}})
 			adminOnly(nextHandler).ServeHTTP(w, r)
 
 			var gotBody map[string]string
@@ -93,7 +92,7 @@ func TestCurrentUser(t *testing.T) {
 		expectErr bool
 		want      middleware.AuthUser
 	}{
-		"success to retreive user from context": {
+		"success to retrieve user from context": {
 			inCtx:     context.WithValue(context.Background(), middleware.AuthCtxKey, middleware.AuthUser{Name: "tecchu", Role: middleware.Admin}),
 			expectErr: false,
 			want:      middleware.AuthUser{Name: "tecchu", Role: middleware.Admin},

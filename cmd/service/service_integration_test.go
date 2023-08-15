@@ -19,7 +19,7 @@ var (
 
 func TestMain(m *testing.M) {
 	prop, _ := configs.Load("local")
-	svc := service.New("local", zap.NewExample(), prop, nil)
+	svc := service.New(zap.NewExample(), prop, nil)
 	svr = httptest.NewServer(svc)
 	defer svr.Close()
 	m.Run()

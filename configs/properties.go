@@ -2,7 +2,6 @@ package configs
 
 import (
 	"embed"
-	"errors"
 	"fmt"
 	"time"
 
@@ -31,11 +30,6 @@ type AuthConfig struct {
 	RoleStr string `yaml:"role"`
 	Key     string `yaml:"key"`
 }
-
-var (
-	ErrConfigNotFound  = errors.New("configuration not found by env")
-	ErrConfigUnmarshal = errors.New("failed to unmarshal to ApplicationProperties")
-)
 
 var (
 	//go:embed *.yaml

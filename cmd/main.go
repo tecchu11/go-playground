@@ -32,7 +32,7 @@ func main() {
 		log.Fatal("Failed to init newrelic Application", err)
 	}
 
-	mux := service.New(env, logger, prop, nrApp)
+	mux := service.New(logger, prop, nrApp)
 	srv := &http.Server{
 		Addr:         prop.ServerConfig.Address,
 		ReadTimeout:  prop.ServerConfig.ReadTimeout,
