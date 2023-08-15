@@ -13,7 +13,7 @@ func TestNotFoundHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/foos", nil)
 
-	handler.NotFoundHandler(&mockFailure{}).ServeHTTP(w, r)
+	handler.NotFoundHandler(&mockJSON{}).ServeHTTP(w, r)
 
 	expectedCode := 404
 	expectedBody := map[string]string{"title": "Resource Not Found", "detail": "/foos resource does not exist"}
@@ -31,7 +31,7 @@ func TestMethodNotAllowedHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("POST", "/foos", nil)
 
-	handler.MethodNotAllowedHandler(&mockFailure{}).ServeHTTP(w, r)
+	handler.MethodNotAllowedHandler(&mockJSON{}).ServeHTTP(w, r)
 
 	expectedCode := 405
 	expectedBody := map[string]string{"title": "Method Not Allowed", "detail": "Http method POST is not allowed for /foos resource"}

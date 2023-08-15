@@ -11,24 +11,18 @@ const (
 	contentTypeValue = "application/json; charset=utf-8"
 )
 
-// Ok return 200 and passed body.
-func Ok(w http.ResponseWriter, body any) {
-	w.Header().Add(contentTypeKey, contentTypeValue)
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(body)
-}
-
 type (
-	// Failure interface for error response.
-	Failure interface {
-		// Response send to client error response body with status code.
+	// JSON interface for error response.
+	JSON interface {
+		Success(w http.ResponseWriter, code int, body any)
+		// Failure send to client error response body with status code.
 		// Error response body is problemDetail.
-		Response(w http.ResponseWriter, r *http.Request, code int, title string, detail string)
+		Failure(w http.ResponseWriter, r *http.Request, code int, title string, detail string)
 	}
 	// RequestIDFunc retrieve request id from context.
 	RequestIDFunc func(ctx context.Context) string
 
-	failure struct {
+	jsonResponse struct {
 		requestID RequestIDFunc
 	}
 	// problemDetail indicates the response body in accordance with RFC7807.
@@ -43,17 +37,27 @@ type (
 	}
 )
 
-// NewFailure init Failure.
-func NewFailure(requestID func(ctx context.Context) string) Failure {
-	return &failure{requestID}
+// NewJSON init JSON.
+func NewJSON(requestID func(ctx context.Context) string) JSON {
+	return &jsonResponse{requestID}
 }
 
-// Response send to client error response body with status code.
+// Failure send to client error response body with status code.
 // Error response body is problemDetail.
-func (f *failure) Response(w http.ResponseWriter, r *http.Request, code int, title string, detail string) {
-	reqID := f.requestID(r.Context())
+func (j *jsonResponse) Failure(w http.ResponseWriter, r *http.Request, code int, title string, detail string) {
+	reqID := j.requestID(r.Context())
 	body := &problemDetail{Type: "not:blank", Title: title, Detail: detail, Instant: r.URL.Path, RequestID: reqID}
 	w.Header().Add(contentTypeKey, contentTypeValue)
 	w.WriteHeader(code)
+	_ = json.NewEncoder(w).Encode(body)
+}
+
+// Success send to client code and body. If code is 204 or 205, given body will be ignored.
+func (j *jsonResponse) Success(w http.ResponseWriter, code int, body any) {
+	w.Header().Add(contentTypeKey, contentTypeValue)
+	w.WriteHeader(code)
+	if code == http.StatusNoContent || code == http.StatusResetContent {
+		return
+	}
 	_ = json.NewEncoder(w).Encode(body)
 }
