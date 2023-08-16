@@ -5,8 +5,8 @@ import (
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"go-playground/configs"
 
-	"go-playground/internal/transport_layer/rest/handler"
-	"go-playground/internal/transport_layer/rest/middleware"
+	"go-playground/internal/transportlayer/rest/handler"
+	"go-playground/internal/transportlayer/rest/middleware"
 	"go-playground/pkg/renderer"
 	"go.uber.org/zap"
 )

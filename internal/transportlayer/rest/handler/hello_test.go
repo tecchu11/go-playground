@@ -2,8 +2,8 @@ package handler_test
 
 import (
 	"encoding/json"
-	"go-playground/internal/transport_layer/rest/handler"
-	"go-playground/internal/transport_layer/rest/middleware"
+	"go-playground/internal/transportlayer/rest/handler"
+	"go-playground/internal/transportlayer/rest/middleware"
 	"net/http/httptest"
 	"testing"
 

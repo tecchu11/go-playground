@@ -2,7 +2,7 @@ package handler
 
 import (
 	"fmt"
-	"go-playground/internal/transport_layer/rest/middleware"
+	"go-playground/internal/transportlayer/rest/middleware"
 	"go-playground/pkg/renderer"
 	"net/http"
 
