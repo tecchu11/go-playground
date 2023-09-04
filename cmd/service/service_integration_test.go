@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go-playground/cmd/service"
 	"go-playground/configs"
-	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -19,7 +18,7 @@ var (
 
 func TestMain(m *testing.M) {
 	prop, _ := configs.Load("local")
-	svc := service.New(zap.NewExample(), prop, nil)
+	svc := service.New(prop, nil)
 	svr = httptest.NewServer(svc)
 	defer svr.Close()
 	m.Run()

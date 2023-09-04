@@ -8,11 +8,10 @@ import (
 	"go-playground/internal/transportlayer/rest/handler"
 	"go-playground/internal/transportlayer/rest/middleware"
 	"go-playground/pkg/renderer"
-	"go.uber.org/zap"
 )
 
 // New returns configured chi.mux.
-func New(logger *zap.Logger, prop *configs.ApplicationProperties, nrApp *newrelic.Application) *chi.Mux {
+func New(prop *configs.ApplicationProperties, nrApp *newrelic.Application) *chi.Mux {
 	// init misc
 	jsonResponse := renderer.NewJSON(middleware.RequestID)
 	preAuth := middleware.PreAuthenticatedUsers(make(map[string]middleware.AuthUser))
@@ -23,13 +22,13 @@ func New(logger *zap.Logger, prop *configs.ApplicationProperties, nrApp *newreli
 	// init middleware
 	generalAuth := preAuth.Auth(jsonResponse, map[middleware.UserRole]struct{}{middleware.Admin: {}, middleware.User: {}})
 	// init handler
-	helloHandler := handler.NewHelloHandler(logger, jsonResponse)
+	helloHandler := handler.NewHelloHandler(jsonResponse)
 	// init mux
 	mux := chi.NewRouter()
 	mux.MethodNotAllowed(handler.MethodNotAllowedHandler(jsonResponse))
 	mux.NotFound(handler.NotFoundHandler(jsonResponse))
 	mux.Use(middleware.NewrelicTxn(nrApp))
-	mux.Use(middleware.Recover(logger, jsonResponse))
+	mux.Use(middleware.Recover(jsonResponse))
 	// init routing
 	mux.Route("/statuses", func(r chi.Router) {
 		r.Get("/", handler.StatusHandler(jsonResponse))

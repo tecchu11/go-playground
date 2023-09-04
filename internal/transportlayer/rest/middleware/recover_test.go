@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func Test_RecoverMiddleWare_Handle(t *testing.T) {
@@ -32,7 +31,7 @@ func Test_RecoverMiddleWare_Handle(t *testing.T) {
 		t.Run(k, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/foos", nil)
-			rec := middleware.Recover(zap.NewExample(), &mockJSON{})
+			rec := middleware.Recover(&mockJSON{})
 			panicHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if v.expectErr {
 					panic("test panic!!")

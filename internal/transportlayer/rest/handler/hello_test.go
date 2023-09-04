@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func TestHelloHandler_GetName(t *testing.T) {
@@ -38,7 +37,7 @@ func TestHelloHandler_GetName(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/hello", nil)
 			ctx := v.requestUser.Set(r.Context())
-			handler.NewHelloHandler(zap.NewExample(), &mockJSON{}).GetName().ServeHTTP(w, r.WithContext(ctx))
+			handler.NewHelloHandler(&mockJSON{}).GetName().ServeHTTP(w, r.WithContext(ctx))
 
 			actualCode := w.Code
 			assert.Equal(t, v.expectedCode, actualCode, "status code should be equal")
