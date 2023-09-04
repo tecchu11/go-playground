@@ -5,34 +5,37 @@ import (
 	"errors"
 	"go-playground/cmd/service"
 	"go-playground/configs"
-	"log"
+	"go-playground/pkg/nrslog"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
-	"go.uber.org/zap"
 )
+
+func init() {
+	slog.SetDefault(
+		slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo})),
+	)
+}
 
 func main() {
 	env := os.Getenv("APP_ENV")
 	prop, err := configs.Load(env)
 	if err != nil {
-		log.Fatalf("Failed to load configuration with %s because %v", env, err)
+		slog.Error("Failed to load configuration", slog.String("env", env), slog.String("error", err.Error()))
+		panic(err)
 	}
-	logger, err := zapLogger(env, prop.AppName)
-	if err != nil {
-		log.Fatal("Failed to init zap logger", err)
-	}
-	defer func(logger *zap.Logger) {
-		_ = logger.Sync() // ignore sync error.
-	}(logger)
 	nrApp, err := newrelicApp(env)
 	if err != nil {
-		log.Fatal("Failed to init newrelic Application", err)
+		slog.Error("Failed to init newrelic Application", slog.String("error", err.Error()))
+		panic(err)
 	}
+	handler := nrslog.NewNRHandler(slog.Default().Handler(), nrApp, false)
+	slog.SetDefault(slog.New(handler))
 
-	mux := service.New(logger, prop, nrApp)
+	mux := service.New(prop, nrApp)
 	srv := &http.Server{
 		Addr:         prop.ServerConfig.Address,
 		ReadTimeout:  prop.ServerConfig.ReadTimeout,
@@ -47,35 +50,22 @@ func main() {
 		signal.Notify(sigint, os.Interrupt)
 		<-sigint
 
-		logger.Info("We received an interrupt signal,so attempt to shut down with gracefully")
+		slog.Info("We received an interrupt signal,so attempt to shut down with gracefully")
 		ctx, cancel := context.WithTimeout(context.Background(), prop.ServerConfig.GraceTimeout)
-		defer func(logger *zap.Logger) {
-			logger.Info("Bye!!")
-			cancel()
-		}(logger)
+		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
-			logger.Error("Failed to terminate server with gracefully. So force terminating ...", zap.Error(err))
+			slog.Error("Failed to terminate server with gracefully. So force terminating ...", slog.String("error", err.Error()))
 		}
 		close(idleConnsClosed)
 	}()
 
-	logger.Info("Server starting ---(ﾟ∀ﾟ)---!!!")
+	slog.Info("Server starting ---(ﾟ∀ﾟ)---!!!")
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		logger.Fatal("Failed to start up server", zap.Error(err))
+		slog.Error("Failed to start up server", slog.String("error", err.Error()))
+		panic(err)
 	}
 	<-idleConnsClosed
-}
-
-// zapLogger init development or production logger with zap filed of env, appName.
-func zapLogger(env string, appName string) (*zap.Logger, error) {
-	opt := zap.Fields(
-		zap.String("appName", appName),
-		zap.String("env", env),
-	)
-	if env == "local" {
-		return zap.NewDevelopment(opt)
-	}
-	return zap.NewProduction(opt)
+	slog.Info("Bye!!")
 }
 
 // newrelicApp init *newrelic.Application. If env is local, *newrelic.Application is nil.

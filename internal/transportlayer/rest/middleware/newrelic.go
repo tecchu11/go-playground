@@ -13,7 +13,7 @@ import (
 func NewrelicTxn(app *newrelic.Application) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if app != nil {
+			if app == nil {
 				next.ServeHTTP(w, r)
 				return
 			}
