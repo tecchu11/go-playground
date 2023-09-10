@@ -32,8 +32,7 @@ func main() {
 		slog.Error("Failed to init newrelic Application", slog.String("error", err.Error()))
 		panic(err)
 	}
-	handler := nrslog.NewNRHandler(slog.Default().Handler(), nrApp, false)
-	slog.SetDefault(slog.New(handler))
+	slog.SetDefault(slog.New(nrslog.New(nrApp)))
 
 	mux := service.New(prop, nrApp)
 	srv := &http.Server{
