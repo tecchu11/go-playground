@@ -16,7 +16,7 @@ import (
 
 func init() {
 	slog.SetDefault(
-		slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo})),
+		slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})),
 	)
 }
 
@@ -32,7 +32,7 @@ func main() {
 		slog.Error("Failed to init newrelic Application", slog.String("error", err.Error()))
 		panic(err)
 	}
-	slog.SetDefault(slog.New(nrslog.New(nrApp)))
+	slog.SetDefault(nrslog.New(nrApp))
 
 	mux := service.New(prop, nrApp)
 	srv := &http.Server{
