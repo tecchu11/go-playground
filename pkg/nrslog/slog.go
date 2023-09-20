@@ -14,32 +14,32 @@ type Config struct {
 	enableNRLogForward bool
 }
 
-// NRHandlerOption is optional func for NRHandler.
-type NRHandlerOption func(*Config)
+// OptionFunc is optional func for nrHandler.
+type OptionFunc func(*Config)
 
-// WithHandler configure specific slog.Handler to NRHandler.
-func WithHandler(handler slog.Handler) NRHandlerOption {
-	return func(conf *Config) {
-		conf.handler = handler
+// WithHandler configure specific slog.Handler to nrHandler.
+func WithHandler(handler slog.Handler) OptionFunc {
+	return func(config *Config) {
+		config.handler = handler
 	}
 }
 
 // EnableNRLogForward determines whether logs are sent via newrelic go agent.
-func EnableNRLogForward() NRHandlerOption {
-	return func(conf *Config) {
-		conf.enableNRLogForward = true
+func EnableNRLogForward() OptionFunc {
+	return func(config *Config) {
+		config.enableNRLogForward = true
 	}
 }
 
-// NRHandler is a Handler that writes a record with newrelic metadata from the parent handler.
-type NRHandler struct {
+// nrHandler is a Handler that writes a record with newrelic metadata via the parent handler.
+type nrHandler struct {
 	parent             slog.Handler
 	app                *newrelic.Application
 	enableNRLogForward bool
 	appName            string
 }
 
-// New initialize NRHandler with given newrelic.Application and options.
+// New initialize slog.Logger consisted by nrHandler with given newrelic.Application and options.
 //
 // Example:
 //
@@ -50,45 +50,47 @@ type NRHandler struct {
 //		)
 //		// Init newrelic.Application
 //		app, _ := newrelic.NewApplication(newrelic.ConfigFromEnvironment())
-//		// Init NRHandler and then set Logger consited by NRHandler globally.
-//		slog.SetDefault(slog.New(nrslog.New(nrApp)))
+//		// Init NRLogger and then set Logger consited by NRHandler globally.
+//		slog.SetDefault(nrslog.New(nrApp))
 //	}
-func New(app *newrelic.Application, opts ...NRHandlerOption) *NRHandler {
-	conf := &Config{
+func New(app *newrelic.Application, opts ...OptionFunc) *slog.Logger {
+	config := &Config{
 		handler:            slog.Default().Handler(),
 		enableNRLogForward: false,
 	}
-	for _, opt := range opts {
-		opt(conf)
+	for _, optFunc := range opts {
+		optFunc(config)
 	}
 	nrConf, ok := app.Config()
 	if !ok {
-		return &NRHandler{
-			parent:             conf.handler,
+		handler := &nrHandler{
+			parent:             config.handler,
 			app:                app,
-			enableNRLogForward: conf.enableNRLogForward,
+			enableNRLogForward: config.enableNRLogForward,
 		}
+		return slog.New(handler)
 	}
-	return &NRHandler{
-		parent:             conf.handler,
+	handler := &nrHandler{
+		parent:             config.handler,
 		app:                app,
-		enableNRLogForward: conf.enableNRLogForward,
+		enableNRLogForward: config.enableNRLogForward,
 		appName:            nrConf.AppName,
 	}
+	return slog.New(handler)
 
 }
 
 // Handle writes logs via the parent Handler with newerlic metadata from newrelic.Transaction or newrelic.Application.
 // if enableNRLogForward is false, no logs are sent via newrelic go agent.
-func (h *NRHandler) Handle(ctx context.Context, record slog.Record) error {
+func (handler *nrHandler) Handle(ctx context.Context, record slog.Record) error {
 	txn := newrelic.FromContext(ctx)
-	if !h.enableNRLogForward {
+	if !handler.enableNRLogForward {
 		if txn == nil {
-			record.AddAttrs(slog.String(logcontext.KeyEntityName, h.appName))
-			return h.parent.Handle(ctx, record)
+			record.AddAttrs(slog.String(logcontext.KeyEntityName, handler.appName))
+			return handler.parent.Handle(ctx, record)
 		}
 		record.AddAttrs(nrAttrsFromTrasnsaction(txn)...)
-		return h.parent.Handle(ctx, record)
+		return handler.parent.Handle(ctx, record)
 	}
 	data := newrelic.LogData{
 		Timestamp: record.Time.UnixMilli(),
@@ -99,26 +101,26 @@ func (h *NRHandler) Handle(ctx context.Context, record slog.Record) error {
 		txn.RecordLog(data)
 		return nil
 	}
-	if h.app != nil {
-		h.app.RecordLog(data)
+	if handler.app != nil {
+		handler.app.RecordLog(data)
 		return nil
 	}
-	return h.parent.Handle(ctx, record)
+	return handler.parent.Handle(ctx, record)
 }
 
 // Enabled reports whether the handler handles records at the given level.
 // The handler ignores records whose level is lower.
-func (h *NRHandler) Enabled(ctx context.Context, level slog.Level) bool {
+func (h *nrHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return h.parent.Enabled(ctx, level)
 }
 
 // WithAttrs returns a new NRHandler whose attributes consists of h's attributes followed by attrs.
-func (h *NRHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &NRHandler{h.parent.WithAttrs(attrs), h.app, h.enableNRLogForward, h.appName}
+func (h *nrHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return &nrHandler{h.parent.WithAttrs(attrs), h.app, h.enableNRLogForward, h.appName}
 }
 
-func (h *NRHandler) WithGroup(name string) slog.Handler {
-	return &NRHandler{h.parent.WithGroup(name), h.app, h.enableNRLogForward, h.appName}
+func (h *nrHandler) WithGroup(name string) slog.Handler {
+	return &nrHandler{h.parent.WithGroup(name), h.app, h.enableNRLogForward, h.appName}
 }
 
 func nrAttrsFromTrasnsaction(txn *newrelic.Transaction) []slog.Attr {
