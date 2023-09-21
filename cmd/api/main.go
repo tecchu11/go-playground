@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"go-playground/cmd/service"
+	"go-playground/cmd/api/service"
 	"go-playground/configs"
 	"go-playground/pkg/nrslog"
 	"log/slog"

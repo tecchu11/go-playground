@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "cmd",
+            "program": "cmd/api",
             "env": {
                 "APP_ENV": "local"
             }
