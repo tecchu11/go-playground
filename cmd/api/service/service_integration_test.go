@@ -3,7 +3,7 @@ package service_test
 import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
-	"go-playground/cmd/service"
+	"go-playground/cmd/api/service"
 	"go-playground/configs"
 	"net/http"
 	"net/http/httptest"
