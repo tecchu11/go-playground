@@ -22,6 +22,7 @@ func slogMiddleware(next apiGatewayProxyHandler) apiGatewayProxyHandler {
 
 // handler handle event source APIGatewayProxyRequest.
 func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	slog.InfoContext(ctx, "Request was recived")
 	response := events.APIGatewayProxyResponse{
 		StatusCode: 200,
 		Body:       "\"Hello from Lambda!\"",
