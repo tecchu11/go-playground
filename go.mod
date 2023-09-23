@@ -3,6 +3,7 @@ module go-playground
 go 1.21.1
 
 require (
+	github.com/aws/aws-lambda-go v1.41.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/newrelic/go-agent/v3 v3.25.1
 	github.com/stretchr/testify v1.8.4
@@ -11,7 +12,6 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
-	github.com/aws/aws-lambda-go v1.41.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/klauspost/compress v1.16.3 // indirect
