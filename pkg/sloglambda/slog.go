@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambdacontext"
 )
 
+// New init slog.Logger configured lambda context attributes.
 func New(ctx context.Context) *slog.Logger {
 	lc, _ := lambdacontext.FromContext(ctx)
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}).WithAttrs(
