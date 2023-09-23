@@ -1,0 +1,20 @@
+name: Delete Image
+
+on:
+  workflow_run:
+    workflows:
+      - Build
+    types:
+      - completed
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old image when workflow success
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: go-playground-api
+          package-type: container
+          min-versions-to-keep: 2
