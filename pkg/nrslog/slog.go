@@ -82,15 +82,15 @@ func New(app *newrelic.Application, opts ...OptionFunc) *slog.Logger {
 
 // Handle writes logs via the parent Handler with newerlic metadata from newrelic.Transaction or newrelic.Application.
 // if enableNRLogForward is false, no logs are sent via newrelic go agent.
-func (handler *nrHandler) Handle(ctx context.Context, record slog.Record) error {
+func (h *nrHandler) Handle(ctx context.Context, record slog.Record) error {
 	txn := newrelic.FromContext(ctx)
-	if !handler.enableNRLogForward {
+	if !h.enableNRLogForward {
 		if txn == nil {
-			record.AddAttrs(slog.String(logcontext.KeyEntityName, handler.appName))
-			return handler.parent.Handle(ctx, record)
+			record.AddAttrs(slog.String(logcontext.KeyEntityName, h.appName))
+			return h.parent.Handle(ctx, record)
 		}
 		record.AddAttrs(nrAttrsFromTrasnsaction(txn)...)
-		return handler.parent.Handle(ctx, record)
+		return h.parent.Handle(ctx, record)
 	}
 	data := newrelic.LogData{
 		Timestamp: record.Time.UnixMilli(),
@@ -101,11 +101,11 @@ func (handler *nrHandler) Handle(ctx context.Context, record slog.Record) error 
 		txn.RecordLog(data)
 		return nil
 	}
-	if handler.app != nil {
-		handler.app.RecordLog(data)
+	if h.app != nil {
+		h.app.RecordLog(data)
 		return nil
 	}
-	return handler.parent.Handle(ctx, record)
+	return h.parent.Handle(ctx, record)
 }
 
 // Enabled reports whether the handler handles records at the given level.
