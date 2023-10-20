@@ -27,7 +27,7 @@ func main() {
 		slog.Error("Failed to load configuration", slog.String("env", env), slog.String("error", err.Error()))
 		panic(err)
 	}
-	nrApp, err := newrelicApp(env)
+	nrApp, err := newrelic.NewApplication(newrelic.ConfigFromEnvironment())
 	if err != nil {
 		slog.Error("Failed to init newrelic Application", slog.String("error", err.Error()))
 		panic(err)
@@ -65,12 +65,4 @@ func main() {
 	}
 	<-idleConnsClosed
 	slog.Info("Bye!!")
-}
-
-// newrelicApp init *newrelic.Application. If env is local, *newrelic.Application is nil.
-func newrelicApp(env string) (*newrelic.Application, error) {
-	if env == "local" {
-		return nil, nil
-	}
-	return newrelic.NewApplication(newrelic.ConfigFromEnvironment())
 }

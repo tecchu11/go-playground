@@ -10,9 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "cmd/api",
-            "env": {
-                "APP_ENV": "local"
-            }
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }
