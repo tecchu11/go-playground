@@ -10,8 +10,30 @@ env:
   IMAGE_NAME: go-playground-api
 
 jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    outputs:
+      env_name: ${{ steps.evaluate-env.outputs.name }}
+    steps:
+      - name: evaluate env
+        id: evaluate-env
+        shell: bash
+        env:
+          isDev: ${{ contains(github.ref, 'dev') }}
+        run: |
+          if $isDev; then
+            echo "name=dev" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=prd" >> "$GITHUB_OUTPUT"
+          fi
+      - name: show env name
+        shell: bash
+        run: echo ${{ steps.evaluate-env.outputs.name }}
+          
   build:
     runs-on: ubuntu-latest
+    needs: evaluate
+    if: needs.evaluate.outputs.env_name == 'prd'
     steps:
       - uses: actions/checkout@v4
       - uses: docker/login-action@v3
