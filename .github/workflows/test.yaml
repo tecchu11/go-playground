@@ -1,0 +1,26 @@
+name: Test
+run-name: Test by ${{ inputs.env_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      env_name:
+        description: env name
+        required: true
+        type: string
+
+env:
+  ENV_NAME: ${{ fromJson(vars.ENV_NAME)[github.event.inputs.env_name] }}
+
+jobs:
+  test:
+     runs-on: ubuntu-latest
+     steps:
+      - name: validate
+        if: env.ENV_NAME == ''
+        shell: bash
+        run: exit 1
+      - name: test by ${{ inputs.env_name }}
+        shell: bash
+        run: echo ${{ fromJson(vars.ENV_NAME)[github.event.inputs.env_name] }}
+
