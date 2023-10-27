@@ -4,7 +4,7 @@ run-name: Test by ${{ inputs.env_name }}
 on:
   push:
     tags: 
-      - "*/v*"
+      - "**"
   workflow_dispatch:
     inputs:
       env_name:
@@ -17,6 +17,7 @@ env:
 
 jobs:
   test-variable:
+     if: false
      runs-on: ubuntu-latest
      steps:
       - name: exit on undefined input
@@ -34,8 +35,6 @@ jobs:
         id: meta
         with:
           images: ghcr.io/${{ github.actor }}/test
-          tags: type=semver,pattern={{major}}.{{minor}}.{{patch}}
+          tags: type=match,pattern=v(.*),group=1
           flavor: latest=false
       - run: echo ${{ steps.meta.outputs.tags }}
-
-
