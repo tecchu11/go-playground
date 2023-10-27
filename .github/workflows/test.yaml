@@ -2,6 +2,9 @@ name: Test
 run-name: Test by ${{ inputs.env_name }}
 
 on:
+  push:
+    tags: 
+      - "*"
   workflow_dispatch:
     inputs:
       env_name:
@@ -13,14 +16,26 @@ env:
   ENV_NAME: ${{ fromJson(vars.ENV_NAME)[github.event.inputs.env_name] }}
 
 jobs:
-  test:
+  test-variable:
      runs-on: ubuntu-latest
      steps:
-      - name: validate
+      - name: exit on undefined input
         if: env.ENV_NAME == ''
         shell: bash
         run: exit 1
       - name: test by ${{ inputs.env_name }}
         shell: bash
         run: echo ${{ fromJson(vars.ENV_NAME)[github.event.inputs.env_name] }}
+  test-metada:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/${{ github.actor }}/test
+          tags: type=semver,pattern={{major}}.{{minor}}.{{patch}}
+          flavor: latest=false
+      - run: echo ${{ steps.meta.outputs.tags }}
+
 
