@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go-playground/cmd/api/service"
 	"go-playground/configs"
 	"go-playground/pkg/nrslog"
@@ -14,27 +15,19 @@ import (
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
-func init() {
-	slog.SetDefault(
-		slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})),
-	)
-}
-
 func main() {
 	env := os.Getenv("APP_ENV")
 	prop, err := configs.Load(env)
 	if err != nil {
-		slog.Error("Failed to load configuration", slog.String("env", env), slog.String("error", err.Error()))
-		panic(err)
+		panic(fmt.Sprintf("failed to load config with env %s: %v", env, err))
 	}
-	nrApp, err := newrelic.NewApplication(newrelic.ConfigFromEnvironment())
+	app, err := newrelic.NewApplication(newrelic.ConfigFromEnvironment())
 	if err != nil {
-		slog.Error("Failed to init newrelic Application", slog.String("error", err.Error()))
-		panic(err)
+		panic(fmt.Sprintf("failed to init newrelic app: %v", err))
 	}
-	slog.SetDefault(nrslog.New(nrApp))
+	slog.SetDefault(slog.New(nrslog.NewNRJSONHandler(app, &slog.HandlerOptions{AddSource: true})))
 
-	mux := service.New(prop, nrApp)
+	mux := service.New(prop, app)
 	srv := &http.Server{
 		Addr:         prop.ServerConfig.Address,
 		ReadTimeout:  prop.ServerConfig.ReadTimeout,
