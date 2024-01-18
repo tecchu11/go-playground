@@ -3,7 +3,7 @@ module go-playground
 go 1.21.5
 
 require (
-	github.com/aws/aws-lambda-go v1.43.0
+	github.com/aws/aws-lambda-go v1.45.0
 	github.com/go-chi/chi/v5 v5.0.11
 	github.com/newrelic/go-agent/v3 v3.29.0
 	github.com/stretchr/testify v1.8.4
