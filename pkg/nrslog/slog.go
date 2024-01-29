@@ -2,6 +2,7 @@ package nrslog
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"os"
 
@@ -15,18 +16,18 @@ type nrJSONHandler struct {
 	app    *newrelic.Application
 }
 
-// NewNRJSONHandler creates nrJSONHandler.
-func NewNRJSONHandler(app *newrelic.Application, opts *slog.HandlerOptions) slog.Handler {
+// NewJSONHandler creates nrJSONHandler.
+func NewJSONHandler(app *newrelic.Application, opts *slog.HandlerOptions) (slog.Handler, error) {
 	if opts == nil {
 		opts = &slog.HandlerOptions{}
 	}
 	base := slog.NewJSONHandler(os.Stdout, opts)
 	conf, ok := app.Config()
 	if !ok {
-		return base
+		return nil, errors.New("missing newrelic.Application because of Application being not yet fully initialized.")
 	}
 	decorated := base.WithAttrs([]slog.Attr{slog.String(logcontext.KeyEntityName, conf.AppName)})
-	return &nrJSONHandler{parent: decorated, app: app}
+	return &nrJSONHandler{parent: decorated, app: app}, nil
 }
 
 // Handle writes logs via the parent Handler with newerlic metadata from newrelic.Transaction or newrelic.Application.

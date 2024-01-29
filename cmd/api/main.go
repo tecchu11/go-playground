@@ -25,7 +25,11 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("failed to init newrelic app: %v", err))
 	}
-	slog.SetDefault(slog.New(nrslog.NewNRJSONHandler(app, &slog.HandlerOptions{AddSource: true})))
+	nrHandler, err := nrslog.NewJSONHandler(app, &slog.HandlerOptions{AddSource: true})
+	if err != nil {
+		panic(err)
+	}
+	slog.SetDefault(slog.New(nrHandler))
 
 	mux := service.New(prop, app)
 	srv := &http.Server{
