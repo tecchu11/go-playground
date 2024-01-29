@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
@@ -43,10 +44,10 @@ func main() {
 	idleConnsClosed := make(chan struct{})
 	go func() {
 		sigint := make(chan os.Signal, 1)
-		signal.Notify(sigint, os.Interrupt)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGTERM)
 		<-sigint
 
-		slog.Info("We received an interrupt signal,so attempt to shut down with gracefully")
+		slog.Info("We received an interrupt signal,so attempt to shutdown with gracefully")
 		ctx, cancel := context.WithTimeout(context.Background(), prop.ServerConfig.GraceTimeout)
 		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
