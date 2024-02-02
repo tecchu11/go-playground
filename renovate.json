@@ -1,6 +1,23 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base"
+    "config:recommended"
+  ],
+  "timezone": "Asia/Tokyo",
+  "labels": [
+    "renovate"
+  ],
+  "packageRules": [
+    {
+      "groupName": "golang-version",
+      "matchManagers": [
+        "dockerfile",
+        "gomod"
+      ],
+      "matchPackageNames": [
+        "go",
+        "golang"
+      ]
+    }
   ]
 }

@@ -1,10 +1,10 @@
-name: renovate
+name: Renovate
 run-name: CI for renovate
 on:
   pull_request:
 
 jobs:
-  go-sum:
+  fix-go-sum:
     if: startsWith(github.head_ref, 'renovate')
     runs-on: ubuntu-latest
     steps:
@@ -15,15 +15,21 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: ./go.mod
-      - run: go mod tidy
-      - id: check-diff
-        run: git diff --exit-code
+      
+      - name: go mod tidy
+        run: go mod tidy
+
+      - name: check diff
+        id: check-diff
+        run: git diff --name-only --exit-code
         continue-on-error: true
-      - run: |
+
+      - name: commit and push on diff
+        if: steps.check-diff.outcome == 'failure'
+        run: |
           git checkout ${{ github.head_ref }}
           git config --local user.name github-actions[bot]
           git config --local user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add .
           git commit -m 'apply go mod tidy'
           git push
-        if: steps.check-diff.outcome == 'failure'
