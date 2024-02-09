@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"context"
+	"go-playground/pkg/router"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
@@ -17,29 +17,16 @@ func NewrelicTxn(app *newrelic.Application) func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-
-			txn := app.StartTransaction("")
+			pattern := router.RoutePattern(r)
+			txn := app.StartTransaction(pattern)
 			defer txn.End()
-
 			txn.SetWebRequestHTTP(r)
 			w = txn.SetWebResponse(w)
 			ctx := newrelic.NewContext(r.Context(), txn)
 			next.ServeHTTP(w, r.WithContext(ctx))
-			txn.SetName(txnName(ctx, r.Method))
 		})
 		return fn
 	}
-}
-
-// txnName return transaction name. Transaction name format is "(MethodName) (Pattern)".
-// chi defines pattern after handled request and response, so please call this func after serve http.
-// Transaction name is "ErrorHandler" when handled by the handler registered with chi.Mux.NotFound.
-func txnName(ctx context.Context, method string) string {
-	p := chi.RouteContext(ctx).RoutePattern()
-	if p == "" {
-		return "ErrorHandler"
-	}
-	return method + " " + p
 }
 
 // RequestID is purpose for response to client.
