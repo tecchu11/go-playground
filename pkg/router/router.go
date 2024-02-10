@@ -9,6 +9,7 @@ import (
 // Router is wrapper of http.ServeMux.
 type Router struct {
 	mux                    *http.ServeMux
+	chainedMiddleware      func(http.Handler) http.Handler
 	notfound               ErrorResponseFunc
 	notfoundPattern        string
 	methodNotAllowed       ErrorResponseFunc
@@ -17,6 +18,7 @@ type Router struct {
 
 type (
 	routerOption struct {
+		chainedMiddleware      func(http.Handler) http.Handler
 		notfound               ErrorResponseFunc
 		notfoundPattern        string
 		methodNotAllowed       ErrorResponseFunc
@@ -54,6 +56,20 @@ func MethodNotAllowedPattern(val string) RouterOptionFunc {
 	}
 }
 
+// Middlewares registers chained middleware from given middleware.
+// Chained middleware is used for all handler.
+func Middlewares(val ...func(http.Handler) http.Handler) RouterOptionFunc {
+	return func(ro *routerOption) {
+		fn := func(next http.Handler) http.Handler {
+			for i := len(val) - 1; i >= 0; i-- {
+				next = val[i](next)
+			}
+			return next
+		}
+		ro.chainedMiddleware = fn
+	}
+}
+
 const (
 	defaultNotfoundPattern         = "DefaultNotFoundHandler"
 	defaultMethodNotAllowedPattern = "DefaultMethodNotAllowedHandler"
@@ -62,6 +78,7 @@ const (
 // New init Router with given RouterOptionFunc.
 func New(options ...RouterOptionFunc) *Router {
 	opt := routerOption{
+		chainedMiddleware:      nil,
 		notfound:               defaultErrorWriter,
 		notfoundPattern:        defaultNotfoundPattern,
 		methodNotAllowed:       defaultErrorWriter,
@@ -72,6 +89,7 @@ func New(options ...RouterOptionFunc) *Router {
 	}
 	return &Router{
 		mux:                    http.NewServeMux(),
+		chainedMiddleware:      opt.chainedMiddleware,
 		notfound:               opt.notfound,
 		notfoundPattern:        opt.notfoundPattern,
 		methodNotAllowed:       opt.methodNotAllowed,
@@ -102,7 +120,11 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// Therefore, a custom ResponseWriter can be passed to the next handler to return a custom defined response.
 		interceptor := newResponseInterceptor(w, r, router.notfound, router.methodNotAllowed)
 		ctx := context.WithValue(r.Context(), routePatternContextKey, router.notfoundPattern)
-		next.ServeHTTP(interceptor, r.WithContext(ctx))
+		if router.chainedMiddleware == nil {
+			next.ServeHTTP(interceptor, r.WithContext(ctx))
+			return
+		}
+		router.chainedMiddleware(next).ServeHTTP(interceptor, r.WithContext(ctx))
 		return
 	}
 	next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), routePatternContextKey, pattern)))
@@ -110,12 +132,19 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Handle registers the handler for the given pattern. If the given pattern conflicts, with one that is already registered, Handle panics.
 func (router *Router) Handle(pattern string, handler http.Handler) {
-	router.mux.Handle(pattern, handler)
+	if router.chainedMiddleware == nil {
+		router.mux.Handle(pattern, handler)
+		return
+	}
+	router.mux.Handle(pattern, router.chainedMiddleware(handler))
 }
 
 // HandleFunc registers the handler function for the given pattern. If the given pattern conflicts, with one that is already registered, HandleFunc panics.
 func (router *Router) HandleFunc(pattern string, handler http.HandlerFunc) {
-	router.mux.HandleFunc(pattern, handler)
+	if router.chainedMiddleware == nil {
+		router.mux.HandleFunc(pattern, handler)
+	}
+	router.mux.HandleFunc(pattern, router.chainedMiddleware(handler).ServeHTTP)
 }
 
 // RoutePattern finds pattern registered Router.
