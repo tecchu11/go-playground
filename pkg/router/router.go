@@ -1,3 +1,4 @@
+// Package router implements multiplexer based on http.ServeMux.
 package router
 
 import (
@@ -8,25 +9,25 @@ import (
 // Router is wrapper of http.ServeMux.
 type Router struct {
 	mux                    *http.ServeMux
-	notfound               http.Handler
+	notfound               ErrorResponseFunc
 	notfoundPattern        string
-	methodNotAllowed       http.Handler
+	methodNotAllowed       ErrorResponseFunc
 	methodNotAllowsPattern string
 }
 
 type (
 	routerOption struct {
-		notfound               http.Handler
+		notfound               ErrorResponseFunc
 		notfoundPattern        string
-		methodNotAllowed       http.Handler
+		methodNotAllowed       ErrorResponseFunc
 		methodNotAllowsPattern string
 	}
 	// RouterOptionFunc is optional function pattern for Router.
 	RouterOptionFunc func(*routerOption)
 )
 
-// NotFoundHandler registers given to router.
-func NotFoundHandler(val http.Handler) RouterOptionFunc {
+// NotFoundHandler registers given ErrorResponseFunc to router.
+func NotFoundHandler(val ErrorResponseFunc) RouterOptionFunc {
 	return func(ro *routerOption) {
 		ro.notfound = val
 	}
@@ -39,8 +40,8 @@ func NotFoundHandlerPattern(val string) RouterOptionFunc {
 	}
 }
 
-// MethodNotAllowed registers given handler to router.
-func MethodNotAllowed(val http.Handler) RouterOptionFunc {
+// MethodNotAllowed registers given ErrorResponseFunc to router.
+func MethodNotAllowed(val ErrorResponseFunc) RouterOptionFunc {
 	return func(ro *routerOption) {
 		ro.methodNotAllowed = val
 	}
@@ -53,17 +54,6 @@ func MethodNotAllowedPattern(val string) RouterOptionFunc {
 	}
 }
 
-var (
-	defaultNotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write(nil)
-	})
-	defaultMethodNotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Write(nil)
-	})
-)
-
 const (
 	defaultNotfoundPattern         = "DefaultNotFoundHandler"
 	defaultMethodNotAllowedPattern = "DefaultMethodNotAllowedHandler"
@@ -72,9 +62,9 @@ const (
 // New init Router with given RouterOptionFunc.
 func New(options ...RouterOptionFunc) *Router {
 	opt := routerOption{
-		notfound:               defaultNotFoundHandler,
+		notfound:               defaultErrorWriter,
 		notfoundPattern:        defaultNotfoundPattern,
-		methodNotAllowed:       defaultMethodNotFoundHandler,
+		methodNotAllowed:       defaultErrorWriter,
 		methodNotAllowsPattern: defaultMethodNotAllowedPattern,
 	}
 	for _, fn := range options {
@@ -107,11 +97,13 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	next, pattern := router.mux.Handler(r)
 	if pattern == "" {
-		// TODO find solution to determine whether next handle is http.NotFoundHandler
-		router.notfound.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), routePatternContextKey, router.notfoundPattern)))
+		// pattern is empty when http.ServeMux determines request is 404 or 405.
+		// ServeMux does not provide a way to write custom 404, 405 responses.
+		// Therefore, a custom ResponseWriter can be passed to the next handler to return a custom defined response.
+		interceptor := newResponseInterceptor(w, r, router.notfound, router.methodNotAllowed)
+		ctx := context.WithValue(r.Context(), routePatternContextKey, router.notfoundPattern)
+		next.ServeHTTP(interceptor, r.WithContext(ctx))
 		return
-		// router.methodNotAllowed.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), routePatternContextKey, router.methodNotAllowsPattern)))
-		// return
 	}
 	next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), routePatternContextKey, pattern)))
 }
