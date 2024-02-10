@@ -27,10 +27,7 @@ func New(prop *configs.ApplicationProperties, nrApp *newrelic.Application) *rout
 	// init handler
 	helloHandler := handler.NewHelloHandler(jsonResponse)
 	// init router
-	r := router.New(
-		router.MethodNotAllowed(newrelicMiddleware(recoverMiddleware(handler.MethodNotAllowedHandler(jsonResponse)))),
-		router.NotFoundHandler(newrelicMiddleware(recoverMiddleware(handler.NotFoundHandler(jsonResponse)))),
-	)
+	r := router.New()
 	// init routing
 	r.Handle("GET /statuses", newrelicMiddleware(recoverMiddleware(handler.StatusHandler(jsonResponse))))
 	r.Handle("GET /hello", newrelicMiddleware(recoverMiddleware(generalAuth(helloHandler.GetName()))))
