@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Delete old image when workflow success
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
-        uses: actions/delete-package-versions@v4
+        uses: actions/delete-package-versions@v5
         with:
           package-name: go-playground-api
           package-type: container
