@@ -1,14 +1,15 @@
 package service_test
 
 import (
-	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"go-playground/cmd/api/service"
 	"go-playground/configs"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -29,28 +30,32 @@ func TestNoResources(t *testing.T) {
 		inMethod    string
 		inResources string
 		wantCode    int
-		wantBody    map[string]string
+		wantBody    []byte
 	}{
 		"no resources with get method and then 404": {
 			inMethod:    "GET",
 			inResources: "/",
 			wantCode:    404,
-			wantBody:    map[string]string{"detail": "/ resource does not exist", "instant": "/", "request_id": "", "title": "Resource Not Found", "type": "not:blank"}},
+			wantBody:    []byte{},
+		},
 		"no resources with post method and then 404": {
 			inMethod:    "POST",
 			inResources: "/",
 			wantCode:    404,
-			wantBody:    map[string]string{"detail": "/ resource does not exist", "instant": "/", "request_id": "", "title": "Resource Not Found", "type": "not:blank"}},
+			wantBody:    []byte{},
+		},
 		"no resources with put method and then 404": {
 			inMethod:    "PUT",
 			inResources: "/",
 			wantCode:    404,
-			wantBody:    map[string]string{"detail": "/ resource does not exist", "instant": "/", "request_id": "", "title": "Resource Not Found", "type": "not:blank"}},
+			wantBody:    []byte{},
+		},
 		"no resources with delete method and then 404": {
 			inMethod:    "DELETE",
 			inResources: "/",
 			wantCode:    404,
-			wantBody:    map[string]string{"detail": "/ resource does not exist", "instant": "/", "request_id": "", "title": "Resource Not Found", "type": "not:blank"}},
+			wantBody:    []byte{},
+		},
 	}
 
 	for k, v := range tests {
@@ -59,12 +64,11 @@ func TestNoResources(t *testing.T) {
 			assert.NoError(t, err)
 			res, err := client.Do(req)
 			assert.NoError(t, err)
-
-			var gotBody map[string]string
-			err = json.NewDecoder(res.Body).Decode(&gotBody)
+			got, err := io.ReadAll(res.Body)
+			defer res.Body.Close()
 			assert.NoError(t, err)
 			assert.Equal(t, v.wantCode, res.StatusCode)
-			assert.Equal(t, v.wantBody, gotBody)
+			assert.Equal(t, v.wantBody, got)
 		})
 	}
 }
@@ -74,18 +78,20 @@ func TestStatusHandler(t *testing.T) {
 		inMethod    string
 		inResources string
 		wantCode    int
-		wantBody    map[string]string
+		wantBody    []byte
 	}{
 		"/statuses and then success": {
 			inMethod:    "GET",
 			inResources: "/statuses",
 			wantCode:    200,
-			wantBody:    map[string]string{"status": "ok"}},
+			wantBody:    []byte("{\"status\":\"ok\"}\n"),
+		},
 		"/statuses with post method and then 405": {
 			inMethod:    "POST",
 			inResources: "/statuses",
 			wantCode:    405,
-			wantBody:    map[string]string{"detail": "Http method POST is not allowed for /statuses resource", "instant": "/statuses", "request_id": "", "title": "Method Not Allowed", "type": "not:blank"}},
+			wantBody:    []byte{},
+		},
 	}
 
 	for k, v := range tests {
@@ -94,12 +100,11 @@ func TestStatusHandler(t *testing.T) {
 			assert.NoError(t, err)
 			res, err := client.Do(req)
 			assert.NoError(t, err)
-
-			var gotBody map[string]string
-			err = json.NewDecoder(res.Body).Decode(&gotBody)
+			got, err := io.ReadAll(res.Body)
+			defer res.Body.Close()
 			assert.NoError(t, err)
 			assert.Equal(t, v.wantCode, res.StatusCode)
-			assert.Equal(t, v.wantBody, gotBody)
+			assert.Equal(t, v.wantBody, got)
 		})
 	}
 }
@@ -110,30 +115,36 @@ func TestHelloHandler_GetName(t *testing.T) {
 		inResources string
 		inHeader    map[string]string
 		wantCode    int
-		wantBody    map[string]string
+		wantBody    []byte
 	}{
 		"/hello with valid token and then success": {
 			inMethod:    "GET",
 			inResources: "/hello",
-			inHeader:    map[string]string{"Authorization": "admin"}, wantCode: 200, wantBody: map[string]string{"message": "Hello tecchu11(ADMIN)!! You have Admin role."}},
+			inHeader:    map[string]string{"Authorization": "admin"},
+			wantCode:    200,
+			wantBody:    []byte("{\"message\":\"Hello tecchu11(ADMIN)!! You have Admin role.\"}\n"),
+		},
 		"/hello with invalid token and then 401": {
 			inMethod:    "GET",
 			inResources: "/hello",
 			inHeader:    map[string]string{"Authorization": "no-auth"},
 			wantCode:    401,
-			wantBody:    map[string]string{"detail": "Request token was not found in your request header", "instant": "/hello", "request_id": "", "title": "Request With No Authentication", "type": "not:blank"}},
+			wantBody:    []byte("{\"type\":\"not:blank\",\"title\":\"Request With No Authentication\",\"detail\":\"Request token was not found in your request header\",\"instant\":\"/hello\",\"request_id\":\"\"}\n"),
+		},
 		"/hello with missing token and then 401": {
 			inMethod:    "GET",
 			inResources: "/hello",
 			inHeader:    map[string]string{},
 			wantCode:    401,
-			wantBody:    map[string]string{"detail": "Request token was not found in your request header", "instant": "/hello", "request_id": "", "title": "Request With No Authentication", "type": "not:blank"}},
+			wantBody:    []byte("{\"type\":\"not:blank\",\"title\":\"Request With No Authentication\",\"detail\":\"Request token was not found in your request header\",\"instant\":\"/hello\",\"request_id\":\"\"}\n"),
+		},
 		"/hello with post method and then 405": {
 			inMethod:    "POST",
 			inResources: "/hello",
 			inHeader:    map[string]string{"Authorization": "admin"},
 			wantCode:    405,
-			wantBody:    map[string]string{"detail": "Http method POST is not allowed for /hello resource", "instant": "/hello", "request_id": "", "title": "Method Not Allowed", "type": "not:blank"}},
+			wantBody:    []byte{},
+		},
 	}
 
 	for k, v := range tests {
@@ -146,11 +157,11 @@ func TestHelloHandler_GetName(t *testing.T) {
 			res, err := client.Do(req)
 			assert.NoError(t, err)
 
-			var gotBody map[string]string
-			err = json.NewDecoder(res.Body).Decode(&gotBody)
+			got, err := io.ReadAll(res.Body)
+			defer res.Body.Close()
 			assert.NoError(t, err)
 			assert.Equal(t, v.wantCode, res.StatusCode)
-			assert.Equal(t, v.wantBody, gotBody)
+			assert.Equal(t, v.wantBody, got)
 		})
 	}
 
