@@ -4,7 +4,7 @@ go 1.22.1
 
 require (
 	github.com/aws/aws-lambda-go v1.46.0
-	github.com/newrelic/go-agent/v3 v3.31.0
+	github.com/newrelic/go-agent/v3 v3.32.0
 	github.com/stretchr/testify v1.9.0
 	gopkg.in/yaml.v3 v3.0.1
 )
