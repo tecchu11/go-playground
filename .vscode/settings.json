@@ -1,4 +1,7 @@
 {
     "files.autoSave": "afterDelay",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "cSpell.words": [
+        "problemdetails"
+    ]
 }
