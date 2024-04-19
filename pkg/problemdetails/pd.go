@@ -18,7 +18,9 @@ type Builder[T any] interface {
 	WithType(string) Builder[T]
 	WithDetail(string) Builder[T]
 	WithAdditional(T) Builder[T]
-	JSON(http.ResponseWriter, *http.Request)
+
+	Write(http.ResponseWriter, *http.Request)
+	JSON(*http.Request) ([]byte, error)
 }
 
 func NewWithType[T any](title string, status int) Builder[T] {
@@ -52,9 +54,14 @@ func (pb *problemDetails[T]) WithAdditional(t T) Builder[T] {
 	return pb
 }
 
-func (pb *problemDetails[T]) JSON(w http.ResponseWriter, r *http.Request) {
+func (pb *problemDetails[T]) Write(w http.ResponseWriter, r *http.Request) {
 	pb.Instance = r.URL.Path
 	w.Header().Add("Content-Type", "application/problem+json")
 	w.WriteHeader(pb.Status)
 	json.NewEncoder(w).Encode(pb)
+}
+
+func (pb *problemDetails[T]) JSON(r *http.Request) ([]byte, error) {
+	pb.Instance = r.URL.Path
+	return json.Marshal(pb)
 }

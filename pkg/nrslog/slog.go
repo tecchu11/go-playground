@@ -12,8 +12,8 @@ import (
 
 // nrJSONHandler is a Handler that writes a record with newrelic metadata via the parent handler.
 type nrJSONHandler struct {
-	parent slog.Handler
-	app    *newrelic.Application
+	slog.Handler
+	app *newrelic.Application
 }
 
 // NewJSONHandler creates nrJSONHandler.
@@ -24,35 +24,29 @@ func NewJSONHandler(app *newrelic.Application, opts *slog.HandlerOptions) (slog.
 	base := slog.NewJSONHandler(os.Stdout, opts)
 	conf, ok := app.Config()
 	if !ok {
-		return nil, errors.New("missing newrelic.Application because of Application being not yet fully initialized.")
+		return nil, errors.New("missing newrelic.Application because of Application being not yet fully initialized")
 	}
 	decorated := base.WithAttrs([]slog.Attr{slog.String(logcontext.KeyEntityName, conf.AppName)})
-	return &nrJSONHandler{parent: decorated, app: app}, nil
+	return &nrJSONHandler{Handler: decorated, app: app}, nil
 }
 
 // Handle writes logs via the parent Handler with newerlic metadata from newrelic.Transaction or newrelic.Application.
 func (h *nrJSONHandler) Handle(ctx context.Context, record slog.Record) error {
 	txn := newrelic.FromContext(ctx)
 	if txn == nil {
-		return h.parent.Handle(ctx, record)
+		return h.Handler.Handle(ctx, record)
 	}
 	record.AddAttrs(nrAttrs(txn)...)
-	return h.parent.Handle(ctx, record)
-}
-
-// Enabled reports whether the handler handles records at the given level.
-// The handler ignores records whose level is lower.
-func (h *nrJSONHandler) Enabled(ctx context.Context, level slog.Level) bool {
-	return h.parent.Enabled(ctx, level)
+	return h.Handler.Handle(ctx, record)
 }
 
 // WithAttrs returns a new nrJSONHandler whose attributes consists of h's attributes followed by attrs.
 func (h *nrJSONHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &nrJSONHandler{parent: h.parent.WithAttrs(attrs), app: h.app}
+	return &nrJSONHandler{Handler: h.Handler.WithAttrs(attrs), app: h.app}
 }
 
 func (h *nrJSONHandler) WithGroup(name string) slog.Handler {
-	return &nrJSONHandler{parent: h.parent.WithGroup(name), app: h.app}
+	return &nrJSONHandler{Handler: h.Handler.WithGroup(name), app: h.app}
 }
 
 func nrAttrs(txn *newrelic.Transaction) []slog.Attr {
@@ -64,3 +58,5 @@ func nrAttrs(txn *newrelic.Transaction) []slog.Attr {
 		slog.String(logcontext.KeyHostname, txn.GetLinkingMetadata().Hostname),
 	}
 }
+
+var _ slog.Handler = (*nrJSONHandler)(nil)

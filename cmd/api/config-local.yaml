@@ -5,10 +5,3 @@ server:
   write_timeout: 10s
   idle_timeout: 120s
   grace_timeout: 20s
-auth:
-  - name: tecchu11(ADMIN)
-    role: Admin
-    key: admin
-  - name: tecchu11(USER)
-    role: User
-    key: user
