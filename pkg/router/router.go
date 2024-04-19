@@ -1,110 +1,70 @@
-// Package router implements multiplexer based on http.ServeMux.
 package router
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 )
 
-// Router is wrapper of http.ServeMux.
+// ErrMarshalFunc marshals 404 or 405 response body with given http.Request.
+type ErrMarshalFunc func(*http.Request) ([]byte, error)
+
+type Middleware func(next http.Handler) http.Handler
+
+// Router is a router based on http.ServeMux.
+// It uses the routing feature of http.ServeMux,
+// but has been extended to return a user-defined response body when the HTTP Status Code is 404 or 405.
 type Router struct {
-	mux                    *http.ServeMux
-	chainedMiddleware      func(http.Handler) http.Handler
-	notfound               ErrorResponseFunc
-	notfoundPattern        string
-	methodNotAllowed       ErrorResponseFunc
-	methodNotAllowsPattern string
+	*http.ServeMux
+	middleware Middleware
+	marshal404 ErrMarshalFunc
+	marshal405 ErrMarshalFunc
 }
 
-type (
-	routerOption struct {
-		chainedMiddleware      func(http.Handler) http.Handler
-		notfound               ErrorResponseFunc
-		notfoundPattern        string
-		methodNotAllowed       ErrorResponseFunc
-		methodNotAllowsPattern string
-	}
-	// RouterOptionFunc is optional function pattern for Router.
-	RouterOptionFunc func(*routerOption)
-)
+// Option configures Router.
+type Option func(*Router)
 
-// NotFoundHandler registers given ErrorResponseFunc to router.
-func NotFoundHandler(val ErrorResponseFunc) RouterOptionFunc {
-	return func(ro *routerOption) {
-		ro.notfound = val
+// WithMiddleware configures middleware wraps any http.Handler
+func WithMiddleware(mid Middleware) Option {
+	return func(r *Router) {
+		r.middleware = mid
 	}
 }
 
-// NotFoundHandlerPattern is used router pattern when request is dispatched not found handler.
-func NotFoundHandlerPattern(val string) RouterOptionFunc {
-	return func(ro *routerOption) {
-		ro.notfoundPattern = val
+// With404Func configures ErrMarshalFunc for 404.
+func With404Func(fn ErrMarshalFunc) Option {
+	return func(r *Router) {
+		r.marshal404 = fn
 	}
 }
 
-// MethodNotAllowed registers given ErrorResponseFunc to router.
-func MethodNotAllowed(val ErrorResponseFunc) RouterOptionFunc {
-	return func(ro *routerOption) {
-		ro.methodNotAllowed = val
+// With405Func configures ErrMarshalFunc for 405.
+func With405Func(fn ErrMarshalFunc) Option {
+	return func(r *Router) {
+		r.marshal405 = fn
 	}
 }
 
-// MethodNotAllowedPattern is used router pattern when request is dispatched method not allowed handler.
-func MethodNotAllowedPattern(val string) RouterOptionFunc {
-	return func(ro *routerOption) {
-		ro.methodNotAllowsPattern = val
+// New initializes Router with given options.
+// By default, 404 and 405 Response Bodies are written as nil.
+func New(opts ...Option) *Router {
+	router := Router{
+		ServeMux:   http.NewServeMux(),
+		marshal404: defaultErrMarshal,
+		marshal405: defaultErrMarshal,
 	}
+	for _, opt := range opts {
+		opt(&router)
+	}
+	return &router
 }
 
-// Middlewares registers chained middleware from given middleware.
-// Chained middleware is used for all handler.
-func Middlewares(val ...func(http.Handler) http.Handler) RouterOptionFunc {
-	return func(ro *routerOption) {
-		fn := func(next http.Handler) http.Handler {
-			for i := len(val) - 1; i >= 0; i-- {
-				next = val[i](next)
-			}
-			return next
-		}
-		ro.chainedMiddleware = fn
-	}
-}
-
-const (
-	defaultNotfoundPattern         = "DefaultNotFoundHandler"
-	defaultMethodNotAllowedPattern = "DefaultMethodNotAllowedHandler"
-)
-
-// New init Router with given RouterOptionFunc.
-func New(options ...RouterOptionFunc) *Router {
-	opt := routerOption{
-		chainedMiddleware:      nil,
-		notfound:               defaultErrorWriter,
-		notfoundPattern:        defaultNotfoundPattern,
-		methodNotAllowed:       defaultErrorWriter,
-		methodNotAllowsPattern: defaultMethodNotAllowedPattern,
-	}
-	for _, fn := range options {
-		fn(&opt)
-	}
-	return &Router{
-		mux:                    http.NewServeMux(),
-		chainedMiddleware:      opt.chainedMiddleware,
-		notfound:               opt.notfound,
-		notfoundPattern:        opt.notfoundPattern,
-		methodNotAllowed:       opt.methodNotAllowed,
-		methodNotAllowsPattern: opt.methodNotAllowsPattern,
-	}
-}
-
-var routePatternContextKey struct{}
+type patternCtxKey struct{}
 
 // ServeHTTP dispatches the request to the handler whose pattern most closely matches the request URL.
 //
-// The pattern is registered in the request context and can be retrieved from RoutePattern function.
-// It will be the registered path matching the request, or in the case of an internally generated redirect, the path to match after the redirect.
-//
-// This method is based on ServeMux.ServeHTTP. So check ServeMux.ServeHTTP for details.
+// The logic to determines the handler uses Handler method provided by http.ServeMux.
+// This also tries to conform to the behavior of ServeMux.ServeHTTP as much as possible.
 func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.RequestURI == "*" {
 		if r.ProtoAtLeast(1, 1) {
@@ -113,43 +73,42 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	next, pattern := router.mux.Handler(r)
+	next, pattern := router.ServeMux.Handler(r)
 	if pattern == "" {
-		// pattern is empty when http.ServeMux determines request is 404 or 405.
-		// ServeMux does not provide a way to write custom 404, 405 responses.
-		// Therefore, a custom ResponseWriter can be passed to the next handler to return a custom defined response.
-		interceptor := newResponseInterceptor(w, r, router.notfound, router.methodNotAllowed)
-		ctx := context.WithValue(r.Context(), routePatternContextKey, router.notfoundPattern)
-		if router.chainedMiddleware == nil {
-			next.ServeHTTP(interceptor, r.WithContext(ctx))
+		iw := &interceptWriter{
+			ResponseWriter: w,
+			Req:            r,
+			Marshal404:     router.marshal404,
+			Marshal405:     router.marshal405,
+		}
+		ctx := context.WithValue(r.Context(), patternCtxKey{}, "MissingRoutePattern")
+		if router.middleware != nil {
+			router.middleware(next).ServeHTTP(iw, r.WithContext(ctx))
 			return
 		}
-		router.chainedMiddleware(next).ServeHTTP(interceptor, r.WithContext(ctx))
+		next.ServeHTTP(iw, r.WithContext(ctx))
 		return
 	}
-	next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), routePatternContextKey, pattern)))
-}
-
-// Handle registers the handler for the given pattern. If the given pattern conflicts, with one that is already registered, Handle panics.
-func (router *Router) Handle(pattern string, handler http.Handler) {
-	if router.chainedMiddleware == nil {
-		router.mux.Handle(pattern, handler)
+	ctx := context.WithValue(r.Context(), patternCtxKey{}, pattern)
+	if router.middleware != nil {
+		router.middleware(router.ServeMux).ServeHTTP(w, r.WithContext(ctx))
 		return
 	}
-	router.mux.Handle(pattern, router.chainedMiddleware(handler))
+	router.ServeMux.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// HandleFunc registers the handler function for the given pattern. If the given pattern conflicts, with one that is already registered, HandleFunc panics.
-func (router *Router) HandleFunc(pattern string, handler http.HandlerFunc) {
-	if router.chainedMiddleware == nil {
-		router.mux.HandleFunc(pattern, handler)
+// Pattern finds handler pattern from given http.Request.
+// This function is intended to be used, for example, when implementing OpenTelemetry Middleware.
+func Pattern(r *http.Request) string {
+	v := r.Context().Value(patternCtxKey{})
+	if v == nil {
+		slog.Error("missing routing pattern from request context")
+		return "MissingRoutingPattern"
 	}
-	router.mux.HandleFunc(pattern, router.chainedMiddleware(handler).ServeHTTP)
-}
-
-// RoutePattern finds pattern registered Router.
-func RoutePattern(r *http.Request) string {
-	// ignore because pattern is always string.
-	pattern := r.Context().Value(routePatternContextKey).(string)
+	pattern, ok := v.(string)
+	if !ok {
+		slog.Error("missing routing pattern string from request context")
+		return "MissingRoutingPatternString"
+	}
 	return pattern
 }

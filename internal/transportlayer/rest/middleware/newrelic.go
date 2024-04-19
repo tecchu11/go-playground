@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"go-playground/pkg/router"
 	"net/http"
 
@@ -17,7 +16,7 @@ func NewrelicTxn(app *newrelic.Application) func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			pattern := router.RoutePattern(r)
+			pattern := router.Pattern(r)
 			txn := app.StartTransaction(pattern)
 			defer txn.End()
 			txn.SetWebRequestHTTP(r)
@@ -27,13 +26,4 @@ func NewrelicTxn(app *newrelic.Application) func(http.Handler) http.Handler {
 		})
 		return fn
 	}
-}
-
-// RequestID is purpose for response to client.
-func RequestID(ctx context.Context) string {
-	txn := newrelic.FromContext(ctx)
-	if txn == nil {
-		return ""
-	}
-	return txn.GetLinkingMetadata().TraceID
 }

@@ -1,14 +1,12 @@
 package handler
 
 import (
-	"go-playground/pkg/renderer"
+	"encoding/json"
 	"net/http"
 )
 
-var status = map[string]string{"status": "ok"}
-
-func StatusHandler(rj renderer.JSON) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		rj.Success(w, 200, status)
-	}
-}
+// HealthCheck is handler for health check.
+var HealthCheck = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	res := map[string]string{"status": "ok"}
+	json.NewEncoder(w).Encode(res)
+})

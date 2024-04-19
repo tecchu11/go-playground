@@ -1,63 +1,48 @@
 package router
 
 import (
+	"log/slog"
 	"net/http"
 )
 
-type ErrorResponseFunc func(http.ResponseWriter, *http.Request, int) (int, error)
-
-var defaultErrorWriter = ErrorResponseFunc(func(w http.ResponseWriter, _ *http.Request, statusCode int) (int, error) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(statusCode)
-	return w.Write(nil)
-})
-
-type responseInterceptor struct {
-	origin           http.ResponseWriter
-	r                *http.Request
-	notFound         ErrorResponseFunc
-	methodNotAllowed ErrorResponseFunc
-	code             int
+type interceptWriter struct {
+	http.ResponseWriter
+	Req        *http.Request
+	Code       int
+	Marshal404 ErrMarshalFunc
+	Marshal405 ErrMarshalFunc
 }
 
-func newResponseInterceptor(origin http.ResponseWriter, r *http.Request, notfound ErrorResponseFunc, methodNotAllowed ErrorResponseFunc) *responseInterceptor {
-	if notfound == nil {
-		notfound = defaultErrorWriter
-	}
-	if methodNotAllowed == nil {
-		methodNotAllowed = defaultErrorWriter
-	}
-	return &responseInterceptor{
-		origin:           origin,
-		r:                r,
-		notFound:         notfound,
-		methodNotAllowed: methodNotAllowed,
-		code:             http.StatusOK,
-	}
+var defaultErrMarshal = func(_ *http.Request) ([]byte, error) {
+	return nil, nil
 }
 
-func (w *responseInterceptor) Header() http.Header {
-	return w.origin.Header()
-}
-
-func (w *responseInterceptor) Write(data []byte) (int, error) {
-	switch code := w.code; code {
+// Writes only ignores given data when http status are 404 or 405 and then write with marshal404 or marshal405.
+func (w *interceptWriter) Write(data []byte) (int, error) {
+	w.ResponseWriter.WriteHeader(w.Code)
+	switch code := w.Code; code {
 	case http.StatusNotFound:
-		return w.notFound(w.origin, w.r, http.StatusNotFound)
+		buf, err := w.Marshal404(w.Req)
+		if err != nil {
+			slog.ErrorContext(w.Req.Context(), "serveMux router defined missing route and then marshal 404 response body", slog.String("error", err.Error()))
+			return w.ResponseWriter.Write(nil)
+		}
+		return w.ResponseWriter.Write(buf)
 	case http.StatusMethodNotAllowed:
-		return w.methodNotAllowed(w.origin, w.r, http.StatusMethodNotAllowed)
+		buf, err := w.Marshal405(w.Req)
+		if err != nil {
+			slog.ErrorContext(w.Req.Context(), "serveMux router defined missing route and then marshal 405 response body", slog.String("error", err.Error()))
+			return w.ResponseWriter.Write(nil)
+		}
+		return w.ResponseWriter.Write(buf)
 	default:
-		return w.origin.Write(data)
+		return w.ResponseWriter.Write(data)
 	}
 }
 
-func (w *responseInterceptor) WriteHeader(statusCode int) {
-	w.code = statusCode
-	if w.code == http.StatusNotFound || w.code == http.StatusMethodNotAllowed {
-		// ignore because will write header in ErrorResponseFunc.
-		return
-	}
-	w.origin.WriteHeader(statusCode)
+// WriteHeader stores statusCode into struct filed.
+func (w *interceptWriter) WriteHeader(statusCode int) {
+	w.Code = statusCode
 }
 
-var _ http.ResponseWriter = (*responseInterceptor)(nil)
+var _ http.ResponseWriter = (*interceptWriter)(nil)
