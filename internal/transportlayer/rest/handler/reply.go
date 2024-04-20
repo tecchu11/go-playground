@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-playground/pkg/problemdetails"
 	"net/http"
+	"strings"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
@@ -16,8 +17,8 @@ type ResponseReply struct {
 
 // ReplyHandler replies.
 var ReplyHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	defer newrelic.FromContext(r.Context()).StartSegment("").End()
-	name := r.PathValue("name")
+	defer newrelic.FromContext(r.Context()).StartSegment("Handler/Reply").End()
+	name := strings.TrimSpace(r.PathValue("name"))
 	if name == "" {
 		problemdetails.New("Missing required variables", http.StatusBadRequest).
 			WithDetail("Path variables name is required").

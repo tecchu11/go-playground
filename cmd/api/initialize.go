@@ -10,9 +10,9 @@ import (
 
 	"go-playground/internal/transportlayer/rest/handler"
 	"go-playground/internal/transportlayer/rest/middleware"
+	"go-playground/pkg/nrmux"
 	"go-playground/pkg/nrslog"
 	"go-playground/pkg/problemdetails"
-	"go-playground/pkg/router"
 )
 
 func Initialize() (*http.Server, error) {
@@ -35,24 +35,21 @@ func Initialize() (*http.Server, error) {
 	}
 	slog.SetDefault(slog.New(nrHandler))
 
-	// inits router
-	newrelicMiddleware := middleware.NewrelicTxn(app)
-	recoverMiddleware := middleware.Recover
-	compositeMiddleware := func(next http.Handler) http.Handler {
-		return newrelicMiddleware(recoverMiddleware(next))
-	}
 	// init router
-	mux := router.New(
-		router.With404Func(func(r *http.Request) ([]byte, error) {
-			return problemdetails.New("Resource Not Found", http.StatusNotFound).JSON(r)
-		}),
-		router.With405Func(func(r *http.Request) ([]byte, error) {
-			return problemdetails.New("Method Not Allowed", http.StatusMethodNotAllowed).JSON(r)
-		}),
-		router.WithMiddleware(compositeMiddleware),
+	mux := nrmux.New(app,
+		nrmux.WithMarshalJSON404(
+			func(r *http.Request) ([]byte, error) {
+				return problemdetails.New("Resource Not Found", http.StatusNotFound).JSON(r)
+			},
+		),
+		nrmux.WithMarshalJSON405(
+			func(r *http.Request) ([]byte, error) {
+				return problemdetails.New("Method Not Allowed", http.StatusMethodNotAllowed).JSON(r)
+			},
+		),
 	)
-	mux.Handle("GET /health", handler.HealthCheck)
-	mux.Handle("GET /reply/{name}", handler.ReplyHandler)
+	mux.Handle("GET /health", middleware.Recover(handler.HealthCheck))
+	mux.Handle("GET /reply/{name}", middleware.Recover(handler.ReplyHandler))
 
 	// inits server
 	svr := &http.Server{

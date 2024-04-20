@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go-playground/pkg/router"
+	"go-playground/pkg/nrmux"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -41,7 +41,7 @@ func TestRouting(t *testing.T) {
 		"GET /health":       {r: httptest.NewRequest("GET", "https://example.com/health", nil), expected: "GET /health"},
 		"GET /reply/{name}": {r: httptest.NewRequest("GET", "https://example.com/reply/Cummerata", nil), expected: "GET /reply/{name}"},
 	}
-	mux, ok := svr.Handler.(*router.Router)
+	mux, ok := svr.Handler.(*nrmux.NRServeMux)
 	require.True(t, ok)
 
 	for k, v := range tests {
