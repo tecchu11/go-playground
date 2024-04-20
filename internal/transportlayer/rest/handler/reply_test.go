@@ -27,6 +27,12 @@ func TestReplyHandler(t *testing.T) {
 			expectedCode: 404,
 			expectedBody: []byte(`404 page not found` + "\n"),
 		},
+		"request to /reply/%20": {
+			w:            httptest.NewRecorder(),
+			r:            httptest.NewRequest("GET", "https://example.com/reply/%20", nil),
+			expectedCode: 400,
+			expectedBody: []byte(`{"type":"about:blank","title":"Missing required variables","status":400,"detail":"Path variables name is required","instance":"/reply/ "}` + "\n"),
+		},
 	}
 
 	for k, v := range tests {
