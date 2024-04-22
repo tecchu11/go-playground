@@ -76,7 +76,7 @@ type unwrapWriter interface {
 }
 
 // unwrapWRMiddleware unwraps ResponseWriter.
-var unwrapWRMiddleware func(next http.Handler) http.Handler = func(next http.Handler) http.Handler {
+var unwrapWRMiddleware = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for {
 			switch t := w.(type) {

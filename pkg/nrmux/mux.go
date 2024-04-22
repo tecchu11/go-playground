@@ -61,7 +61,7 @@ func (mux *NRServeMux) Handle(pattern string, handler http.Handler) {
 	mux.ServeMux.Handle(p, mux.unwrap(hn))
 }
 
-// Handle registers handler which is instrumented by NewRelic.
+// HandleFunc registers handler which is instrumented by NewRelic.
 func (mux *NRServeMux) HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) {
 	mux.Handle(pattern, http.HandlerFunc(handler))
 }

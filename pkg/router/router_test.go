@@ -17,9 +17,9 @@ func TestWithMiddleware(t *testing.T) {
 		return next // noop
 	})
 	optFn := router.WithMiddleware(mid)
-	var router router.Router
-	optFn(&router)
-	require.NotNil(t, router.Middleware())
+	var r router.Router
+	optFn(&r)
+	require.NotNil(t, r.Middleware())
 }
 
 func TestWith404Func(t *testing.T) {
@@ -27,9 +27,9 @@ func TestWith404Func(t *testing.T) {
 		return nil, nil
 	}
 	optFn := router.With404Func(fn)
-	var router router.Router
-	optFn(&router)
-	require.NotNil(t, router.Marshal404())
+	var r router.Router
+	optFn(&r)
+	require.NotNil(t, r.Marshal404())
 }
 
 func TestWith405Func(t *testing.T) {
@@ -37,22 +37,22 @@ func TestWith405Func(t *testing.T) {
 		return nil, nil
 	}
 	optFn := router.With405Func(fn)
-	var router router.Router
-	optFn(&router)
-	require.NotNil(t, router.Marshal405())
+	var r router.Router
+	optFn(&r)
+	require.NotNil(t, r.Marshal405())
 }
 
 func TestNewWithoutOption(t *testing.T) {
-	router := router.New()
-	require.Equal(t, http.NewServeMux(), router.ServeMux)
-	require.NotNil(t, router.Marshal404())
-	require.NotNil(t, router.Marshal405())
-	require.Nil(t, router.Middleware())
+	r := router.New()
+	require.Equal(t, http.NewServeMux(), r.ServeMux)
+	require.NotNil(t, r.Marshal404())
+	require.NotNil(t, r.Marshal405())
+	require.Nil(t, r.Middleware())
 }
 
 func TestNewWithOption(t *testing.T) {
-	router := router.New(router.WithMiddleware(func(next http.Handler) http.Handler { return next }))
-	require.NotNil(t, router.Middleware())
+	r := router.New(router.WithMiddleware(func(next http.Handler) http.Handler { return next }))
+	require.NotNil(t, r.Middleware())
 }
 
 func TestRouter_ServeHTTP_WithDefault(t *testing.T) {
@@ -87,16 +87,16 @@ func TestRouter_ServeHTTP_WithDefault(t *testing.T) {
 			body: nil,
 		},
 	}
-	router := router.New()
+	r := router.New()
 	index := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		w.Write([]byte(fmt.Sprintf("this is %s", path)))
 	})
-	router.HandleFunc("GET /index", index)
+	r.HandleFunc("GET /index", index)
 	for k, v := range tests {
 		t.Run(k, func(t *testing.T) {
 			t.Parallel()
-			router.ServeHTTP(v.w, v.r)
+			r.ServeHTTP(v.w, v.r)
 			require.Equal(t, v.code, v.w.Code)
 			require.Equal(t, v.body, v.w.Body.Bytes())
 		})
@@ -141,7 +141,7 @@ func TestRouter_ServeHTTP_WithCustom(t *testing.T) {
 		},
 	}
 	var reqCount int32
-	router := router.New(
+	r := router.New(
 		router.WithMiddleware(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				atomic.AddInt32(&reqCount, 1)
@@ -153,10 +153,10 @@ func TestRouter_ServeHTTP_WithCustom(t *testing.T) {
 		path := r.URL.Path
 		w.Write([]byte(fmt.Sprintf("this is %s", path)))
 	})
-	router.HandleFunc("GET /index", index)
+	r.HandleFunc("GET /index", index)
 	for k, v := range tests {
 		t.Run(k, func(t *testing.T) {
-			router.ServeHTTP(v.w, v.r)
+			r.ServeHTTP(v.w, v.r)
 			require.Equal(t, v.code, v.w.Code)
 			require.Equal(t, v.body, v.w.Body.Bytes())
 			require.Equal(t, v.reqCount, reqCount)
