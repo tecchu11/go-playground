@@ -19,5 +19,8 @@
         "golang"
       ]
     }
+  ],
+  "postUpdateOptions": [
+    "gomodTidy"
   ]
 }
