@@ -13,7 +13,7 @@ const (
 
 // Recover handle un-recovered panic when handling request.
 // If panic have not happened, this middleware nothing to do.
-var Recover func(http.Handler) http.Handler = func(next http.Handler) http.Handler {
+var Recover = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {

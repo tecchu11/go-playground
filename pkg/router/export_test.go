@@ -6,14 +6,14 @@ var DefaultErrMarshal = defaultErrMarshal
 
 type PatternContextKey = patternCtxKey
 
-func (r *Router) Middleware() Middleware {
-	return r.middleware
+func (router *Router) Middleware() Middleware {
+	return router.middleware
 }
 
-func (r *Router) Marshal404() ErrMarshalFunc {
-	return r.marshal404
+func (router *Router) Marshal404() ErrMarshalFunc {
+	return router.marshal404
 }
 
-func (r *Router) Marshal405() ErrMarshalFunc {
-	return r.marshal405
+func (router *Router) Marshal405() ErrMarshalFunc {
+	return router.marshal405
 }
