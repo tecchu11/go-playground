@@ -1,6 +1,7 @@
-package main
+package config_test
 
 import (
+	"go-playground/cmd/api/internal/config"
 	"testing"
 	"time"
 
@@ -10,13 +11,13 @@ import (
 func TestLoadConfig(t *testing.T) {
 	tests := map[string]struct {
 		env          string
-		expectedConf *Config
+		expectedConf *config.Config
 	}{
 		"env is local": {
 			env: "local",
-			expectedConf: &Config{
+			expectedConf: &config.Config{
 				AppName: "go-playground",
-				Svr: ConfigServer{
+				Svr: config.ConfigServer{
 					Addr:         ":8080",
 					ReadTimeout:  10 * time.Second,
 					WriteTimeout: 10 * time.Second,
@@ -28,7 +29,7 @@ func TestLoadConfig(t *testing.T) {
 	}
 	for k, v := range tests {
 		t.Run(k, func(t *testing.T) {
-			actualConf, actualErr := LoadConfig(v.env)
+			actualConf, actualErr := config.Load(v.env)
 			require.NoError(t, actualErr)
 			require.Equal(t, v.expectedConf, actualConf)
 		})

@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"embed"
@@ -24,7 +24,7 @@ type Config struct {
 //go:embed *.yaml
 var conf embed.FS
 
-func LoadConfig(env string) (*Config, error) {
+func Load(env string) (*Config, error) {
 	f := fmt.Sprintf("config-%s.yaml", env)
 	buf, err := conf.ReadFile(f)
 	if err != nil {
