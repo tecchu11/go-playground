@@ -2,14 +2,14 @@ package main
 
 import (
 	"errors"
+	"go-playground/cmd/api/internal/transportlayer/rest/handler"
+	"go-playground/cmd/api/internal/transportlayer/rest/middleware"
 	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
 
-	"go-playground/internal/transportlayer/rest/handler"
-	"go-playground/internal/transportlayer/rest/middleware"
 	"go-playground/pkg/nrmux"
 	"go-playground/pkg/nrslog"
 	"go-playground/pkg/problemdetails"

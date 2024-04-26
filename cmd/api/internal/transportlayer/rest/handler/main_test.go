@@ -1,7 +1,7 @@
 package handler_test
 
 import (
-	"go-playground/internal/transportlayer/rest/handler"
+	"go-playground/cmd/api/internal/transportlayer/rest/handler"
 	"net/http"
 	"testing"
 )

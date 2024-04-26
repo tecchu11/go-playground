@@ -1,7 +1,7 @@
 package middleware_test
 
 import (
-	"go-playground/internal/transportlayer/rest/middleware"
+	"go-playground/cmd/api/internal/transportlayer/rest/middleware"
 	"net/http"
 	"net/http/httptest"
 	"testing"
