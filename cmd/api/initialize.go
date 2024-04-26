@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"go-playground/cmd/api/internal/config"
 	"go-playground/cmd/api/internal/transportlayer/rest/handler"
 	"go-playground/cmd/api/internal/transportlayer/rest/middleware"
 	"log/slog"
@@ -21,7 +22,7 @@ func Initialize() (*http.Server, error) {
 	if !ok {
 		return nil, errors.New("environment variables APP_ENV is missing")
 	}
-	conf, err := LoadConfig(env)
+	conf, err := config.Load(env)
 	if err != nil {
 		return nil, err
 	}
