@@ -2,7 +2,7 @@ version: '3'
 
 services:
   todo-mysql:
-    image: mysql:8.4.1
+    image: mysql:9.0.1
     platform: linux/amd64
     container_name: go-playground-mysql
     env_file: .env
