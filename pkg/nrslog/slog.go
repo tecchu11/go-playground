@@ -18,9 +18,6 @@ type nrJSONHandler struct {
 
 // NewJSONHandler creates nrJSONHandler.
 func NewJSONHandler(app *newrelic.Application, opts *slog.HandlerOptions) (slog.Handler, error) {
-	if opts == nil {
-		opts = &slog.HandlerOptions{}
-	}
 	base := slog.NewJSONHandler(os.Stdout, opts)
 	conf, ok := app.Config()
 	if !ok {
@@ -30,7 +27,7 @@ func NewJSONHandler(app *newrelic.Application, opts *slog.HandlerOptions) (slog.
 	return &nrJSONHandler{Handler: decorated, app: app}, nil
 }
 
-// Handle writes logs via the parent Handler with newerlic metadata from newrelic.Transaction or newrelic.Application.
+// Handle writes logs via the parent Handler with newrelic metadata from newrelic.Transaction or newrelic.Application.
 func (h *nrJSONHandler) Handle(ctx context.Context, record slog.Record) error {
 	txn := newrelic.FromContext(ctx)
 	if txn == nil {
