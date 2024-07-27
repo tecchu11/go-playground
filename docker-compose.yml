@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  todo-mysql:
+    image: mysql:8.4.1
+    platform: linux/amd64
+    container_name: go-playground-mysql
+    env_file: .env
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: true
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: 'Asia/Tokyo'
+    volumes:
+      - ./docker/volumes/mysql/my.cnf:/etc/mysql/my.cnf
+      - ./docker/volumes/mysql/tmp:/var/lib/mysql
+    ports:
+      - "13306:3306"

@@ -1,0 +1,11 @@
+version: "2"
+sql:
+  - engine: "mysql"
+    queries:
+      - "tasks.sql"
+    schema:
+      - "schema.sql"
+    gen:
+      go:
+        package: "maindb"
+        out: "."

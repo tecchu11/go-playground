@@ -2,36 +2,25 @@ package config_test
 
 import (
 	"go-playground/cmd/api/internal/config"
+	"os"
 	"testing"
-	"time"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestLoadConfig(t *testing.T) {
-	tests := map[string]struct {
-		env          string
-		expectedConf *config.Config
-	}{
-		"env is local": {
-			env: "local",
-			expectedConf: &config.Config{
-				AppName: "go-playground",
-				Svr: config.ConfigServer{
-					Addr:         ":8080",
-					ReadTimeout:  10 * time.Second,
-					WriteTimeout: 10 * time.Second,
-					IdleTimeout:  120 * time.Second,
-					GraceTimeout: 20 * time.Second,
-				},
-			},
-		},
+func TestLoad(t *testing.T) {
+	os.Setenv("APP_ENV", "test")
+	os.Setenv("DB_USER", "test-user")
+	os.Setenv("DB_PASSWORD", "test-password")
+	os.Setenv("DB_HOST", "test.localhost:3306")
+	os.Setenv("DB_NAME", "test-db")
+	actual := config.Load()
+	expected := config.Configuration{
+		Env:        "test",
+		DBUser:     "test-user",
+		DBPassword: "test-password",
+		DBAddr:     "test.localhost:3306",
+		DBName:     "test-db",
 	}
-	for k, v := range tests {
-		t.Run(k, func(t *testing.T) {
-			actualConf, actualErr := config.Load(v.env)
-			require.NoError(t, actualErr)
-			require.Equal(t, v.expectedConf, actualConf)
-		})
-	}
+	assert.Equal(t, &expected, actual)
 }

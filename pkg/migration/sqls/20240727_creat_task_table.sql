@@ -1,0 +1,10 @@
+-- +goose Up
+CREATE TABLE tasks (
+    id VARCHAR(36) NOT NULL PRIMARY KEY COMMENT 'id is task id',
+    content TEXT NOT NULL COMMENT 'content is task content',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- +goose Down
+DROP TABLE IF EXISTS tasks;
