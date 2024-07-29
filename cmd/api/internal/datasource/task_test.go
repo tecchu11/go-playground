@@ -5,6 +5,7 @@ import (
 	"go-playground/cmd/api/internal/datasource"
 	"go-playground/cmd/api/internal/datasource/maindb"
 	"go-playground/cmd/api/internal/domain/entity"
+	"go-playground/pkg/timex"
 	"testing"
 	"time"
 
@@ -22,8 +23,8 @@ func TestTaskAdaptorFindByID(t *testing.T) {
 			expectedEntity: entity.Task{
 				ID:        "0190f34a-e069-7873-8fe1-fdf871eb3918",
 				Content:   "this is test 1",
-				CreatedAt: time.Date(2024, 7, 28, 0, 0, 0, 0, loc),
-				UpdatedAt: time.Date(2024, 7, 28, 0, 0, 0, 0, loc),
+				CreatedAt: time.Date(2024, 7, 28, 0, 0, 0, 0, timex.JST()),
+				UpdatedAt: time.Date(2024, 7, 28, 0, 0, 0, 0, timex.JST()),
 			},
 			expectedErr: nil,
 		},

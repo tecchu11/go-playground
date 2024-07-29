@@ -9,9 +9,9 @@ import (
 	"flag"
 	"fmt"
 	"go-playground/pkg/migration"
+	"go-playground/pkg/timex"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -27,10 +27,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	loc, err := time.LoadLocation("Asia/Tokyo")
-	if err != nil {
-		panic(err)
-	}
 	mysql.NewConfig()
 	conf := mysql.Config{
 		User:      envs["DB_USER"],
@@ -38,7 +34,7 @@ func main() {
 		Net:       "tcp",
 		Addr:      envs["DB_HOST"],
 		DBName:    envs["DB_NAME"],
-		Loc:       loc,
+		Loc:       timex.JST(),
 		ParseTime: true,
 	}
 	db, err := sql.Open("mysql", conf.FormatDSN())

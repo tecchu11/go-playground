@@ -18,6 +18,7 @@ import (
 
 	"go-playground/pkg/nrhttp"
 	"go-playground/pkg/nrslog"
+	"go-playground/pkg/timex"
 )
 
 func Initialize() (*http.Server, error) {
@@ -32,10 +33,6 @@ func Initialize() (*http.Server, error) {
 		return nil, err
 	}
 	slog.SetDefault(slog.New(nrHandler))
-	loc, err := time.LoadLocation("Asia/Tokyo")
-	if err != nil {
-		return nil, err
-	}
 	myConf := mysql.Config{
 		User:         conf.DBUser,
 		Passwd:       conf.DBPassword,
@@ -44,7 +41,7 @@ func Initialize() (*http.Server, error) {
 		DBName:       conf.DBName,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
-		Loc:          loc,
+		Loc:          timex.JST(),
 		ParseTime:    true,
 	}
 	db, err := sql.Open("nrmysql", myConf.FormatDSN())
