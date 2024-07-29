@@ -5,6 +5,7 @@ import (
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/cmd/api/internal/transportlayer/rest/handler"
 	"go-playground/pkg/errorx"
+	"go-playground/pkg/timex"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,10 +16,6 @@ import (
 )
 
 func TestFindTaskByID(t *testing.T) {
-	loc, err := time.LoadLocation("Asia/Tokyo")
-	if err != nil {
-		t.Fatal(err)
-	}
 	tests := map[string]struct {
 		w                *httptest.ResponseRecorder
 		r                *http.Request
@@ -35,8 +32,8 @@ func TestFindTaskByID(t *testing.T) {
 				entity.Task{
 					ID:        "test-id",
 					Content:   "do test",
-					CreatedAt: time.Date(2024, 7, 26, 0, 0, 0, 0, loc),
-					UpdatedAt: time.Date(2024, 7, 26, 0, 0, 0, 0, loc),
+					CreatedAt: time.Date(2024, 7, 26, 0, 0, 0, 0, timex.JST()),
+					UpdatedAt: time.Date(2024, 7, 26, 0, 0, 0, 0, timex.JST()),
 				},
 				nil,
 			},

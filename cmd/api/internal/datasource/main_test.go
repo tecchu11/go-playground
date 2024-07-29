@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"go-playground/cmd/api/internal/datasource"
 	"go-playground/pkg/migration"
+	"go-playground/pkg/timex"
 	"testing"
 	"time"
 
@@ -46,7 +47,6 @@ var (
 	testDB       = "playground-test"
 	testUser     = "test_user"
 	testPassword = "test"
-	loc          *time.Location
 )
 
 func startContainer(ctx context.Context) (*sql.DB, shutdownFunc, error) {
@@ -65,11 +65,6 @@ func startContainer(ctx context.Context) (*sql.DB, shutdownFunc, error) {
 		_ = container.Terminate(ctx)
 		return nil, nil, err
 	}
-	loc, err = time.LoadLocation("Asia/Tokyo")
-	if err != nil {
-		_ = container.Terminate(ctx)
-		return nil, nil, err
-	}
 	addr, err := container.Endpoint(ctx, "")
 	if err != nil {
 		_ = container.Terminate(ctx)
@@ -81,7 +76,7 @@ func startContainer(ctx context.Context) (*sql.DB, shutdownFunc, error) {
 		Net:             "tcp",
 		Addr:            addr,
 		DBName:          testDB,
-		Loc:             loc,
+		Loc:             timex.JST(),
 		ParseTime:       true,
 		MultiStatements: true,
 	}
