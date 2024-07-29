@@ -16,9 +16,8 @@ import (
 	_ "github.com/newrelic/go-agent/v3/integrations/nrmysql"
 	"github.com/newrelic/go-agent/v3/newrelic"
 
-	"go-playground/pkg/nrmux"
+	"go-playground/pkg/nrhttp"
 	"go-playground/pkg/nrslog"
-	"go-playground/pkg/problemdetails"
 )
 
 func Initialize() (*http.Server, error) {
@@ -66,24 +65,21 @@ func Initialize() (*http.Server, error) {
 	taskAdaptor := datasource.NewTaskAdaptor(queries)
 	// useCase
 	taskUseCase := usecase.NewTaskUseCase(taskAdaptor, transactionAdaptor)
+	// init handler
+	findTaskByID := handler.FindTaskByID(taskUseCase)
+	postTask := handler.PostTask(taskUseCase)
+	putTask := handler.PutTask(taskUseCase)
+	// init middleware
+	middlewares := func(h http.Handler) http.Handler {
+		return nrhttp.Middleware(app)(middleware.Recover(h))
+	}
 
 	// init router
-	mux := nrmux.New(app,
-		nrmux.WithMarshalJSON404(
-			func(r *http.Request) ([]byte, error) {
-				return problemdetails.New("Resource Not Found", http.StatusNotFound).JSON(r)
-			},
-		),
-		nrmux.WithMarshalJSON405(
-			func(r *http.Request) ([]byte, error) {
-				return problemdetails.New("Method Not Allowed", http.StatusMethodNotAllowed).JSON(r)
-			},
-		),
-	)
-	mux.Handle("GET /health", middleware.Recover(handler.HealthCheck))
-	mux.Handle("GET /tasks/{id}", middleware.Recover(handler.FindTaskByID(taskUseCase)))
-	mux.Handle("POST /tasks", middleware.Recover(handler.PostTask(taskUseCase)))
-	mux.Handle("PUT /tasks/{id}", middleware.Recover(handler.PutTask(taskUseCase)))
+	mux := http.NewServeMux()
+	mux.Handle("GET /health", middlewares(handler.HealthCheck))
+	mux.Handle("GET /tasks/{id}", middlewares(findTaskByID))
+	mux.Handle("POST /tasks", middlewares(postTask))
+	mux.Handle("PUT /tasks/{id}", middlewares(putTask))
 
 	// inits server
 	svr := &http.Server{
