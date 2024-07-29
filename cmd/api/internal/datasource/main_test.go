@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 type shutdownFunc func(context.Context) error
 
 var (
-	testImage    = "mysql:8.4.1"
+	testImage    = "mysql:8.0.36"
 	testDB       = "playground-test"
 	testUser     = "test_user"
 	testPassword = "test"
