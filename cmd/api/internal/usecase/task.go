@@ -27,18 +27,18 @@ func (u *TaskUseCase) FindTaskByID(ctx context.Context, id string) (entity.Task,
 	return task, nil
 }
 
-func (u *TaskUseCase) CreateTask(ctx context.Context, content string) error {
+func (u *TaskUseCase) CreateTask(ctx context.Context, content string) (entity.TaskID, error) {
 	defer newrelic.FromContext(ctx).StartSegment("usecase/TaskUseCase/CreateTask").End()
 
 	task, err := entity.NewTask(content)
 	if err != nil {
-		return err
+		return "", err
 	}
 	err = u.taskRepository.Create(ctx, task)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return task.ID, nil
 }
 
 func (u *TaskUseCase) UpdateTask(ctx context.Context, id string, content string) error {

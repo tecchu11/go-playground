@@ -41,19 +41,21 @@ func TestTask_CreateTask(t *testing.T) {
 	useCase := usecase.NewTaskUseCase(&taskRepo, nil)
 	taskRepo.On("Create", context.Background(), mock.AnythingOfType("Task")).Return(nil)
 
-	err := useCase.CreateTask(context.Background(), "do test")
+	id, err := useCase.CreateTask(context.Background(), "do test")
 
 	taskRepo.AssertExpectations(t)
 	assert.NoError(t, err)
+	assert.NotZero(t, id)
 }
 
 func TestTask_CreateTask_ErrorWhenContentIsBlank(t *testing.T) {
 	useCase := usecase.NewTaskUseCase(nil, nil)
 
-	err := useCase.CreateTask(context.Background(), " ")
+	id, err := useCase.CreateTask(context.Background(), " ")
 
 	var myErr *errorx.Error
 	assert.ErrorAs(t, err, &myErr)
+	assert.Zero(t, id)
 }
 
 func TestTask_CreateTask_ErrorWhenCreating(t *testing.T) {
@@ -61,9 +63,10 @@ func TestTask_CreateTask_ErrorWhenCreating(t *testing.T) {
 	useCase := usecase.NewTaskUseCase(&taskRepo, nil)
 	taskRepo.On("Create", context.Background(), mock.AnythingOfType("Task")).Return(errors.New("failed to create"))
 
-	err := useCase.CreateTask(context.Background(), "do test")
+	id, err := useCase.CreateTask(context.Background(), "do test")
 
 	assert.EqualError(t, err, "failed to create")
+	assert.Zero(t, id)
 }
 
 func TestTask_UpdateTask(t *testing.T) {

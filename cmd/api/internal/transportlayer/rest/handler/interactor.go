@@ -9,7 +9,7 @@ import (
 // TaskInteractor is interface for usecase.TaskUseCase.
 type TaskInteractor interface {
 	FindTaskByID(context.Context, string) (entity.Task, error)
-	CreateTask(context.Context, string) error
+	CreateTask(context.Context, string) (entity.TaskID, error)
 	UpdateTask(context.Context, string, string) error
 }
 
