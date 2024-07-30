@@ -30,12 +30,13 @@ func PostTask(taskInteractor TaskInteractor) http.Handler {
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			return err
 		}
-		err := taskInteractor.CreateTask(ctx, body.Content)
+		id, err := taskInteractor.CreateTask(ctx, body.Content)
 		if err != nil {
 			return err
 		}
+		res := ResPostTask{id}
 		w.WriteHeader(http.StatusCreated)
-		return json.NewEncoder(w).Encode(nil)
+		return json.NewEncoder(w).Encode(res)
 	})
 }
 

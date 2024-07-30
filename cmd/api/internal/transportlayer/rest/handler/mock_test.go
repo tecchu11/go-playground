@@ -16,9 +16,9 @@ func (mck *MockTaskInteractor) FindTaskByID(ctx context.Context, id string) (ent
 	return args.Get(0).(entity.Task), args.Error(1)
 }
 
-func (mck *MockTaskInteractor) CreateTask(ctx context.Context, content string) error {
+func (mck *MockTaskInteractor) CreateTask(ctx context.Context, content string) (entity.TaskID, error) {
 	args := mck.Called(ctx, content)
-	return args.Error(0)
+	return args.Get(0).(string), args.Error(1)
 }
 
 func (mck *MockTaskInteractor) UpdateTask(ctx context.Context, id, content string) error {

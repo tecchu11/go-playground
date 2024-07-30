@@ -67,36 +67,37 @@ func TestPostTask(t *testing.T) {
 	tests := map[string]struct {
 		w              *httptest.ResponseRecorder
 		r              *http.Request
-		mockCreateTask error
+		mockCreateTask []any
 		expectedCode   int
 		expectedBody   string
 	}{
 		"success": {
 			w:              httptest.NewRecorder(),
 			r:              httptest.NewRequest("POST", "/tasks", strings.NewReader(`{"content":"do test"}`)),
-			mockCreateTask: nil,
+			mockCreateTask: []any{"019102c9-19e3-76cd-85cc-08a12fcfa8f9", nil},
 			expectedCode:   201,
-			expectedBody:   `null`,
+			expectedBody:   `{"id":"019102c9-19e3-76cd-85cc-08a12fcfa8f9"}`,
 		},
 		"failed to create task": {
 			w:              httptest.NewRecorder(),
 			r:              httptest.NewRequest("POST", "/tasks", strings.NewReader(`{"content":"do test"}`)),
-			mockCreateTask: errorx.NewError("failed to create task"),
+			mockCreateTask: []any{"", errorx.NewError("failed to create task")},
 			expectedCode:   500,
 			expectedBody:   `{"type":"about:blank", "title":"Handled error", "detail":"failed to create task", "instance":"/tasks", "status":500}`,
 		},
 		"unmarshal error": {
-			w:            httptest.NewRecorder(),
-			r:            httptest.NewRequest("POST", "/tasks", strings.NewReader("")),
-			expectedCode: 500,
-			expectedBody: `{"type":"about:blank", "title":"Unhandled error", "detail":"EOF", "instance":"/tasks", "status":500}`,
+			w:              httptest.NewRecorder(),
+			r:              httptest.NewRequest("POST", "/tasks", strings.NewReader("")),
+			mockCreateTask: []any{nil, nil},
+			expectedCode:   500,
+			expectedBody:   `{"type":"about:blank", "title":"Unhandled error", "detail":"EOF", "instance":"/tasks", "status":500}`,
 		},
 	}
 
 	for k, v := range tests {
 		t.Run(k, func(t *testing.T) {
 			mockTakInteractor := MockTaskInteractor{}
-			mockTakInteractor.On("CreateTask", context.Background(), "do test").Return(v.mockCreateTask)
+			mockTakInteractor.On("CreateTask", context.Background(), "do test").Return(v.mockCreateTask[0], v.mockCreateTask[1])
 
 			handler.PostTask(&mockTakInteractor).ServeHTTP(v.w, v.r)
 
