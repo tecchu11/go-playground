@@ -2,6 +2,7 @@ package handler_test
 
 import (
 	"context"
+	"errors"
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/cmd/api/internal/transportlayer/rest/handler"
 	"go-playground/pkg/errorx"
@@ -14,6 +15,56 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestListTasks(t *testing.T) {
+	tests := map[string]struct {
+		w            *httptest.ResponseRecorder
+		r            *http.Request
+		mockOn       []any
+		mockReturn   []any
+		expectedCode int
+		expectedBody string
+	}{
+		"success": {
+			w:      httptest.NewRecorder(),
+			r:      httptest.NewRequest("", "/tasks?limit=2", nil),
+			mockOn: []any{context.Background(), "", int32(2)},
+			mockReturn: []any{entity.CursorPage[string, entity.Task]{
+				Items:     []entity.Task{{ID: "test-id-1"}, {ID: "test-id-2"}},
+				HasNext:   true,
+				NextToken: "test-id-3",
+			}, nil},
+			expectedCode: 200,
+			expectedBody: `{"items":[{"ID":"test-id-1", "Content":"", "CreatedAt":"0001-01-01T00:00:00Z", "UpdatedAt":"0001-01-01T00:00:00Z"},{"ID":"test-id-2", "Content":"", "CreatedAt":"0001-01-01T00:00:00Z", "UpdatedAt":"0001-01-01T00:00:00Z"}], "next":"test-id-3", "hasNext":true}`,
+		},
+		"limit is not number": {
+			w:            httptest.NewRecorder(),
+			r:            httptest.NewRequest("", "/tasks?limit=o", nil),
+			expectedCode: 400,
+			expectedBody: `{"type":"about:blank", "title":"Handled error", "detail":"limit must be number", "instance":"/tasks", "status":400}`,
+		},
+		"failed to list tasks": {
+			w:            httptest.NewRecorder(),
+			r:            httptest.NewRequest("", "/tasks?limit=100&next=test-id", nil),
+			mockOn:       []any{context.Background(), "test-id", int32(100)},
+			mockReturn:   []any{entity.CursorPage[string, entity.Task]{}, errors.New("unknown error on list tasks")},
+			expectedCode: 500,
+			expectedBody: `{"type":"about:blank", "title":"Unhandled error", "detail":"unknown error on list tasks", "instance":"/tasks", "status":500}`,
+		},
+	}
+
+	for k, v := range tests {
+		t.Run(k, func(t *testing.T) {
+			mockTaskInteractor := MockTaskInteractor{}
+			mockTaskInteractor.On("ListTasks", v.mockOn...).Return(v.mockReturn...)
+
+			handler.Listtasks(&mockTaskInteractor).ServeHTTP(v.w, v.r)
+
+			assert.Equal(t, v.expectedCode, v.w.Code)
+			assert.JSONEq(t, v.expectedBody, v.w.Body.String())
+		})
+	}
+}
 
 func TestFindTaskByID(t *testing.T) {
 	tests := map[string]struct {

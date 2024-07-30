@@ -1,21 +1,34 @@
--- name: FindTask :one
+-- name: ListTasks :many
+-- ListTasks finds tasks by cursor pagination.
 SELECT
-    *
+	*
 FROM
-    tasks
+	tasks
 WHERE
-    id = ?;
+	id >= ?
+ORDER BY
+	id
+LIMIT ?;
+
+-- name: FindTask :one
+-- FindTask finds task by given id.
+SELECT
+	*
+FROM
+	tasks
+WHERE
+	id = ?;
 
 -- name: CreateTask :execresult
-INSERT INTO
-    tasks (id, content)
-VALUES
-    (?, ?);
-
+-- CreateTask inserts given task.
+INSERT INTO tasks (id, content)
+		VALUES(?, ?);
+ 
 -- name: UpdateTask :execresult
+-- UpdateTask updates task by given id.
 UPDATE
-    tasks
+	tasks
 SET
-    content = ?
+	content = ?
 WHERE
-    id = ?;
+	id = ?;

@@ -63,6 +63,7 @@ func Initialize() (*http.Server, error) {
 	// useCase
 	taskUseCase := usecase.NewTaskUseCase(taskAdaptor, transactionAdaptor)
 	// init handler
+	listTasks := handler.Listtasks(taskUseCase)
 	findTaskByID := handler.FindTaskByID(taskUseCase)
 	postTask := handler.PostTask(taskUseCase)
 	putTask := handler.PutTask(taskUseCase)
@@ -74,6 +75,7 @@ func Initialize() (*http.Server, error) {
 	// init router
 	mux := http.NewServeMux()
 	mux.Handle("GET /health", middlewares(handler.HealthCheck))
+	mux.Handle("GET /tasks", middlewares(listTasks))
 	mux.Handle("GET /tasks/{id}", middlewares(findTaskByID))
 	mux.Handle("POST /tasks", middlewares(postTask))
 	mux.Handle("PUT /tasks/{id}", middlewares(putTask))

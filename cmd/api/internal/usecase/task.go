@@ -13,8 +13,21 @@ type TaskUseCase struct {
 	taskRepository repository.TaskRepository
 }
 
+const (
+	LimitListTasks int32 = 100
+)
+
 func NewTaskUseCase(taskRepo repository.TaskRepository, transaction repository.TransactionRepository) *TaskUseCase {
 	return &TaskUseCase{transaction: transaction, taskRepository: taskRepo}
+}
+
+func (u *TaskUseCase) ListTasks(ctx context.Context, next string, limit int32) (entity.CursorPage[string, entity.Task], error) {
+	defer newrelic.FromContext(ctx).StartSegment("usecase/TaskUseCase/ListTasks").End()
+
+	if limit == 0 {
+		limit = LimitListTasks
+	}
+	return u.taskRepository.ListTasks(ctx, next, limit)
 }
 
 func (u *TaskUseCase) FindTaskByID(ctx context.Context, id string) (entity.Task, error) {
