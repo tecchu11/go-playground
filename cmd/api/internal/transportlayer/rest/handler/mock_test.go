@@ -11,6 +11,11 @@ type MockTaskInteractor struct {
 	mock.Mock
 }
 
+func (mck *MockTaskInteractor) ListTasks(ctx context.Context, token string, limit int32) (entity.CursorPage[string, entity.Task], error) {
+	args := mck.Called(ctx, token, limit)
+	return args.Get(0).(entity.CursorPage[string, entity.Task]), args.Error(1)
+}
+
 func (mck *MockTaskInteractor) FindTaskByID(ctx context.Context, id string) (entity.Task, error) {
 	args := mck.Called(ctx, id)
 	return args.Get(0).(entity.Task), args.Error(1)

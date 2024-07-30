@@ -12,6 +12,40 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func TestTaskUseCase_ListTasks(t *testing.T) {
+	mockTaskRepo := MockTaskRepository{}
+	useCase := usecase.NewTaskUseCase(&mockTaskRepo, nil)
+	expected := entity.CursorPage[string, entity.Task]{
+		Items: []entity.Task{
+			{ID: "task-id-1"}, {ID: "task-id-2"},
+		},
+		HasNext:   true,
+		NextToken: "task-id-3",
+	}
+	mockTaskRepo.On("ListTasks", context.Background(), "task-id-1", int32(2)).Return(expected, nil)
+
+	actuaPage, acutalErr := useCase.ListTasks(context.Background(), "task-id-1", 2)
+
+	assert.NoError(t, acutalErr)
+	assert.Equal(t, expected, actuaPage)
+}
+
+func TestTaskUseCase_ListTasks_LimitIsZero(t *testing.T) {
+	mockTaskRepo := MockTaskRepository{}
+	useCase := usecase.NewTaskUseCase(&mockTaskRepo, nil)
+	expected := entity.CursorPage[string, entity.Task]{
+		Items: []entity.Task{
+			{ID: "task-id-1"}, {ID: "task-id-2"},
+		},
+	}
+	mockTaskRepo.On("ListTasks", context.Background(), "task-id-1", int32(100)).Return(expected, nil)
+
+	actuaPage, acutalErr := useCase.ListTasks(context.Background(), "task-id-1", 0)
+
+	assert.NoError(t, acutalErr)
+	assert.Equal(t, expected, actuaPage)
+}
+
 func TestTaskUseCase_FindTaskByID(t *testing.T) {
 	mockTaskRepo := MockTaskRepository{}
 	useCase := usecase.NewTaskUseCase(&mockTaskRepo, nil)

@@ -54,3 +54,8 @@ func validateTask(content string) error {
 	}
 	return nil
 }
+
+// Token is implementation of Item[string] interface.
+func (t Task) Token() string {
+	return t.ID
+}

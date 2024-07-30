@@ -2,10 +2,30 @@ package handler
 
 import (
 	"encoding/json"
+	"go-playground/pkg/errorx"
+	"go-playground/pkg/httpx"
 	"net/http"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
+
+func Listtasks(taskInteractor TaskInteractor) http.Handler {
+	return ErrorHandlerFunc(func(w http.ResponseWriter, r *http.Request) error {
+		ctx := r.Context()
+		defer newrelic.FromContext(ctx).StartSegment("handler/ListTasks").End()
+
+		limit, err := httpx.QueryInt32(r, "limit")
+		if err != nil {
+			return errorx.NewWarn("limit must be number", errorx.WithCause(err), errorx.WithStatus(400))
+		}
+		next := r.URL.Query().Get("next")
+		tasks, err := taskInteractor.ListTasks(ctx, next, limit)
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(w).Encode(tasks)
+	})
+}
 
 func FindTaskByID(taskInteractor TaskInteractor) http.Handler {
 	return ErrorHandlerFunc(func(w http.ResponseWriter, r *http.Request) error {

@@ -59,3 +59,8 @@ func TestTask_UpdateContent_ErrorWhenContentIsBlank(t *testing.T) {
 	assert.Equal(t, 400, myErr.HTTPStatus())
 	assert.Equal(t, slog.LevelInfo, myErr.Level())
 }
+
+func TestToken(t *testing.T) {
+	task := entity.Task{ID: "test-id"}
+	assert.Equal(t, "test-id", task.Token())
+}

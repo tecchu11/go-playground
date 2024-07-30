@@ -8,6 +8,7 @@ import (
 
 // TaskInteractor is interface for usecase.TaskUseCase.
 type TaskInteractor interface {
+	ListTasks(context.Context, string, int32) (entity.CursorPage[string, entity.Task], error)
 	FindTaskByID(context.Context, string) (entity.Task, error)
 	CreateTask(context.Context, string) (entity.TaskID, error)
 	UpdateTask(context.Context, string, string) error
