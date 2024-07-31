@@ -4,31 +4,29 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"os"
 
 	"github.com/newrelic/go-agent/v3/integrations/logcontext"
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
-// nrJSONHandler is a Handler that writes a record with newrelic metadata via the parent handler.
-type nrJSONHandler struct {
+// nrHandler is a Handler that writes a record with newrelic metadata via the parent handler.
+type nrHandler struct {
 	slog.Handler
 	app *newrelic.Application
 }
 
-// NewJSONHandler creates nrJSONHandler.
-func NewJSONHandler(app *newrelic.Application, opts *slog.HandlerOptions) (slog.Handler, error) {
-	base := slog.NewJSONHandler(os.Stdout, opts)
+// NewHandler creates nrJSONHandler.
+func NewHandler(app *newrelic.Application, h slog.Handler) (slog.Handler, error) {
 	conf, ok := app.Config()
 	if !ok {
 		return nil, errors.New("missing newrelic.Application because of Application being not yet fully initialized")
 	}
-	decorated := base.WithAttrs([]slog.Attr{slog.String(logcontext.KeyEntityName, conf.AppName)})
-	return &nrJSONHandler{Handler: decorated, app: app}, nil
+	decorated := h.WithAttrs([]slog.Attr{slog.String(logcontext.KeyEntityName, conf.AppName)})
+	return &nrHandler{Handler: decorated, app: app}, nil
 }
 
 // Handle writes logs via the parent Handler with newrelic metadata from newrelic.Transaction or newrelic.Application.
-func (h *nrJSONHandler) Handle(ctx context.Context, record slog.Record) error {
+func (h *nrHandler) Handle(ctx context.Context, record slog.Record) error {
 	txn := newrelic.FromContext(ctx)
 	if txn == nil {
 		return h.Handler.Handle(ctx, record)
@@ -38,12 +36,12 @@ func (h *nrJSONHandler) Handle(ctx context.Context, record slog.Record) error {
 }
 
 // WithAttrs returns a new nrJSONHandler whose attributes consists of h's attributes followed by attrs.
-func (h *nrJSONHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &nrJSONHandler{Handler: h.Handler.WithAttrs(attrs), app: h.app}
+func (h *nrHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return &nrHandler{Handler: h.Handler.WithAttrs(attrs), app: h.app}
 }
 
-func (h *nrJSONHandler) WithGroup(name string) slog.Handler {
-	return &nrJSONHandler{Handler: h.Handler.WithGroup(name), app: h.app}
+func (h *nrHandler) WithGroup(name string) slog.Handler {
+	return &nrHandler{Handler: h.Handler.WithGroup(name), app: h.app}
 }
 
 func nrAttrs(txn *newrelic.Transaction) []slog.Attr {
@@ -56,4 +54,4 @@ func nrAttrs(txn *newrelic.Transaction) []slog.Attr {
 	}
 }
 
-var _ slog.Handler = (*nrJSONHandler)(nil)
+var _ slog.Handler = (*nrHandler)(nil)
