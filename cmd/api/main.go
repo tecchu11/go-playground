@@ -3,16 +3,25 @@ package main
 import (
 	"context"
 	"errors"
+	"go-playground/cmd/api/internal/datasource"
+	"go-playground/cmd/api/internal/datasource/maindb"
+	"go-playground/cmd/api/internal/transportlayer/rest/handler"
+	"go-playground/cmd/api/internal/transportlayer/rest/middleware"
+	"go-playground/cmd/api/internal/usecase"
+	"go-playground/pkg/nrhttp"
+	"go-playground/pkg/nrslog"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 func main() {
-	svr, err := Initialize()
+	svr, err := setup()
 	if err != nil {
 		panic(err)
 	}
@@ -38,4 +47,57 @@ func main() {
 	}
 	<-idleConnsClosed
 	slog.Info("Bye!!")
+}
+
+func setup() (*http.Server, error) {
+	app, err := newrelic.NewApplication(newrelic.ConfigFromEnvironment())
+	if err != nil {
+		return nil, err
+	}
+	nrHandler, err := nrslog.NewHandler(app, slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{AddSource: true}))
+	if err != nil {
+		return nil, err
+	}
+	slog.SetDefault(slog.New(nrHandler))
+	db, err := maindb.NewDB(os.LookupEnv)
+	if err != nil {
+		return nil, err
+	}
+	err = db.Ping()
+	if err != nil {
+		return nil, err
+	}
+	// init datasource
+	queries := maindb.New(db)
+	transactionAdaptor := datasource.NewDBTransactionAdaptor(db)
+	taskAdaptor := datasource.NewTaskAdaptor(queries)
+	// useCase
+	taskUseCase := usecase.NewTaskUseCase(taskAdaptor, transactionAdaptor)
+	// init handler
+	listTasks := handler.Listtasks(taskUseCase)
+	findTaskByID := handler.FindTaskByID(taskUseCase)
+	postTask := handler.PostTask(taskUseCase)
+	putTask := handler.PutTask(taskUseCase)
+	// init middleware
+	middlewares := func(h http.Handler) http.Handler {
+		return nrhttp.Middleware(app)(middleware.Recover(h))
+	}
+
+	// init router
+	mux := http.NewServeMux()
+	mux.Handle("GET /health", middlewares(handler.HealthCheck))
+	mux.Handle("GET /tasks", middlewares(listTasks))
+	mux.Handle("GET /tasks/{id}", middlewares(findTaskByID))
+	mux.Handle("POST /tasks", middlewares(postTask))
+	mux.Handle("PUT /tasks/{id}", middlewares(putTask))
+
+	// inits server
+	svr := &http.Server{
+		Addr:         ":8080",
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+		Handler:      mux,
+	}
+	return svr, nil
 }
