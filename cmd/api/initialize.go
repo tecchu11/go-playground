@@ -10,6 +10,7 @@ import (
 	"go-playground/cmd/api/internal/usecase"
 	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -28,7 +29,7 @@ func Initialize() (*http.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	nrHandler, err := nrslog.NewJSONHandler(app, &slog.HandlerOptions{AddSource: true})
+	nrHandler, err := nrslog.NewHandler(app, slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{AddSource: true}))
 	if err != nil {
 		return nil, err
 	}
