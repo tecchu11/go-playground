@@ -3,6 +3,17 @@
     "dockerComposeFile": "docker-compose.yml",
     "workspaceFolder": "/app",
     "features":{
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+        "ghcr.io/devcontainers/features/aws-cli:1": {},
+        "ghcr.io/devcontainers/features/common-utils:2": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go",
+                "streetsidesoftware.code-spell-checker"
+            ]
+        }
     }
 }
