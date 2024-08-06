@@ -7,7 +7,7 @@ require (
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/go-testfixtures/testfixtures/v3 v3.12.0
 	github.com/google/uuid v1.6.0
-	github.com/newrelic/go-agent/v3 v3.33.1
+	github.com/newrelic/go-agent/v3 v3.34.0
 	github.com/newrelic/go-agent/v3/integrations/nrmysql v1.2.2
 	github.com/pressly/goose/v3 v3.21.1
 	github.com/sqlc-dev/sqlc v1.26.0
