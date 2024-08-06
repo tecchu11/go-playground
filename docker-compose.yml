@@ -3,9 +3,9 @@ services:
     image: golang:1.23rc2
     volumes:
       - .:/app
-      - gomods:/go/pkg/mod
-      - gobins:/go/bin
-      - gocache:/root/.cache/go-build
+      - go:/go
+      - cache:/root/.cache
+      - ~/.config/gh/hosts.yml:/root/.config/gh/hosts.yml
     stdin_open: true
     tty: true
   maindb:
@@ -20,7 +20,7 @@ services:
       TZ: Asia/Tokyo
     volumes:
       - ./docker/volumes/mysql/my.cnf:/etc/mysql/my.cnf
-      - mysqllib:/var/lib/mysql
+      - mysql:/var/lib/mysql
     ports:
       - "13306:3306"
   localstack:
@@ -40,8 +40,7 @@ services:
       - localstack:/var/lib/localstack
       - /var/run/docker.socket:/var/run/docker.socket
 volumes:
-  gomods:
-  gobins:
-  gocache:
-  mysqllib:
+  go:
+  cache:
+  mysql:
   localstack:

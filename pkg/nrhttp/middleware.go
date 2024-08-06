@@ -19,7 +19,7 @@ func Middleware(app *newrelic.Application) func(http.Handler) http.Handler {
 			if pattern == "" {
 				pattern = "ErrorHandler" // error handler routes 404 or 405 handler.
 			}
-			txn := app.StartTransaction(r.Pattern)
+			txn := app.StartTransaction(pattern)
 			defer txn.End()
 			txn.SetWebRequestHTTP(r)
 			w = txn.SetWebResponse(w)
