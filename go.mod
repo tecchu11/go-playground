@@ -3,7 +3,6 @@ module go-playground
 go 1.23rc2
 
 require (
-	github.com/aws/aws-lambda-go v1.47.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/go-testfixtures/testfixtures/v3 v3.12.0
 	github.com/google/uuid v1.6.0
