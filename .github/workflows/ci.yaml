@@ -32,7 +32,7 @@ jobs:
           git config --local user.name github-actions[bot]
           git config --local user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add .
-          git commit -m 'apply go mod tidy'
+          git commit -m 'go diff'
           git push
   test:
     runs-on: ubuntu-latest
