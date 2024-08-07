@@ -1,6 +1,8 @@
 services:
   app:
     image: golang:1.23rc2
+    environment:
+      - GOPRIVATE=github.com/tecchu11
     volumes:
       - .:/app
       - go:/go

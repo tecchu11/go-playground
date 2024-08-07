@@ -8,8 +8,6 @@ import (
 	"go-playground/cmd/api/internal/transportlayer/rest/handler"
 	"go-playground/cmd/api/internal/transportlayer/rest/middleware"
 	"go-playground/cmd/api/internal/usecase"
-	"go-playground/pkg/nrhttp"
-	"go-playground/pkg/nrslog"
 	"log/slog"
 	"net/http"
 	"os"
@@ -18,6 +16,8 @@ import (
 	"time"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
+	"github.com/tecchu11/nrgo-std/nrhttp"
+	"github.com/tecchu11/nrgo-std/nrslog"
 )
 
 func main() {
@@ -54,10 +54,7 @@ func setup() (*http.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	nrHandler, err := nrslog.NewHandler(app, slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{AddSource: true}))
-	if err != nil {
-		return nil, err
-	}
+	nrHandler := nrslog.NewHandler(app)
 	slog.SetDefault(slog.New(nrHandler))
 	db, err := maindb.NewDB(os.LookupEnv)
 	if err != nil {
