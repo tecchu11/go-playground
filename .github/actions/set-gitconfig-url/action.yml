@@ -1,0 +1,14 @@
+name: 'set git config url'
+description: 'Set git config URL with the given GitHub app token'
+inputs:
+  token:
+    description: 'GitHub app token'
+    required: true
+    
+runs:
+  using: "composite"
+  steps:
+    - name: Set Git config URL
+      run: |
+        git config --global url."https://x-access-token:${{ inputs.token }}@github.com/tecchu11/".insteadOf https://github.com/tecchu11/
+      shell: bash

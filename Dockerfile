@@ -3,6 +3,11 @@
 FROM golang:1.23rc2 AS build
 WORKDIR /src
 
+ENV GOPRIVATE=github.com/tecchu11
+
+RUN --mount=type=secret,id=GITHUB_TOKEN \
+    git config --global url."https://x-access-token:$(cat /run/secrets/GITHUB_TOKEN)@github.com/tecchu11/".insteadOf https://github.com/tecchu11/
+
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,source=go.sum,target=go.sum \
     --mount=type=bind,source=go.mod,target=go.mod \
