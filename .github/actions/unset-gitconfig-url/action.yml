@@ -1,0 +1,14 @@
+name: 'unset git config url'
+description: 'Unset git config URL with the given GitHub app token'
+inputs:
+  token:
+    description: 'GitHub app token'
+    required: true
+    
+runs:
+  using: "composite"
+  steps:
+    - name: Unset Git config URL
+      run: |
+        git config --global --unset url."https://x-access-token:${{ inputs.token }}@github.com/tecchu11/".insteadOf
+      shell: bash

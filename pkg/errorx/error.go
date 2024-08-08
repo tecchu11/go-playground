@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 	"runtime"
+
+	"github.com/tecchu11/nrgo-std/nrslog"
 )
 
 // Error is error implementation.
@@ -103,7 +105,16 @@ func (e *Error) Level() slog.Level {
 	return e.level
 }
 
+func (e *Error) NRAttribute() map[string]string {
+	return map[string]string{
+		"msg":   e.msg,
+		"cause": e.cause.Error(),
+		"at":    e.at,
+	}
+}
+
 var (
-	_ error          = (*Error)(nil)
-	_ slog.LogValuer = (*Error)(nil)
+	_ error             = (*Error)(nil)
+	_ slog.LogValuer    = (*Error)(nil)
+	_ nrslog.Attributer = (*Error)(nil)
 )
