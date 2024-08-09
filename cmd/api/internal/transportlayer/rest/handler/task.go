@@ -9,7 +9,7 @@ import (
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
-func Listtasks(taskInteractor TaskInteractor) http.Handler {
+func ListTasks(taskInteractor TaskInteractor) http.Handler {
 	return ErrorHandlerFunc(func(w http.ResponseWriter, r *http.Request) error {
 		ctx := r.Context()
 		defer newrelic.FromContext(ctx).StartSegment("handler/ListTasks").End()

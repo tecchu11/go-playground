@@ -58,7 +58,7 @@ func TestListTasks(t *testing.T) {
 			mockTaskInteractor := MockTaskInteractor{}
 			mockTaskInteractor.On("ListTasks", v.mockOn...).Return(v.mockReturn...)
 
-			handler.Listtasks(&mockTaskInteractor).ServeHTTP(v.w, v.r)
+			handler.ListTasks(&mockTaskInteractor).ServeHTTP(v.w, v.r)
 
 			assert.Equal(t, v.expectedCode, v.w.Code)
 			assert.JSONEq(t, v.expectedBody, v.w.Body.String())
