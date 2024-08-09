@@ -54,24 +54,20 @@ func setup() (*http.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	nrHandler := nrslog.NewHandler(app)
-	slog.SetDefault(slog.New(nrHandler))
-	db, err := maindb.NewDB(os.LookupEnv)
-	if err != nil {
-		return nil, err
-	}
-	err = db.Ping()
+	slog.SetDefault(slog.New(nrslog.NewHandler(app)))
+
+	db, queries, err := maindb.NewQueryDB(os.LookupEnv)
 	if err != nil {
 		return nil, err
 	}
 	// init datasource
-	queries := maindb.New(db)
 	transactionAdaptor := datasource.NewDBTransactionAdaptor(db)
 	taskAdaptor := datasource.NewTaskAdaptor(queries)
 	// useCase
 	taskUseCase := usecase.NewTaskUseCase(taskAdaptor, transactionAdaptor)
 	// init handler
-	listTasks := handler.Listtasks(taskUseCase)
+	health := handler.HealthCheck(db)
+	listTasks := handler.ListTasks(taskUseCase)
 	findTaskByID := handler.FindTaskByID(taskUseCase)
 	postTask := handler.PostTask(taskUseCase)
 	putTask := handler.PutTask(taskUseCase)
@@ -82,7 +78,7 @@ func setup() (*http.Server, error) {
 
 	// init router
 	mux := http.NewServeMux()
-	mux.Handle("GET /health", middlewares(handler.HealthCheck))
+	mux.Handle("GET /health", middlewares(health))
 	mux.Handle("GET /tasks", middlewares(listTasks))
 	mux.Handle("GET /tasks/{id}", middlewares(findTaskByID))
 	mux.Handle("POST /tasks", middlewares(postTask))

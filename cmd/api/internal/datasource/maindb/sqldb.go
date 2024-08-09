@@ -10,7 +10,7 @@ import (
 	_ "github.com/newrelic/go-agent/v3/integrations/nrmysql"
 )
 
-// NewDB creates [sql.DB]. Default lookup is [os.LookupEnv].
+// NewQueryDB creates [sql.DB] and [Queries]. Default lookup is [os.LookupEnv].
 // Error will be returned if look up failed.
 //
 // Lookup key is below.
@@ -19,7 +19,7 @@ import (
 //   - DB_PASSWORD: password
 //   - DB_ADDRESS: host and port
 //   - DB_NAME: database name
-func NewDB(lookup func(string) (string, bool)) (*sql.DB, error) {
+func NewQueryDB(lookup func(string) (string, bool)) (*sql.DB, *Queries, error) {
 	var err error
 	conf := mysql.Config{
 		User:                 env.ApplyString(&err, "DB_USER", lookup),
@@ -37,15 +37,15 @@ func NewDB(lookup func(string) (string, bool)) (*sql.DB, error) {
 		ParseTime:            true,
 	}
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	db, err := sql.Open("nrmysql", conf.FormatDSN())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	db.SetMaxIdleConns(10)
 	db.SetMaxOpenConns(100)
 	db.SetConnMaxIdleTime(1 * time.Minute)
 	db.SetConnMaxLifetime(5 * time.Minute)
-	return db, nil
+	return db, New(db), nil
 }
