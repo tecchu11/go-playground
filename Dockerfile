@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.23rc2 AS build
+FROM golang:1.23.0 AS build
 WORKDIR /src
 
 ENV GOPRIVATE=github.com/tecchu11
