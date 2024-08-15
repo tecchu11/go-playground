@@ -13,6 +13,7 @@
       "groupName": "golang-version",
       "matchManagers": [
         "dockerfile",
+        "docker-compose",
         "gomod"
       ],
       "matchPackageNames": [
@@ -23,5 +24,8 @@
   ],
   "postUpdateOptions": [
     "gomodTidy"
+  ],
+  "ignoreDeps": [
+    "mysql"
   ]
 }
