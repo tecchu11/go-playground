@@ -2,7 +2,7 @@ package maindb
 
 import (
 	"database/sql"
-	"go-playground/pkg/env"
+	"go-playground/pkg/env/v2"
 	"go-playground/pkg/timex"
 	"time"
 
@@ -20,13 +20,13 @@ import (
 //   - DB_ADDRESS: host and port
 //   - DB_NAME: database name
 func NewQueryDB(lookup func(string) (string, bool)) (*sql.DB, *Queries, error) {
-	var err error
+	applier := env.New(lookup)
 	conf := mysql.Config{
-		User:                 env.ApplyString(&err, "DB_USER", lookup),
-		Passwd:               env.ApplyString(&err, "DB_PASSWORD", lookup),
+		User:                 applier.String("DB_USER"),
+		Passwd:               applier.String("DB_PASSWORD"),
 		Net:                  "tcp",
-		Addr:                 env.ApplyString(&err, "DB_ADDRESS", lookup),
-		DBName:               env.ApplyString(&err, "DB_NAME", lookup),
+		Addr:                 applier.String("DB_ADDRESS"),
+		DBName:               applier.String("DB_NAME"),
 		Loc:                  timex.JST(),
 		MaxAllowedPacket:     64 << 20,
 		Timeout:              20 * time.Second,
@@ -36,7 +36,7 @@ func NewQueryDB(lookup func(string) (string, bool)) (*sql.DB, *Queries, error) {
 		MultiStatements:      true,
 		ParseTime:            true,
 	}
-	if err != nil {
+	if err := applier.Err(); err != nil {
 		return nil, nil, err
 	}
 	db, err := sql.Open("nrmysql", conf.FormatDSN())
