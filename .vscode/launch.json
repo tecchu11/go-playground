@@ -11,6 +11,15 @@
             "mode": "auto",
             "program": "cmd/api",
             "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "name": "Migration",
+            "type": "go",
+            "request": "launch",
+            "args": ["up"],
+            "mode": "auto",
+            "program": "cmd/migration",
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }
