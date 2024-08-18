@@ -8,6 +8,19 @@
   "labels": [
     "renovate"
   ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^.tool-versions"
+      ],
+      "matchStrings": [
+        "sqlc (?<currentValue>.*?)\n"
+      ],
+      "datasourceTemplate": "go",
+      "packageNameTemplate": "github.com/sqlc-dev/sqlc"
+    }
+  ],
   "packageRules": [
     {
       "groupName": "golang-version",
