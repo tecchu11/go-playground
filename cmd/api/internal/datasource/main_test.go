@@ -71,14 +71,15 @@ func startContainer(ctx context.Context) (*sql.DB, shutdownFunc, error) {
 		return nil, nil, err
 	}
 	conf := mysql.Config{
-		User:            testUser,
-		Passwd:          testPassword,
-		Net:             "tcp",
-		Addr:            addr,
-		DBName:          testDB,
-		Loc:             timex.JST(),
-		ParseTime:       true,
-		MultiStatements: true,
+		User:                 testUser,
+		Passwd:               testPassword,
+		Net:                  "tcp",
+		Addr:                 addr,
+		DBName:               testDB,
+		Loc:                  timex.JST(),
+		AllowNativePasswords: true,
+		ParseTime:            true,
+		MultiStatements:      true,
 	}
 	db, err := sql.Open("mysql", conf.FormatDSN())
 	if err != nil {

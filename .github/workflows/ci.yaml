@@ -21,6 +21,13 @@ jobs:
           go-version-file: go.mod
           check-latest: true
 
+      - uses: wasabeef/import-asdf-tool-versions-action@v1.0.1
+        id: tool-versions
+        
+      - uses: sqlc-dev/setup-sqlc@v4
+        with:
+          sqlc-version: ${{ steps.tool-versions.outputs.sqlc }}
+          
       - uses: actions/create-github-app-token@v1
         id: app-token
         with:
