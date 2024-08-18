@@ -1,4 +1,10 @@
-.PHONY: fmt, test, gen, migration-up, migration-down
+.PHONY: setup, fmt, test, gen, migration-up, migration-down
+
+setup:
+	@asdf plugin add nodejs
+	@asdf plugin add sqlc https://github.com/tecchu11/asdf-sqlc.git
+	@asdf plugin add golangci-lint
+	@asdf install
 
 fmt:
 	@go fmt ./...
