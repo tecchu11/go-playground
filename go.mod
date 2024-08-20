@@ -11,7 +11,7 @@ require (
 	github.com/pressly/goose/v3 v3.21.1
 	github.com/stretchr/testify v1.9.0
 	github.com/tecchu11/nrgo-std v0.2.0
-	github.com/testcontainers/testcontainers-go/modules/mysql v0.32.0
+	github.com/testcontainers/testcontainers-go/modules/mysql v0.33.0
 )
 
 require (
