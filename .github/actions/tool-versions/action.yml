@@ -1,0 +1,10 @@
+name: 'Tool Versions'
+description: 'Load .tool-versions and set output tool name and value'
+inputs:
+  file:
+    description: 'Location of .tool-versions'
+    required: true
+    default: .tool-versions
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
