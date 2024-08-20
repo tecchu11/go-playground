@@ -40,11 +40,5 @@
   ],
   "ignoreDeps": [
     "mysql"
-  ],
-  "hostRules": [
-    {
-      "matchHost": "github.com/tecchu11",
-      "token": "{{ secrets.MEND_GITHUB_TOKEN }}"
-    }
   ]
 }
