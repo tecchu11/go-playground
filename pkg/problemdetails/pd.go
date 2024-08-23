@@ -58,7 +58,7 @@ func (pb *problemDetails[T]) Write(w http.ResponseWriter, r *http.Request) {
 	pb.Instance = r.URL.Path
 	w.Header().Add("Content-Type", "application/problem+json")
 	w.WriteHeader(pb.Status)
-	json.NewEncoder(w).Encode(pb)
+	_ = json.NewEncoder(w).Encode(pb)
 }
 
 func (pb *problemDetails[T]) JSON(r *http.Request) ([]byte, error) {
