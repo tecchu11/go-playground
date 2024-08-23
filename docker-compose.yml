@@ -21,7 +21,7 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
       TZ: Asia/Tokyo
     volumes:
-      - ./docker/volumes/mysql/my.cnf:/etc/mysql/my.cnf
+      - ./testdata/mysql/conf/my.cnf:/etc/mysql/my.cnf
       - mysql:/var/lib/mysql
     ports:
       - "13306:3306"
