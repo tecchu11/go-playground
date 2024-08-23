@@ -7,7 +7,7 @@ services:
       - .:/app
       - go:/go
       - cache:/root/.cache
-      - ~/.config/gh/hosts.yml:/root/.config/gh/hosts.yml
+      - gh-config:/root/.config/gh
     stdin_open: true
     tty: true
   maindb:
@@ -21,7 +21,7 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
       TZ: Asia/Tokyo
     volumes:
-      - ./docker/volumes/mysql/my.cnf:/etc/mysql/my.cnf
+      - ./testdata/mysql/conf/my.cnf:/etc/mysql/my.cnf
       - mysql:/var/lib/mysql
     ports:
       - "13306:3306"
@@ -30,6 +30,7 @@ services:
     networks:
       default:
         aliases:
+          - localhost.localstack.cloud
           - s3.localhost.localstack.cloud
           - s3-website.localhost.localstack.cloud
           - my-bucket.s3.localhost.localstack.cloud
@@ -44,5 +45,6 @@ services:
 volumes:
   go:
   cache:
+  gh-config:
   mysql:
   localstack:
