@@ -2,7 +2,13 @@
 
 go playground for tecchu11
 
-## How to
+## HowTo
+
+### Gen code
+
+```bash
+go generate -tags tools  ./... 
+```
 
 ### Build and run image
 
@@ -48,5 +54,5 @@ TOKEN=$(gh auth token) && \
     renovate \
     --token "$TOKEN" \
     --dry-run \
-    tecchu11/go-playground
+    tecchu11/go-playground > renovate.log
 ```

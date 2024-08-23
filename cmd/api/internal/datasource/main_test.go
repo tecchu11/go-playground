@@ -23,7 +23,9 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	defer shutdown(ctx)
+	defer func() {
+		_ = shutdown(ctx)
+	}()
 	db = container
 	err = db.PingContext(ctx)
 	if err != nil {

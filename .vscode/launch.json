@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch API",
+            "name": "LaunchAPI",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -13,13 +13,22 @@
             "envFile": "${workspaceFolder}/.env"
         },
         {
-            "name": "Migration",
+            "name": "MigrationUp",
             "type": "go",
             "request": "launch",
             "args": ["up"],
             "mode": "auto",
             "program": "cmd/migration",
             "envFile": "${workspaceFolder}/.env"
-        }
+        },
+        {
+            "name": "MigrationDown",
+            "type": "go",
+            "request": "launch",
+            "args": ["down"],
+            "mode": "auto",
+            "program": "cmd/migration",
+            "envFile": "${workspaceFolder}/.env"
+        },
     ]
 }
