@@ -7,7 +7,7 @@ services:
       - .:/app
       - go:/go
       - cache:/root/.cache
-      - ~/.config/gh/hosts.yml:/root/.config/gh/hosts.yml
+      - gh-config:/root/.config/gh
     stdin_open: true
     tty: true
   maindb:
