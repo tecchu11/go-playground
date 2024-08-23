@@ -30,6 +30,7 @@ services:
     networks:
       default:
         aliases:
+          - localhost.localstack.cloud
           - s3.localhost.localstack.cloud
           - s3-website.localhost.localstack.cloud
           - my-bucket.s3.localhost.localstack.cloud
@@ -44,5 +45,6 @@ services:
 volumes:
   go:
   cache:
+  gh-config:
   mysql:
   localstack:
