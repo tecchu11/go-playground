@@ -9,3 +9,4 @@ sql:
       go:
         package: "maindb"
         out: "."
+        omit_sqlc_version: true
