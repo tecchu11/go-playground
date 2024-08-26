@@ -13,10 +13,10 @@ type TaskID = string
 
 // Task is domain entity.
 type Task struct {
-	ID        TaskID
-	Content   string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        TaskID    `json:"id"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // NewTask creates new task.
