@@ -35,7 +35,7 @@ func TestListTasks(t *testing.T) {
 				NextToken: "test-id-3",
 			}, nil},
 			expectedCode: 200,
-			expectedBody: `{"items":[{"ID":"test-id-1", "Content":"", "CreatedAt":"0001-01-01T00:00:00Z", "UpdatedAt":"0001-01-01T00:00:00Z"},{"ID":"test-id-2", "Content":"", "CreatedAt":"0001-01-01T00:00:00Z", "UpdatedAt":"0001-01-01T00:00:00Z"}], "next":"test-id-3", "hasNext":true}`,
+			expectedBody: `{"items":[{"id":"test-id-1", "content":"", "createdAt":"0001-01-01T00:00:00Z", "updatedAt":"0001-01-01T00:00:00Z"},{"id":"test-id-2", "content":"", "createdAt":"0001-01-01T00:00:00Z", "updatedAt":"0001-01-01T00:00:00Z"}], "next":"test-id-3", "hasNext":true}`,
 		},
 		"limit is not number": {
 			w:            httptest.NewRecorder(),
@@ -89,7 +89,7 @@ func TestFindTaskByID(t *testing.T) {
 				nil,
 			},
 			expectedCode: 200,
-			expectedBody: `{"ID":"test-id", "Content":"do test", "CreatedAt":"2024-07-26T00:00:00+09:00", "UpdatedAt":"2024-07-26T00:00:00+09:00"}`,
+			expectedBody: `{"id":"test-id", "content":"do test", "createdAt":"2024-07-26T00:00:00+09:00", "updatedAt":"2024-07-26T00:00:00+09:00"}`,
 		},
 		"not found task": {
 			w:                httptest.NewRecorder(),
