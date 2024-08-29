@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"go-playground/pkg/problemdetails"
+	"go-playground/cmd/api/internal/transportlayer/rest"
 	"log/slog"
 	"net/http"
 )
@@ -18,14 +18,20 @@ var Recover = func(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				if err == http.ErrAbortHandler {
+					// noop
 					panic(err)
 				}
-				slog.ErrorContext(r.Context(), "Panic was happened. So check detail as soon as possible the reason why happened panic.", slog.Any("error", err))
+				slog.ErrorContext(
+					r.Context(),
+					"Panic was happened. So check detail as soon as possible the reason why happened panic.",
+					slog.Any("error", err),
+				)
 				if r.Header.Get(connectionHeader) != connectionHeaderValue {
-					problemdetails.
-						New("Internal Server Error", http.StatusInternalServerError).
-						WithDetail("Unexpected error was happened. Please report this error you have checked.").
-						Write(w, r)
+					rest.Err(
+						w,
+						"Unexpected error was happened. Please report this error you have checked.",
+						http.StatusInternalServerError,
+					)
 				}
 			}
 		}()
