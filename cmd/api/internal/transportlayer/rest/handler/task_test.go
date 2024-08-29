@@ -41,7 +41,7 @@ func TestListTasks(t *testing.T) {
 			w:            httptest.NewRecorder(),
 			r:            httptest.NewRequest("", "/tasks?limit=o", nil),
 			expectedCode: 400,
-			expectedBody: `{"type":"about:blank", "title":"Handled error", "detail":"limit must be number", "instance":"/tasks", "status":400}`,
+			expectedBody: `{"message":"limit must be number"}`,
 		},
 		"failed to list tasks": {
 			w:            httptest.NewRecorder(),
@@ -49,7 +49,7 @@ func TestListTasks(t *testing.T) {
 			mockOn:       []any{context.Background(), "test-id", int32(100)},
 			mockReturn:   []any{entity.CursorPage[string, entity.Task]{}, errors.New("unknown error on list tasks")},
 			expectedCode: 500,
-			expectedBody: `{"type":"about:blank", "title":"Unhandled error", "detail":"unknown error on list tasks", "instance":"/tasks", "status":500}`,
+			expectedBody: `{"message":"unknown error on list tasks"}`,
 		},
 	}
 
@@ -97,7 +97,7 @@ func TestFindTaskByID(t *testing.T) {
 			id:               "missing-id",
 			mockFindTaskByID: []any{entity.Task{}, errorx.NewInfo("missing task", errorx.WithStatus(404))},
 			expectedCode:     404,
-			expectedBody:     `{"title":"Handled error", "type":"about:blank", "detail":"missing task", "instance":"/tasks/{id}", "status":404}`,
+			expectedBody:     `{"message":"missing task"}`,
 		},
 	}
 	for k, v := range tests {
@@ -134,14 +134,14 @@ func TestPostTask(t *testing.T) {
 			r:              httptest.NewRequest("POST", "/tasks", strings.NewReader(`{"content":"do test"}`)),
 			mockCreateTask: []any{"", errorx.NewError("failed to create task")},
 			expectedCode:   500,
-			expectedBody:   `{"type":"about:blank", "title":"Handled error", "detail":"failed to create task", "instance":"/tasks", "status":500}`,
+			expectedBody:   `{"message":"failed to create task"}`,
 		},
 		"unmarshal error": {
 			w:              httptest.NewRecorder(),
 			r:              httptest.NewRequest("POST", "/tasks", strings.NewReader("")),
 			mockCreateTask: []any{nil, nil},
 			expectedCode:   500,
-			expectedBody:   `{"type":"about:blank", "title":"Unhandled error", "detail":"EOF", "instance":"/tasks", "status":500}`,
+			expectedBody:   `{"message":"EOF"}`,
 		},
 	}
 
@@ -179,13 +179,13 @@ func TestPutTask(t *testing.T) {
 			r:              httptest.NewRequest("PUT", "/tasks/{id}", strings.NewReader(`{"content":"do test"}`)),
 			mockUpdateTask: errorx.NewError("failed to update task"),
 			expectedCode:   500,
-			expectedBody:   `{"type":"about:blank", "title":"Handled error", "detail":"failed to update task", "instance":"/tasks/{id}", "status":500}`,
+			expectedBody:   `{"message":"failed to update task"}`,
 		},
 		"unmarshal error": {
 			w:            httptest.NewRecorder(),
 			r:            httptest.NewRequest("PUT", "/tasks/{id}", strings.NewReader("")),
 			expectedCode: 500,
-			expectedBody: `{"type":"about:blank", "title":"Unhandled error", "detail":"EOF", "instance":"/tasks/{id}", "status":500}`,
+			expectedBody: `{"message":"EOF"}`,
 		},
 	}
 

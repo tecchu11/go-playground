@@ -36,7 +36,7 @@ func TestErrorHandlerFunc(t *testing.T) {
 				return errors.New("unhandled")
 			}),
 			expectedCode: 500,
-			expectedBody: `{"type":"about:blank","title":"Unhandled error","detail":"unhandled","instance":"/","status":500}`,
+			expectedBody: `{"message":"unhandled"}`,
 		},
 		"handled error": {
 			w: httptest.NewRecorder(),
@@ -45,7 +45,7 @@ func TestErrorHandlerFunc(t *testing.T) {
 				return errorx.NewError("handled error", errorx.WithStatus(400))
 			}),
 			expectedCode: 400,
-			expectedBody: `{"type":"about:blank","title":"Handled error","detail":"handled error","instance":"/","status":400}`,
+			expectedBody: `{"message":"handled error"}`,
 		},
 	}
 

@@ -2,8 +2,8 @@ package handler
 
 import (
 	"errors"
+	"go-playground/cmd/api/internal/transportlayer/rest"
 	"go-playground/pkg/errorx"
-	"go-playground/pkg/problemdetails"
 	"log/slog"
 	"net/http"
 
@@ -21,22 +21,16 @@ func (fn ErrorHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	var appErr *errorx.Error
 	if !errors.As(err, &appErr) {
-		slog.ErrorContext(r.Context(), "unhandled error", slog.String("error", err.Error()))
+		slog.ErrorContext(r.Context(), "caught unhandled error", slog.String("error", err.Error()))
 		txn.NoticeError(err)
-		problemdetails.
-			New("Unhandled error", http.StatusInternalServerError).
-			WithDetail(err.Error()).
-			Write(w, r)
+		rest.Err(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	slog.Log(r.Context(), appErr.Level(), "caught error", slog.Any("error", appErr))
 	if appErr.Level() == slog.LevelError {
 		txn.NoticeError(appErr)
 	}
-	problemdetails.
-		New("Handled error", appErr.HTTPStatus()).
-		WithDetail(appErr.Msg()).
-		Write(w, r)
+	rest.Err(w, appErr.Msg(), appErr.HTTPStatus())
 }
 
 var _ http.Handler = (ErrorHandlerFunc)(nil)
