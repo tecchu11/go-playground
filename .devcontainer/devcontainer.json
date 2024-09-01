@@ -2,10 +2,13 @@
     "service": "app",
     "dockerComposeFile": "../docker-compose.yml",
     "workspaceFolder": "/app",
-    "features":{
+    "features": {
         "ghcr.io/devcontainers/features/docker-in-docker:2": {},
         "ghcr.io/devcontainers/features/aws-cli:1": {},
-        "ghcr.io/devcontainers/features/common-utils:2": {},
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installOhMyZsh": false,
+            "installOhMyZshConfig": false
+        },
         "ghcr.io/devcontainers/features/github-cli:1": {}
     },
     "postCreateCommand": "/bin/sh .devcontainer/postCreateCommand.sh",
@@ -13,7 +16,7 @@
         "vscode": {
             "settings": {
                 "terminal.integrated.defaultProfile.linux": "zsh"
-              },
+            },
             "extensions": [
                 "golang.go",
                 "streetsidesoftware.code-spell-checker"
