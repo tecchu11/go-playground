@@ -28,7 +28,7 @@ EXPOSE 8080
 ENTRYPOINT [ "/bin/server" ]
 
 # latest-arm64
-FROM gcr.io/distroless/static-debian12@sha256:a216254b8f42a015e380cebb6538488bed896a7072dcac951007d14f79806b84 AS final
+FROM gcr.io/distroless/static-debian12@sha256:31034c10eadd77e11256b49b8fcb9d6009daa01efbd76f078bd160249fb823d6 AS final
 
 COPY --from=build --chown=nonroot:nonroot /bin/server /bin/
 
