@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,target=. \
-    CGO_ENABLED=0 go build -o /bin/server ./cmd/api
+    CGO_ENABLED=0 go build -o /bin/server --ldflags="-s -w" -trimpath ./cmd/api
 
 FROM gcr.io/distroless/static-debian12:debug AS debug
 
