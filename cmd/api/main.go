@@ -54,7 +54,12 @@ func setup() (*http.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	slog.SetDefault(slog.New(nrslog.NewHandler(app)))
+	slog.SetDefault(slog.New(
+		nrslog.NewHandler(
+			app,
+			nrslog.WithHandler(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{AddSource: true})),
+		),
+	))
 
 	db, queries, err := maindb.NewQueryDB(os.LookupEnv)
 	if err != nil {

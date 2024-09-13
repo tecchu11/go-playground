@@ -19,6 +19,7 @@ func HealthCheck(pinger Pinger) http.HandlerFunc {
 		err := pinger.PingContext(ctx)
 		if err != nil {
 			slog.ErrorContext(ctx, "ping error", slog.String("error", err.Error()))
+			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
 			_ = json.NewEncoder(w).Encode(nil)
 			return
