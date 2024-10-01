@@ -47,13 +47,16 @@ func (q *Queries) FindTask(ctx context.Context, id string) (Task, error) {
 
 const listTasks = `-- name: ListTasks :many
 SELECT
-	id, content, created_at, updated_at
+    id,
+    content,
+    created_at,
+    updated_at
 FROM
-	tasks
+    tasks
 WHERE
-	id >= ?
+    '' = ? OR id <= ?
 ORDER BY
-	id
+    id DESC
 LIMIT ?
 `
 
@@ -64,7 +67,7 @@ type ListTasksParams struct {
 
 // ListTasks finds tasks by cursor pagination.
 func (q *Queries) ListTasks(ctx context.Context, arg ListTasksParams) ([]Task, error) {
-	rows, err := q.db.QueryContext(ctx, listTasks, arg.ID, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, listTasks, arg.ID, arg.ID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

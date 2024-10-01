@@ -1,31 +1,32 @@
 package entity
 
-// Item is pagination item type.
-type Item[T comparable] interface {
-	Token() T
+// Base is entity base interface for this app.
+type Base interface {
+	EncodeCursor() (string, error)
 }
 
-// CursorPage is cursor paginatied items.
-// Type T is cursor token type and type I is item type.
-type CursorPage[T comparable, I Item[T]] struct {
-	Items     []I  `json:"items"`
-	HasNext   bool `json:"hasNext"`
-	NextToken T    `json:"next"`
+// Page is pagination of entities.
+type Page[E Base] struct {
+	Items     []E    `json:"items"`
+	HasNext   bool   `json:"hasNext"`
+	NextToken string `json:"next"`
 }
 
-// NewCursorPage inits CursorPage.
-// NextToken is zero if no next items.
-func NewCursorPage[T comparable, I Item[T]](items []I, limit int32) CursorPage[T, I] {
-	if len(items) >= int(limit)+1 {
-		next := items[limit].Token()
-		return CursorPage[T, I]{
-			Items:     items[:limit],
+// NewPage converts Page by E.
+func NewPage[E Base](s []E, limit int32) (Page[E], error) {
+	if len(s) >= int(limit)+1 {
+		next, err := s[limit].EncodeCursor()
+		if err != nil {
+			return Page[E]{}, err
+		}
+		return Page[E]{
+			Items:     s[:limit],
 			HasNext:   true,
 			NextToken: next,
-		}
+		}, nil
 	}
-	return CursorPage[T, I]{
-		Items:   items,
+	return Page[E]{
+		Items:   s,
 		HasNext: false,
-	}
+	}, nil
 }
