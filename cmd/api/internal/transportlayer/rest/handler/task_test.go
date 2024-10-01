@@ -29,7 +29,7 @@ func TestListTasks(t *testing.T) {
 			w:      httptest.NewRecorder(),
 			r:      httptest.NewRequest("", "/tasks?limit=2", nil),
 			mockOn: []any{context.Background(), "", int32(2)},
-			mockReturn: []any{entity.CursorPage[string, entity.Task]{
+			mockReturn: []any{entity.Page[entity.Task]{
 				Items:     []entity.Task{{ID: "test-id-1"}, {ID: "test-id-2"}},
 				HasNext:   true,
 				NextToken: "test-id-3",
@@ -47,7 +47,7 @@ func TestListTasks(t *testing.T) {
 			w:            httptest.NewRecorder(),
 			r:            httptest.NewRequest("", "/tasks?limit=100&next=test-id", nil),
 			mockOn:       []any{context.Background(), "test-id", int32(100)},
-			mockReturn:   []any{entity.CursorPage[string, entity.Task]{}, errors.New("unknown error on list tasks")},
+			mockReturn:   []any{entity.Page[entity.Task]{}, errors.New("unknown error on list tasks")},
 			expectedCode: 500,
 			expectedBody: `{"message":"unknown error on list tasks"}`,
 		},
