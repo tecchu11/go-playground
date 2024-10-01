@@ -6,16 +6,18 @@ import (
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/cmd/api/internal/usecase"
 	"go-playground/pkg/errorx"
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTaskUseCase_ListTasks(t *testing.T) {
 	mockTaskRepo := MockTaskRepository{}
 	useCase := usecase.NewTaskUseCase(&mockTaskRepo, nil)
-	expected := entity.CursorPage[string, entity.Task]{
+	expected := entity.Page[entity.Task]{
 		Items: []entity.Task{
 			{ID: "task-id-1"}, {ID: "task-id-2"},
 		},
@@ -24,7 +26,7 @@ func TestTaskUseCase_ListTasks(t *testing.T) {
 	}
 	mockTaskRepo.On("ListTasks", context.Background(), "task-id-1", int32(2)).Return(expected, nil)
 
-	actuaPage, acutalErr := useCase.ListTasks(context.Background(), "task-id-1", 2)
+	actuaPage, acutalErr := useCase.ListTasks(context.Background(), "eyJpZCI6InRhc2staWQtMSJ9Cg==", 2)
 
 	assert.NoError(t, acutalErr)
 	assert.Equal(t, expected, actuaPage)
@@ -33,17 +35,29 @@ func TestTaskUseCase_ListTasks(t *testing.T) {
 func TestTaskUseCase_ListTasks_LimitIsZero(t *testing.T) {
 	mockTaskRepo := MockTaskRepository{}
 	useCase := usecase.NewTaskUseCase(&mockTaskRepo, nil)
-	expected := entity.CursorPage[string, entity.Task]{
+	expected := entity.Page[entity.Task]{
 		Items: []entity.Task{
 			{ID: "task-id-1"}, {ID: "task-id-2"},
 		},
 	}
-	mockTaskRepo.On("ListTasks", context.Background(), "task-id-1", int32(100)).Return(expected, nil)
+	mockTaskRepo.On("ListTasks", context.Background(), "task-id-1", int32(10)).Return(expected, nil)
 
-	actuaPage, acutalErr := useCase.ListTasks(context.Background(), "task-id-1", 0)
+	actuaPage, acutalErr := useCase.ListTasks(context.Background(), "eyJpZCI6InRhc2staWQtMSJ9Cg==", 0)
 
 	assert.NoError(t, acutalErr)
 	assert.Equal(t, expected, actuaPage)
+}
+
+func TestTaskUseCase_ListTasks_CursorIsInValid(t *testing.T) {
+	useCase := usecase.NewTaskUseCase(nil, nil)
+	actuaPage, acutalErr := useCase.ListTasks(context.Background(), "invalid", 0)
+
+	var err *errorx.Error
+	require.ErrorAs(t, acutalErr, &err)
+	assert.Equal(t, "failed to decode task cursor token", err.Msg())
+	assert.Equal(t, 400, err.HTTPStatus())
+	assert.Equal(t, slog.LevelWarn, err.Level())
+	assert.Zero(t, actuaPage)
 }
 
 func TestTaskUseCase_FindTaskByID(t *testing.T) {

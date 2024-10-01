@@ -18,12 +18,34 @@ func TestTaskAdaptorListTasks(t *testing.T) {
 	tests := map[string]struct {
 		token    string
 		limit    int32
-		expected entity.CursorPage[string, entity.Task]
+		expected entity.Page[entity.Task]
 	}{
-		"default": {
+		"next is empty": {
 			token: "",
 			limit: 2,
-			expected: entity.CursorPage[string, entity.Task]{
+			expected: entity.Page[entity.Task]{
+				Items: []entity.Task{
+					{
+						ID:        "0191039a-d472-7e9f-9138-7b5e1c400553",
+						Content:   "this is test 5",
+						CreatedAt: time.Date(2024, 7, 30, 21, 26, 04, 0, timex.JST()),
+						UpdatedAt: time.Date(2024, 7, 30, 21, 26, 04, 0, timex.JST()),
+					},
+					{
+						ID:        "0191039a-cef4-7c15-9b84-525f37ec3f8b",
+						Content:   "this is test 4",
+						CreatedAt: time.Date(2024, 7, 30, 21, 26, 02, 0, timex.JST()),
+						UpdatedAt: time.Date(2024, 7, 30, 21, 26, 02, 0, timex.JST()),
+					},
+				},
+				HasNext:   true,
+				NextToken: "eyJpZCI6IjAxOTEwMmNhLWI1OGItN2I0Ni04ZTI3LWQ2MzQ4NWE3MDU3NCJ9",
+			},
+		},
+		"no next": {
+			token: "0190fe59-6618-7811-8b28-a3e67969a4ef",
+			limit: 2,
+			expected: entity.Page[entity.Task]{
 				Items: []entity.Task{
 					{
 						ID:        "0190fe59-6618-7811-8b28-a3e67969a4ef",
@@ -31,33 +53,11 @@ func TestTaskAdaptorListTasks(t *testing.T) {
 						CreatedAt: time.Date(2024, 7, 29, 20, 56, 30, 0, timex.JST()),
 						UpdatedAt: time.Date(2024, 7, 29, 20, 56, 30, 0, timex.JST()),
 					},
-					{
-						ID:        "0190fe5b-1f83-7024-a233-c8a18935f5dc",
-						Content:   "this is test 2",
-						CreatedAt: time.Date(2024, 7, 29, 20, 58, 23, 0, timex.JST()),
-						UpdatedAt: time.Date(2024, 7, 29, 20, 58, 23, 0, timex.JST()),
-					},
-				},
-				HasNext:   true,
-				NextToken: "019102ca-b58b-7b46-8e27-d63485a70574",
-			},
-		},
-		"no next": {
-			token: "0191039a-d472-7e9f-9138-7b5e1c400553",
-			limit: 2,
-			expected: entity.CursorPage[string, entity.Task]{
-				Items: []entity.Task{
-					{
-						ID:        "0191039a-d472-7e9f-9138-7b5e1c400553",
-						Content:   "this is test 5",
-						CreatedAt: time.Date(2024, 7, 30, 21, 26, 4, 0, timex.JST()),
-						UpdatedAt: time.Date(2024, 7, 30, 21, 26, 4, 0, timex.JST()),
-					},
 				},
 			},
 		},
-		"empty": {
-			token: "019103cf-dcb8-797f-ba3b-78246e157c1c",
+		"no result": {
+			token: "00000000-0000-1000-8000-000000000000",
 			limit: 1,
 		},
 	}

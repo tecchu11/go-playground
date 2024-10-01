@@ -23,13 +23,13 @@ func NewTaskAdaptor(queries *maindb.Queries) *TaskAdaptor {
 }
 
 // ListTasks list all task.
-func (a *TaskAdaptor) ListTasks(ctx context.Context, next entity.TaskID, limit int32) (entity.CursorPage[string, entity.Task], error) {
+func (a *TaskAdaptor) ListTasks(ctx context.Context, next entity.TaskID, limit int32) (entity.Page[entity.Task], error) {
 	defer newrelic.FromContext(ctx).StartSegment("datasource/TaskAdaptor/ListTasks").End()
 
 	queries := TransactionQueries(ctx, a.queries)
 	rows, err := queries.ListTasks(ctx, maindb.ListTasksParams{ID: next, Limit: limit + 1})
 	if err != nil {
-		return entity.CursorPage[string, entity.Task]{}, errorx.NewError("cant list tasks", errorx.WithCause(err))
+		return entity.Page[entity.Task]{}, errorx.NewError("cant list tasks", errorx.WithCause(err))
 	}
 	var tasks []entity.Task
 	for _, record := range rows {
@@ -40,7 +40,7 @@ func (a *TaskAdaptor) ListTasks(ctx context.Context, next entity.TaskID, limit i
 			UpdatedAt: record.UpdatedAt,
 		})
 	}
-	return entity.NewCursorPage(tasks, limit), nil
+	return entity.NewPage(tasks, limit)
 }
 
 // FindByID select task from task record by given id. Error will be returned task is not found.

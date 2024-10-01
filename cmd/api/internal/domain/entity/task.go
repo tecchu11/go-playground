@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"go-playground/pkg/errorx"
 	"strings"
 	"time"
@@ -55,7 +57,41 @@ func validateTask(content string) error {
 	return nil
 }
 
-// Token is implementation of Item[string] interface.
-func (t Task) Token() string {
-	return t.ID
+type TaskCursor struct {
+	ID string `json:"id"`
+}
+
+// EncodeCursor encodes task cursor token.
+func (t Task) EncodeCursor() (string, error) {
+	c := TaskCursor{ID: t.ID}
+	buf, err := json.Marshal(c)
+	if err != nil {
+		return "", errorx.NewError("failed to create task cursor token", errorx.WithCause(err))
+	}
+	return base64.StdEncoding.EncodeToString(buf), nil
+}
+
+// DecodeTaskCursor decodes token to task cursor.
+func DecodeTaskCursor(token string) (TaskCursor, error) {
+	if token == "" {
+		return TaskCursor{}, nil
+	}
+	var cursor TaskCursor
+	buf, err := base64.StdEncoding.DecodeString(token)
+	if err != nil {
+		return cursor, errorx.NewWarn(
+			"failed to decode task cursor token",
+			errorx.WithCause(err),
+			errorx.WithStatus(400),
+		)
+	}
+	err = json.Unmarshal(buf, &cursor)
+	if err != nil {
+		return cursor, errorx.NewWarn(
+			"failed to decode task cursor token",
+			errorx.WithCause(err),
+			errorx.WithStatus(400),
+		)
+	}
+	return cursor, nil
 }

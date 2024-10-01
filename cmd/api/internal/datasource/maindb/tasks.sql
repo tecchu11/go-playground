@@ -1,14 +1,18 @@
 -- name: ListTasks :many
 -- ListTasks finds tasks by cursor pagination.
 SELECT
-	*
+    id,
+    content,
+    created_at,
+    updated_at
 FROM
-	tasks
+    tasks
 WHERE
-	id >= ?
+    '' = sqlc.arg('id') OR id <= sqlc.arg('id')
 ORDER BY
-	id
+    id DESC
 LIMIT ?;
+
 
 -- name: FindTask :one
 -- FindTask finds task by given id.
