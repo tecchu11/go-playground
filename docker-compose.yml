@@ -26,7 +26,7 @@ services:
     ports:
       - "13306:3306"
   localstack:
-    image: localstack/localstack:3.7
+    image: localstack/localstack:3.8
     networks:
       default:
         aliases:
