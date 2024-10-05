@@ -2,7 +2,7 @@ module go-playground
 
 go 1.23.0
 
-toolchain go1.23.1
+toolchain go1.23.2
 
 require (
 	github.com/go-sql-driver/mysql v1.8.1
