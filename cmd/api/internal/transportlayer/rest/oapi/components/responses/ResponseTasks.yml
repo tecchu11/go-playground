@@ -1,0 +1,22 @@
+description: List of tasks. Items is empty-able.
+content:
+  application/json:
+    schema:
+      type: object
+      required:
+        - items
+        - hasNext
+        - next
+      properties:
+        items:
+          type: array
+          description: Items of task
+          items:
+            $ref: ../schemas/Task.yml
+        hasNext:
+          type: boolean
+          description: whether has next items.
+        next:
+          type: string
+          description: cursor of next item.
+          example: eyJpZCI6IjAxOTIzM2Y1LTQzYzMtNzk4Yi1iMjRkLWVjYmM3NThhZTVmYiJ9

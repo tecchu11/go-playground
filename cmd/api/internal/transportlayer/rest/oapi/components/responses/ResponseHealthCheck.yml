@@ -1,0 +1,5 @@
+description: Health check response.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Simple.yml

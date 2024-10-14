@@ -1,0 +1,12 @@
+description: saved task id.
+content:
+  application/json:
+    schema:
+      type: object
+      required:
+        - id
+      properties:
+        id: 
+          type: string
+          description: ID of task.
+          example: 01928120-055d-7edb-a12a-2d290512266e

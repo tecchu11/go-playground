@@ -1,0 +1,5 @@
+description: get task by id response.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Task.yml

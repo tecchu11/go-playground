@@ -1,0 +1,7 @@
+name: TaskID
+in: path
+required: true
+schema:
+  type: string
+  description: ID of task.
+  example: 01928120-055d-7edb-a12a-2d290512266e

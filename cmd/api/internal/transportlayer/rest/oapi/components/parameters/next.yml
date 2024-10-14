@@ -1,0 +1,8 @@
+name: next
+in: query
+required: false
+schema:
+  type: string
+  description: pagination cursor value.
+  example: eyJpZCI6MX0K
+  default: ''
