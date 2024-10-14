@@ -1,0 +1,21 @@
+type: object
+required:
+  - id
+  - content
+  - createdAt
+  - updatedAt
+properties:
+  id:
+    type: string
+    example: 01928120-055d-7edb-a12a-2d290512266e
+  content:
+    type: string
+    example: go  shopping
+  createdAt:
+    type: string
+    format: date-time
+    example: 2024-10-12T23:26:52+09:00
+  updatedAt:
+    type: string
+    format: date-time
+    example: 2024-10-12T23:26:52+09:00

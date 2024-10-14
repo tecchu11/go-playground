@@ -1,0 +1,32 @@
+get:
+  summary: Get task
+  description: Get task by id.
+  operationId: GetTask
+  parameters:
+    - $ref: ../../../components/parameters/TaskID.yml
+  responses:
+    "200":
+      $ref: ../../../components/responses/ResponseTask.yml
+    "400":
+      $ref: ../../../components/responses/Response400.yml
+    "404":
+      $ref: ../../../components/responses/Response404.yml
+    "500":
+      $ref: ../../../components/responses/Response500.yml
+put:
+  summary: Put task
+  description: Put task with given request body. If any create task.
+  operationId: PutTask
+  parameters:
+    - $ref: ../../../components/parameters/TaskID.yml
+  requestBody:
+    $ref: ../../../components/requestBodies/RequestTask.yml
+  responses:
+    "200":
+      $ref: ../../../components/responses/ResponseTaskID.yml
+    "400":
+      $ref: ../../../components/responses/Response400.yml
+    "404":
+      $ref: ../../../components/responses/Response404.yml
+    "500":
+      $ref: ../../../components/responses/Response500.yml

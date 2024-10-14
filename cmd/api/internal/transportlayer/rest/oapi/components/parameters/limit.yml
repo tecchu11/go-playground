@@ -1,0 +1,9 @@
+name: Limit
+in: query
+required: false
+schema:
+  type: integer
+  description: pagination limit size.
+  format: int32
+  minimum: 1
+  default: 10
