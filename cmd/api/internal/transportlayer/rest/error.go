@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"go-playground/cmd/api/internal/transportlayer/rest/oapi"
 	"net/http"
 )
 
@@ -18,5 +19,5 @@ func Err(
 ) {
 	w.WriteHeader(sts)
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(ErrBody{Msg: msg})
+	_ = json.NewEncoder(w).Encode(oapi.Error{Message: msg})
 }

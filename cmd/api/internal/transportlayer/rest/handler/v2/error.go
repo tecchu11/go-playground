@@ -10,9 +10,8 @@ import (
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
-type ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request) error
-
-func (fn ErrorHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// ErrorHandlerFunc handles request/response safely.
+func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, fn func(http.ResponseWriter, *http.Request) error) {
 	txn := newrelic.FromContext(r.Context())
 
 	err := fn(w, r)
@@ -29,8 +28,8 @@ func (fn ErrorHandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	slog.Log(r.Context(), appErr.Level(), "caught error", slog.Any("error", appErr))
 	if appErr.Level() == slog.LevelError {
 		txn.NoticeError(appErr)
+	} else {
+		txn.NoticeExpectedError(appErr)
 	}
 	rest.Err(w, appErr.Msg(), appErr.HTTPStatus())
 }
-
-var _ http.Handler = (ErrorHandlerFunc)(nil)

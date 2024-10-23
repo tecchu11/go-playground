@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/fd1f9b3e448846c1c4749f5c7eaae60e2be7a02c/configuration-schema.json
+package: oapi
+generate:
+  std-http-server: true
+  models: true
+  # strict-server: true
+output: oapi.gen.go

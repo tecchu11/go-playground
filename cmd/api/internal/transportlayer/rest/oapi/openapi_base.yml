@@ -15,7 +15,7 @@ paths:
     $ref: ./paths/health/index.yml
   /tasks:
     $ref: ./paths/tasks/index.yml
-  /tasks/{TaskID}:
+  /tasks/{taskId}:
     $ref: ./paths/tasks/[taskID]/index.yml
 components:
   schemas:

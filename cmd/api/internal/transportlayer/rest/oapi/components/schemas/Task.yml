@@ -7,6 +7,7 @@ required:
 properties:
   id:
     type: string
+    x-go-name: ID
     example: 01928120-055d-7edb-a12a-2d290512266e
   content:
     type: string

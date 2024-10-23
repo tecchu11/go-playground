@@ -1,4 +1,5 @@
-name: TaskID
+name: taskId
+x-go-name: TaskID
 in: path
 required: true
 schema:
