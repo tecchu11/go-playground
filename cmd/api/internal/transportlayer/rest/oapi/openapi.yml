@@ -51,7 +51,7 @@ paths:
           $ref: '#/components/responses/Response404'
         '500':
           $ref: '#/components/responses/Response500'
-  /tasks/{TaskID}:
+  /tasks/{taskId}:
     get:
       summary: Get task
       description: Get task by id.
@@ -124,6 +124,7 @@ components:
       properties:
         id:
           type: string
+          x-go-name: ID
           example: 01928120-055d-7edb-a12a-2d290512266e
         content:
           type: string
@@ -157,7 +158,8 @@ components:
         example: eyJpZCI6MX0K
         default: ''
     TaskID:
-      name: TaskID
+      name: taskId
+      x-go-name: TaskID
       in: path
       required: true
       schema:
@@ -213,6 +215,7 @@ components:
             properties:
               id:
                 type: string
+                x-go-name: ID
                 description: ID of task.
                 example: 01928120-055d-7edb-a12a-2d290512266e
     ResponseTasks:

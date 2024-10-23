@@ -7,6 +7,15 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+type MockPinger struct {
+	mock.Mock
+}
+
+func (mck *MockPinger) PingContext(ctx context.Context) error {
+	args := mck.Called(ctx)
+	return args.Error(0)
+}
+
 type MockTaskInteractor struct {
 	mock.Mock
 }
