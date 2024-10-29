@@ -9,6 +9,9 @@
             "installOhMyZsh": false,
             "installOhMyZshConfig": false
         },
+        "ghcr.io/devcontainers/features/terraform:1": {
+            "version": "1.9.8"
+        },
         "ghcr.io/devcontainers/features/github-cli:1": {}
     },
     "postCreateCommand": "/bin/sh .devcontainer/postCreateCommand.sh",
