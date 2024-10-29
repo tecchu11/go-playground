@@ -1,2 +1,6 @@
 .env
 node_modules/
+frontend
+.terraform
+terraform.tfstate*
+.idea

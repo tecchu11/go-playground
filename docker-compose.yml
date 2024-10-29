@@ -15,16 +15,22 @@ services:
     platform: linux/amd64
     env_file: .env
     environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: true
+      MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-      TZ: Asia/Tokyo
     volumes:
       - ./testdata/mysql/conf/my.cnf:/etc/mysql/my.cnf
+      - ./testdata/mysql/init://docker-entrypoint-initdb.d
       - mysql:/var/lib/mysql
     ports:
       - "13306:3306"
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
   localstack:
     image: localstack/localstack:3.8
     networks:
@@ -42,9 +48,23 @@ services:
     volumes:
       - localstack:/var/lib/localstack
       - /var/run/docker.socket:/var/run/docker.socket
+  auth:
+    image: keycloak/keycloak:26.0.2
+    env_file: .env
+    command:
+      - start-dev
+    ports:
+      - "18080:18080"
+    volumes:
+      - auth:/opt/keycloak/data
+    depends_on:
+      maindb:
+        condition: service_healthy
+        restart: true
 volumes:
   go:
   cache:
   gh-config:
   mysql:
   localstack:
+  auth:
