@@ -2,4 +2,4 @@
 
 package oapi
 
-//go:generate sh script.sh
+//go:generate sh generator.sh

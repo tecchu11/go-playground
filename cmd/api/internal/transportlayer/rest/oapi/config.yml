@@ -3,5 +3,4 @@ package: oapi
 generate:
   std-http-server: true
   models: true
-  # strict-server: true
 output: oapi.gen.go
