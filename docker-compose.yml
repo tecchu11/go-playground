@@ -31,6 +31,26 @@ services:
       timeout: 30s
       retries: 5
       start_period: 30s
+  migration:
+    build: 
+      context: .
+      dockerfile: Dockerfile.migration
+    env_file:
+      - .env
+    depends_on:
+      maindb:
+        condition: service_healthy
+        restart: true
+  dbschema:
+    build: 
+      context: doc/dbschema
+      network: host
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+        restart: true
+    ports:
+      - "18000:8000"
   localstack:
     image: localstack/localstack:3.8
     networks:
@@ -68,3 +88,4 @@ volumes:
   mysql:
   localstack:
   auth:
+  schemadoc:
