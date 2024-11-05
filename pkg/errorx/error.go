@@ -105,7 +105,14 @@ func (e *Error) Level() slog.Level {
 	return e.level
 }
 
+// NRAttribute is implementation of [nrslog.Attributer].
 func (e *Error) NRAttribute() map[string]string {
+	if e.cause == nil {
+		return map[string]string{
+			"msg": e.msg,
+			"at":  e.at,
+		}
+	}
 	return map[string]string{
 		"msg":   e.msg,
 		"cause": e.cause.Error(),

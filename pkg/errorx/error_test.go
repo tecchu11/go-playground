@@ -113,3 +113,57 @@ func TestErrorHTTPStatus(t *testing.T) {
 		})
 	}
 }
+
+func TestNRAttributer(t *testing.T) {
+	type input struct {
+		msg   string
+		cause error
+	}
+	type want struct {
+		msg   string
+		cause error
+	}
+	tests := map[string]struct {
+		in   input
+		want want
+	}{
+		"cause is nil": {
+			in: input{
+				msg: "error",
+			},
+			want: want{
+				msg: "error",
+			},
+		},
+		"cause is not nil": {
+			in: input{
+				msg:   "error",
+				cause: io.EOF,
+			},
+			want: want{
+				msg:   "error",
+				cause: io.EOF,
+			},
+		},
+	}
+	for k, v := range tests {
+		t.Run(k, func(t *testing.T) {
+			err := errorx.NewError(v.in.msg, errorx.WithCause(v.in.cause))
+			attr := err.NRAttribute()
+
+			got, ok := attr["msg"]
+			assert.True(t, ok)
+			assert.Equal(t, v.want.msg, got)
+
+			if v.in.cause != nil {
+				got, ok = attr["cause"]
+				assert.True(t, ok)
+				assert.Equal(t, v.want.cause.Error(), got)
+			}
+
+			got, ok = attr["at"]
+			assert.True(t, ok)
+			assert.NotEmpty(t, got)
+		})
+	}
+}
