@@ -34,7 +34,7 @@ services:
   migration:
     build: 
       context: .
-      dockerfile: Dockerfile.migration
+      dockerfile: ./cmd/migration/Dockerfile
     env_file:
       - .env
     depends_on:

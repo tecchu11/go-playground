@@ -35,5 +35,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          file: ./cmd/api
           secrets: |
             GITHUB_TOKEN=${{ steps.app-token.outputs.token }}
