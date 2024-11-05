@@ -6,8 +6,16 @@ go playground for tecchu11
 
 ### Gen code
 
+#### Gen tools
+
 ```bash
 go generate -tags tools  ./... 
+```
+
+#### Gen oapi
+
+```bash
+go generate --tags oapi ./...
 ```
 
 ### Build and run image
@@ -17,7 +25,9 @@ build
 ```bash
 GITHUB_TOKEN=$(gh auth token) docker build \
 --secret id=GITHUB_TOKEN \
--t go-playground:latest . 
+-t go-playground:latest \
+-f ./cmd/api/Dockerfile \
+.
 ```
 
 build(debug)
@@ -26,7 +36,9 @@ build(debug)
 GITHUB_TOKEN=$(gh auth token) docker build \
 --secret id=GITHUB_TOKEN \
 --target debug \
--t go-playground:latest . 
+-t go-playground:latest \
+-f ./cmd/api/Dockerfile \
+.
 ```
 
 run
