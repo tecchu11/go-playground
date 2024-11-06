@@ -7,7 +7,6 @@ import (
 	"go-playground/cmd/api/internal/transportlayer/rest/oapi"
 	"go-playground/pkg/errorx"
 	"go-playground/pkg/ptr"
-	"go-playground/pkg/timex"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -46,8 +45,8 @@ func TestListTasks(t *testing.T) {
 						{
 							ID:        "0192b845-7a32-706b-ae58-d46437963c0e",
 							Content:   "this is test",
-							CreatedAt: time.Date(2024, 10, 23, 16, 26, 54, 0, timex.JST()),
-							UpdatedAt: time.Date(2024, 10, 23, 16, 26, 54, 0, timex.JST()),
+							CreatedAt: time.Date(2024, 10, 23, 16, 26, 54, 0, time.UTC),
+							UpdatedAt: time.Date(2024, 10, 23, 16, 26, 54, 0, time.UTC),
 						},
 					},
 				}, nil)
@@ -61,9 +60,9 @@ func TestListTasks(t *testing.T) {
   "items": [
     {
       "content": "this is test",
-      "createdAt": "2024-10-23T16:26:54+09:00",
+      "createdAt": "2024-10-23T16:26:54Z",
       "id": "0192b845-7a32-706b-ae58-d46437963c0e",
-      "updatedAt": "2024-10-23T16:26:54+09:00"
+      "updatedAt": "2024-10-23T16:26:54Z"
     }
   ],
   "next": "eyJpZCI6IjAxOTJiODQzLTE1MWUtNzRmZS04MTk4LTBlNjljZTM3OTMyYiJ9"
@@ -86,8 +85,8 @@ func TestListTasks(t *testing.T) {
 						{
 							ID:        "0192b843-151e-74fe-8198-0e69ce37932b",
 							Content:   "this is test 2",
-							CreatedAt: time.Date(2024, 10, 23, 16, 24, 17, 0, timex.JST()),
-							UpdatedAt: time.Date(2024, 10, 23, 16, 24, 17, 0, timex.JST()),
+							CreatedAt: time.Date(2024, 10, 23, 16, 24, 17, 0, time.UTC),
+							UpdatedAt: time.Date(2024, 10, 23, 16, 24, 17, 0, time.UTC),
 						},
 					},
 				}, nil)
@@ -101,9 +100,9 @@ func TestListTasks(t *testing.T) {
   "items": [
     {
       "content": "this is test 2",
-      "createdAt": "2024-10-23T16:24:17+09:00",
+      "createdAt": "2024-10-23T16:24:17Z",
       "id": "0192b843-151e-74fe-8198-0e69ce37932b",
-      "updatedAt": "2024-10-23T16:24:17+09:00"
+      "updatedAt": "2024-10-23T16:24:17Z"
     }
   ],
   "next": "eyJpZCI6IjAxOTJiODNmLWUxOTktNzlkMS1hODcyLWIzZGNmMWY0MTE5YSJ9"
@@ -126,8 +125,8 @@ func TestListTasks(t *testing.T) {
 						{
 							ID:        "0192b843-151e-74fe-8198-0e69ce37932b",
 							Content:   "this is test 2",
-							CreatedAt: time.Date(2024, 10, 23, 16, 24, 17, 0, timex.JST()),
-							UpdatedAt: time.Date(2024, 10, 23, 16, 24, 17, 0, timex.JST()),
+							CreatedAt: time.Date(2024, 10, 23, 16, 24, 17, 0, time.UTC),
+							UpdatedAt: time.Date(2024, 10, 23, 16, 24, 17, 0, time.UTC),
 						},
 					},
 				}, nil)
@@ -141,9 +140,9 @@ func TestListTasks(t *testing.T) {
   "items": [
     {
       "content": "this is test 2",
-      "createdAt": "2024-10-23T16:24:17+09:00",
+      "createdAt": "2024-10-23T16:24:17Z",
       "id": "0192b843-151e-74fe-8198-0e69ce37932b",
-      "updatedAt": "2024-10-23T16:24:17+09:00"
+      "updatedAt": "2024-10-23T16:24:17Z"
     }
   ],
   "next": "eyJpZCI6IjAxOTJiODNmLWUxOTktNzlkMS1hODcyLWIzZGNmMWY0MTE5YSJ9"
@@ -221,8 +220,8 @@ func TestGetTas(t *testing.T) {
 				mck.On("FindTaskByID", context.Background(), "0192b83f-e199-79d1-a872-b3dcf1f4119a").Return(entity.Task{
 					ID:        "0192b83f-e199-79d1-a872-b3dcf1f4119a",
 					Content:   "this is test",
-					CreatedAt: time.Date(2024, 10, 23, 16, 20, 47, 0, timex.JST()),
-					UpdatedAt: time.Date(2024, 10, 23, 16, 20, 47, 0, timex.JST()),
+					CreatedAt: time.Date(2024, 10, 23, 16, 20, 47, 0, time.UTC),
+					UpdatedAt: time.Date(2024, 10, 23, 16, 20, 47, 0, time.UTC),
 				}, nil)
 				return &handler.TaskHandler{TaskInteractor: mck}
 			},
@@ -231,9 +230,9 @@ func TestGetTas(t *testing.T) {
 				body: `
 {
   "content": "this is test",
-  "createdAt": "2024-10-23T16:20:47+09:00",
+  "createdAt": "2024-10-23T16:20:47Z",
   "id": "0192b83f-e199-79d1-a872-b3dcf1f4119a",
-  "updatedAt": "2024-10-23T16:20:47+09:00"
+  "updatedAt": "2024-10-23T16:20:47Z"
 }
 				`,
 			},

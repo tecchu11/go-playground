@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"go-playground/pkg/env/v2"
 	"go-playground/pkg/migration"
-	"go-playground/pkg/timex"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -25,7 +24,6 @@ func main() {
 		Net:       "tcp",
 		Addr:      applier.String("DB_ADDRESS"),
 		DBName:    applier.String("DB_NAME"),
-		Loc:       timex.JST(),
 		ParseTime: true,
 	}
 	db, err := sql.Open("mysql", conf.FormatDSN())

@@ -6,7 +6,6 @@ import (
 	"go-playground/cmd/api/internal/datasource/maindb"
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/pkg/errorx"
-	"go-playground/pkg/timex"
 	"testing"
 	"time"
 
@@ -28,14 +27,14 @@ func TestTaskAdaptorListTasks(t *testing.T) {
 					{
 						ID:        "0191039a-d472-7e9f-9138-7b5e1c400553",
 						Content:   "this is test 5",
-						CreatedAt: time.Date(2024, 7, 30, 21, 26, 04, 0, timex.JST()),
-						UpdatedAt: time.Date(2024, 7, 30, 21, 26, 04, 0, timex.JST()),
+						CreatedAt: time.Date(2024, 7, 30, 21, 26, 04, 0, time.UTC),
+						UpdatedAt: time.Date(2024, 7, 30, 21, 26, 04, 0, time.UTC),
 					},
 					{
 						ID:        "0191039a-cef4-7c15-9b84-525f37ec3f8b",
 						Content:   "this is test 4",
-						CreatedAt: time.Date(2024, 7, 30, 21, 26, 02, 0, timex.JST()),
-						UpdatedAt: time.Date(2024, 7, 30, 21, 26, 02, 0, timex.JST()),
+						CreatedAt: time.Date(2024, 7, 30, 21, 26, 02, 0, time.UTC),
+						UpdatedAt: time.Date(2024, 7, 30, 21, 26, 02, 0, time.UTC),
 					},
 				},
 				HasNext:   true,
@@ -50,8 +49,8 @@ func TestTaskAdaptorListTasks(t *testing.T) {
 					{
 						ID:        "0190fe59-6618-7811-8b28-a3e67969a4ef",
 						Content:   "this is test 1",
-						CreatedAt: time.Date(2024, 7, 29, 20, 56, 30, 0, timex.JST()),
-						UpdatedAt: time.Date(2024, 7, 29, 20, 56, 30, 0, timex.JST()),
+						CreatedAt: time.Date(2024, 7, 29, 20, 56, 30, 0, time.UTC),
+						UpdatedAt: time.Date(2024, 7, 29, 20, 56, 30, 0, time.UTC),
 					},
 				},
 			},
@@ -85,8 +84,8 @@ func TestTaskAdaptorFindByID(t *testing.T) {
 			expectedEntity: entity.Task{
 				ID:        "0190fe59-6618-7811-8b28-a3e67969a4ef",
 				Content:   "this is test 1",
-				CreatedAt: time.Date(2024, 7, 29, 20, 56, 30, 0, timex.JST()),
-				UpdatedAt: time.Date(2024, 7, 29, 20, 56, 30, 0, timex.JST()),
+				CreatedAt: time.Date(2024, 7, 29, 20, 56, 30, 0, time.UTC),
+				UpdatedAt: time.Date(2024, 7, 29, 20, 56, 30, 0, time.UTC),
 			},
 		},
 		"missing": {

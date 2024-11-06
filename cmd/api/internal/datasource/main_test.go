@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"go-playground/cmd/api/internal/datasource"
 	"go-playground/pkg/migration"
-	"go-playground/pkg/timex"
 	"testing"
 	"time"
 
@@ -78,7 +77,6 @@ func startContainer(ctx context.Context) (*sql.DB, shutdownFunc, error) {
 		Net:                  "tcp",
 		Addr:                 addr,
 		DBName:               testDB,
-		Loc:                  timex.JST(),
 		AllowNativePasswords: true,
 		ParseTime:            true,
 		MultiStatements:      true,

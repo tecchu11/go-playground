@@ -3,7 +3,6 @@ package maindb
 import (
 	"database/sql"
 	"go-playground/pkg/env/v2"
-	"go-playground/pkg/timex"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -27,7 +26,6 @@ func NewQueryDB(lookup func(string) (string, bool)) (*sql.DB, *Queries, error) {
 		Net:                  "tcp",
 		Addr:                 applier.String("DB_ADDRESS"),
 		DBName:               applier.String("DB_NAME"),
-		Loc:                  timex.JST(),
 		MaxAllowedPacket:     64 << 20,
 		Timeout:              20 * time.Second,
 		ReadTimeout:          20 * time.Second,
