@@ -1,11 +1,9 @@
-package null
+package ptr
 
 func String(v string) *string {
-	value := v
-	return &value
+	return &v
 }
 
 func Int32(v int32) *int32 {
-	value := v
-	return &value
+	return &v
 }
