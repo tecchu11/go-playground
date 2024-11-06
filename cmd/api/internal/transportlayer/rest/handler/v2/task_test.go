@@ -6,7 +6,7 @@ import (
 	"go-playground/cmd/api/internal/transportlayer/rest/handler/v2"
 	"go-playground/cmd/api/internal/transportlayer/rest/oapi"
 	"go-playground/pkg/errorx"
-	"go-playground/pkg/null"
+	"go-playground/pkg/ptr"
 	"go-playground/pkg/timex"
 	"net/http"
 	"net/http/httptest"
@@ -75,7 +75,7 @@ func TestListTasks(t *testing.T) {
 			input: input{
 				w:     httptest.NewRecorder(),
 				r:     httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/tasks?next=eyJpZCI6IjAxOTJiODQzLTE1MWUtNzRmZS04MTk4LTBlNjljZTM3OTMyYiJ9", nil),
-				param: oapi.ListTasksParams{Next: null.String("eyJpZCI6IjAxOTJiODQzLTE1MWUtNzRmZS04MTk4LTBlNjljZTM3OTMyYiJ9")},
+				param: oapi.ListTasksParams{Next: ptr.String("eyJpZCI6IjAxOTJiODQzLTE1MWUtNzRmZS04MTk4LTBlNjljZTM3OTMyYiJ9")},
 			},
 			setup: func() *handler.TaskHandler {
 				mck := new(MockTaskInteractor)
@@ -115,7 +115,7 @@ func TestListTasks(t *testing.T) {
 			input: input{
 				w:     httptest.NewRecorder(),
 				r:     httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/tasks?limit=1", nil),
-				param: oapi.ListTasksParams{Limit: null.Int32(1)},
+				param: oapi.ListTasksParams{Limit: ptr.Int32(1)},
 			},
 			setup: func() *handler.TaskHandler {
 				mck := new(MockTaskInteractor)
