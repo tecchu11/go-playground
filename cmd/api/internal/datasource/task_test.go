@@ -3,7 +3,7 @@ package datasource_test
 import (
 	"context"
 	"go-playground/cmd/api/internal/datasource"
-	"go-playground/cmd/api/internal/datasource/maindb"
+	"go-playground/cmd/api/internal/datasource/database"
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/pkg/errorx"
 	"testing"
@@ -60,7 +60,7 @@ func TestTaskAdaptorListTasks(t *testing.T) {
 			limit: 1,
 		},
 	}
-	adaptor := datasource.NewTaskAdaptor(maindb.New(db))
+	adaptor := datasource.NewTaskAdaptor(database.New(db))
 	for k, v := range tests {
 		t.Run(k, func(t *testing.T) {
 			runInTx(t, func(ctx context.Context) {
@@ -93,7 +93,7 @@ func TestTaskAdaptorFindByID(t *testing.T) {
 			expectErr: true,
 		},
 	}
-	adaptor := datasource.NewTaskAdaptor(maindb.New(db))
+	adaptor := datasource.NewTaskAdaptor(database.New(db))
 	for k, v := range tests {
 		t.Run(k, func(t *testing.T) {
 			runInTx(t, func(ctx context.Context) {
@@ -116,7 +116,7 @@ func TestTaskAdaptorCreate(t *testing.T) {
 		ID:      "0190f34a-e069-7873-8fe1-fdf871eb3919",
 		Content: "create task",
 	}
-	adaptor := datasource.NewTaskAdaptor(maindb.New(db))
+	adaptor := datasource.NewTaskAdaptor(database.New(db))
 	runInTx(t, func(ctx context.Context) {
 		err := adaptor.Create(ctx, task)
 		assert.NoError(t, err)
@@ -131,7 +131,7 @@ func TestTaskAdaptorUpdate(t *testing.T) {
 		ID:      "0190fe59-6618-7811-8b28-a3e67969a4ef",
 		Content: "update task",
 	}
-	adaptor := datasource.NewTaskAdaptor(maindb.New(db))
+	adaptor := datasource.NewTaskAdaptor(database.New(db))
 	runInTx(t, func(ctx context.Context) {
 		err := adaptor.Update(ctx, task)
 		assert.NoError(t, err)

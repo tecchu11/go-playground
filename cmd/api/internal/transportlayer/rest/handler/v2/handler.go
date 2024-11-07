@@ -3,7 +3,7 @@ package handler
 import (
 	"fmt"
 	"go-playground/cmd/api/internal/datasource"
-	"go-playground/cmd/api/internal/datasource/maindb"
+	"go-playground/cmd/api/internal/datasource/database"
 	"go-playground/cmd/api/internal/transportlayer/rest"
 	"go-playground/cmd/api/internal/transportlayer/rest/middleware"
 	"go-playground/cmd/api/internal/transportlayer/rest/oapi"
@@ -21,7 +21,7 @@ type handlers struct {
 
 // New creates handler to handle requests.
 func New(app *newrelic.Application, lookup func(string) (string, bool)) (http.Handler, error) {
-	db, queries, err := maindb.NewQueryDB(lookup)
+	db, queries, err := database.NewQueryDB(lookup)
 	if err != nil {
 		return nil, fmt.Errorf("new query db: %w", err)
 	}

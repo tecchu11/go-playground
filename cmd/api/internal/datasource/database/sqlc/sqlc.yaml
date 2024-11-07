@@ -7,6 +7,6 @@ sql:
       - ../../../../../../pkg/migration/sqls/
     gen:
       go:
-        package: maindb
+        package: database
         out: ..
         omit_sqlc_version: true
