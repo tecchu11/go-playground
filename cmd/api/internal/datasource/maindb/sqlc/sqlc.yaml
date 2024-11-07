@@ -1,0 +1,12 @@
+version: "2"
+sql:
+  - engine: mysql
+    queries:
+      - .
+    schema:
+      - ../../../../../../pkg/migration/sqls/
+    gen:
+      go:
+        package: maindb
+        out: ..
+        omit_sqlc_version: true

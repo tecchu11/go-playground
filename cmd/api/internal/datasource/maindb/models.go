@@ -14,3 +14,21 @@ type Task struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+// users is user information
+type User struct {
+	// id is user id
+	ID []byte
+	// sub is jwt subject
+	Sub string
+	// given_name of user
+	GivenName string
+	// family_name of user
+	FamilyName string
+	// email of user
+	Email string
+	// email_verified is whether email is verified
+	EmailVerified bool
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
