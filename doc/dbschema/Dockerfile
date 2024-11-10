@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM ghcr.io/k1low/tbls:v1.79.1 AS build
+FROM ghcr.io/k1low/tbls:v1.79.2 AS build
 WORKDIR /src
 
 RUN --mount=type=bind,source=.tbls.yml,target=.tbls.yml \
