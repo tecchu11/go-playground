@@ -38,4 +38,17 @@ func (mck *MockTransactionRepository) Do(ctx context.Context, action func(contex
 	return action(ctx)
 }
 
-var _ repository.TaskRepository = (*MockTaskRepository)(nil)
+type MockUserRepository struct {
+	mock.Mock
+}
+
+func (mck *MockUserRepository) Create(ctx context.Context, user entity.User) error {
+	args := mck.Called(ctx, user)
+	return args.Error(0)
+}
+
+var (
+	_ repository.TransactionRepository = (*MockTransactionRepository)(nil)
+	_ repository.TaskRepository        = (*MockTaskRepository)(nil)
+	_ repository.UserRepository        = (*MockUserRepository)(nil)
+)

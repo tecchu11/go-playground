@@ -26,7 +26,7 @@ func NewTaskAdaptor(queries *database.Queries) *TaskAdaptor {
 func (a *TaskAdaptor) ListTasks(ctx context.Context, next entity.TaskID, limit int32) (entity.Page[entity.Task], error) {
 	defer newrelic.FromContext(ctx).StartSegment("datasource/TaskAdaptor/ListTasks").End()
 
-	queries := TransactionQueries(ctx, a.queries)
+	queries := txqFromContext(ctx, a.queries)
 	rows, err := queries.ListTasks(ctx, database.ListTasksParams{ID: next, Limit: limit + 1})
 	if err != nil {
 		return entity.Page[entity.Task]{}, errorx.NewError("cant list tasks", errorx.WithCause(err))
@@ -47,7 +47,7 @@ func (a *TaskAdaptor) ListTasks(ctx context.Context, next entity.TaskID, limit i
 func (a *TaskAdaptor) FindByID(ctx context.Context, id entity.TaskID) (entity.Task, error) {
 	defer newrelic.FromContext(ctx).StartSegment("datasource/TaskAdaptor/FindByID").End()
 
-	queries := TransactionQueries(ctx, a.queries)
+	queries := txqFromContext(ctx, a.queries)
 	row, err := queries.FindTask(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -71,7 +71,7 @@ func (a *TaskAdaptor) FindByID(ctx context.Context, id entity.TaskID) (entity.Ta
 func (a *TaskAdaptor) Create(ctx context.Context, task entity.Task) error {
 	defer newrelic.FromContext(ctx).StartSegment("datasource/TaskAdaptor/Create").End()
 
-	queries := TransactionQueries(ctx, a.queries)
+	queries := txqFromContext(ctx, a.queries)
 	result, err := queries.CreateTask(ctx, database.CreateTaskParams{
 		ID:      task.ID,
 		Content: task.Content,
@@ -90,7 +90,7 @@ func (a *TaskAdaptor) Create(ctx context.Context, task entity.Task) error {
 func (a *TaskAdaptor) Update(ctx context.Context, task entity.Task) error {
 	defer newrelic.FromContext(ctx).StartSegment("datasource/TaskAdaptor/Update").End()
 
-	queries := TransactionQueries(ctx, a.queries)
+	queries := txqFromContext(ctx, a.queries)
 	result, err := queries.UpdateTask(ctx, database.UpdateTaskParams{
 		ID:      task.ID,
 		Content: task.Content,

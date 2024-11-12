@@ -3,6 +3,7 @@ package env
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 )
 
@@ -29,6 +30,20 @@ func (a *Applier) String(key string) string {
 	}
 	a.err = errors.Join(a.err, errMissing(key))
 	return ""
+}
+
+func (a *Applier) URL(key string) *url.URL {
+	v, ok := a.lookup(key)
+	if !ok {
+		a.err = errors.Join(a.err, errMissing(key))
+		return nil
+	}
+	u, err := url.Parse(v)
+	if err != nil {
+		a.err = errors.Join(a.err, err)
+		return nil
+	}
+	return u
 }
 
 func (a *Applier) Err() error {

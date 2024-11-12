@@ -8,7 +8,7 @@ CREATE TABLE users (
     email_verified TINYINT(1) NOT NULL COMMENT 'email_verified is whether email is verified',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_sub (sub) COMMENT 'index for jwt subject'
+    UNIQUE KEY idx_sub (sub) COMMENT 'index for jwt subject'
 ) COMMENT = 'users is user information';
 
 

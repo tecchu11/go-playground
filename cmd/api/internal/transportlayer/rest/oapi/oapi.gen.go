@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // Error defines model for Error.
@@ -81,8 +82,29 @@ type ResponseTasks struct {
 	Next string `json:"next"`
 }
 
+// ResponseUserID defines model for ResponseUserID.
+type ResponseUserID struct {
+	// ID ID of user id
+	ID openapi_types.UUID `json:"id"`
+}
+
 // RequestTask defines model for RequestTask.
 type RequestTask = TaskContent
+
+// RequestUser defines model for RequestUser.
+type RequestUser struct {
+	// Email user email
+	Email openapi_types.Email `json:"email"`
+
+	// EmailVerified whether email is verified
+	EmailVerified bool `json:"emailVerified"`
+
+	// FamilyName user family name
+	FamilyName string `json:"familyName"`
+
+	// GivenName user given name
+	GivenName string `json:"givenName"`
+}
 
 // ListTasksParams defines parameters for ListTasks.
 type ListTasksParams struct {
@@ -90,11 +112,29 @@ type ListTasksParams struct {
 	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// PostUserJSONBody defines parameters for PostUser.
+type PostUserJSONBody struct {
+	// Email user email
+	Email openapi_types.Email `json:"email"`
+
+	// EmailVerified whether email is verified
+	EmailVerified bool `json:"emailVerified"`
+
+	// FamilyName user family name
+	FamilyName string `json:"familyName"`
+
+	// GivenName user given name
+	GivenName string `json:"givenName"`
+}
+
 // PostTaskJSONRequestBody defines body for PostTask for application/json ContentType.
 type PostTaskJSONRequestBody = TaskContent
 
 // PutTaskJSONRequestBody defines body for PutTask for application/json ContentType.
 type PutTaskJSONRequestBody = TaskContent
+
+// PostUserJSONRequestBody defines body for PostUser for application/json ContentType.
+type PostUserJSONRequestBody PostUserJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -113,6 +153,9 @@ type ServerInterface interface {
 	// Put task
 	// (PUT /tasks/{taskId})
 	PutTask(w http.ResponseWriter, r *http.Request, taskID TaskID)
+	// Post user
+	// (POST /users)
+	PostUser(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -228,6 +271,20 @@ func (siw *ServerInterfaceWrapper) PutTask(w http.ResponseWriter, r *http.Reques
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PutTask(w, r, taskID)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostUser operation middleware
+func (siw *ServerInterfaceWrapper) PostUser(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostUser(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -362,6 +419,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("POST "+options.BaseURL+"/tasks", wrapper.PostTask)
 	m.HandleFunc("GET "+options.BaseURL+"/tasks/{taskId}", wrapper.GetTask)
 	m.HandleFunc("PUT "+options.BaseURL+"/tasks/{taskId}", wrapper.PutTask)
+	m.HandleFunc("POST "+options.BaseURL+"/users", wrapper.PostUser)
 
 	return m
 }

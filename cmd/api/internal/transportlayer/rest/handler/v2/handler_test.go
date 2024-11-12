@@ -23,10 +23,30 @@ func TestNew(t *testing.T) {
 				t.Setenv("DB_PASSWORD", "dummy_password")
 				t.Setenv("DB_ADDRESS", "localhost:3306")
 				t.Setenv("DB_NAME", "dummy")
+				t.Setenv("AUTH_ISSUER_URL", "http://example.com")
 			},
 		},
 		"failure: failed to create query db": {
 			setup:   func(t *testing.T) { /* noop */ },
+			wantErr: true,
+		},
+		"failure: failed to find issuer url": {
+			setup: func(t *testing.T) {
+				t.Setenv("DB_USER", "dummy_user")
+				t.Setenv("DB_PASSWORD", "dummy_password")
+				t.Setenv("DB_ADDRESS", "localhost:3306")
+				t.Setenv("DB_NAME", "dummy")
+			},
+			wantErr: true,
+		},
+		"failure: failed to create auth middleware": {
+			setup: func(t *testing.T) {
+				t.Setenv("DB_USER", "dummy_user")
+				t.Setenv("DB_PASSWORD", "dummy_password")
+				t.Setenv("DB_ADDRESS", "localhost:3306")
+				t.Setenv("DB_NAME", "dummy")
+				t.Setenv("AUTH_ISSUER_URL", "")
+			},
 			wantErr: true,
 		},
 	}
@@ -52,6 +72,7 @@ func TestNew_ErrorHandlerFunc(t *testing.T) {
 	t.Setenv("DB_PASSWORD", "dummy_password")
 	t.Setenv("DB_ADDRESS", "localhost:3306")
 	t.Setenv("DB_NAME", "dummy")
+	t.Setenv("AUTH_ISSUER_URL", "http://example.com")
 	hn, err := handler.New(nil, os.LookupEnv)
 	require.NoError(t, err)
 	w := httptest.NewRecorder()

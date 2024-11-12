@@ -11,8 +11,8 @@ import (
 
 type transactionContextKey struct{}
 
-// TransactionQueries configures *sql.tx to given queries if *sql.tx exists in context.
-func TransactionQueries(ctx context.Context, queries *database.Queries) *database.Queries {
+// txqFromContext configures *sql.tx to given queries if *sql.tx exists in context.
+func txqFromContext(ctx context.Context, queries *database.Queries) *database.Queries {
 	if tx, ok := ctx.Value(transactionContextKey{}).(*sql.Tx); ok {
 		return queries.WithTx(tx)
 	}

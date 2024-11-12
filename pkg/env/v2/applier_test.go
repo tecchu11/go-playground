@@ -2,6 +2,7 @@ package env_test
 
 import (
 	"go-playground/pkg/env/v2"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -61,6 +62,71 @@ func TestApplier_String(t *testing.T) {
 			} else {
 				assert.EqualError(t, applier.Err(), testCase.want.err)
 			}
+		})
+	}
+}
+
+func TestApplier_URL(t *testing.T) {
+	type input struct {
+		key string
+	}
+	type setup func(*testing.T)
+	type want struct {
+		url   string
+		isErr bool
+		error string
+	}
+	tests := map[string]struct {
+		input input
+		setup setup
+		want  want
+	}{
+		"success": {
+			input: input{
+				key: "TEST_URL",
+			},
+			setup: func(t *testing.T) {
+				t.Setenv("TEST_URL", "http://example.com")
+			},
+			want: want{
+				url: "http://example.com",
+			},
+		},
+		"missing env": {
+			input: input{
+				key: "TEST_URL",
+			},
+			setup: func(t *testing.T) {},
+			want: want{
+				isErr: true,
+				error: "missing env TEST_URL",
+			},
+		},
+		"parse error": {
+			input: input{
+				key: "TEST_URL",
+			},
+			setup: func(t *testing.T) { t.Setenv("TEST_URL", "%") },
+			want: want{
+				isErr: true,
+				error: "parse \"%\": invalid URL escape \"%\"",
+			},
+		},
+	}
+	for k, v := range tests {
+		t.Run(k, func(t *testing.T) {
+			v.setup(t)
+			applier := env.New(os.LookupEnv)
+
+			got := applier.URL(v.input.key)
+
+			if v.want.isErr {
+				assert.EqualError(t, applier.Err(), v.want.error)
+			} else {
+				assert.NoError(t, applier.Err())
+				assert.Equal(t, v.want.url, got.String())
+			}
+
 		})
 	}
 }

@@ -24,7 +24,7 @@ type Error struct {
 }
 
 func callerAt() string {
-	pc := make([]uintptr, 10)
+	pc := make([]uintptr, 5)
 	n := runtime.Callers(3, pc)
 	if n == 0 {
 		return ""
