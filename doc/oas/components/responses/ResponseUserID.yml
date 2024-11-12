@@ -1,0 +1,14 @@
+description: saved user id.
+content:
+  application/json:
+    schema:
+      type: object
+      required:
+        - id
+      properties:
+        id: 
+          type: string
+          x-go-name: ID
+          format: uuid
+          description: ID of user id
+          example: 01928120-055d-7edb-a12a-2d290512266e

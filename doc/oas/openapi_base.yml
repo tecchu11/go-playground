@@ -17,6 +17,8 @@ paths:
     $ref: ./paths/tasks/index.yml
   /tasks/{taskId}:
     $ref: ./paths/tasks/[taskID]/index.yml
+  /users:
+    $ref: ./paths/users/index.yml
 components:
   schemas:
     Error:
@@ -37,6 +39,8 @@ components:
   requestBodies:
     RequestTask:
       $ref: ./components/requestBodies/RequestTask.yml
+    RequestUser:
+      $ref: ./components/requestBodies/RequestUser.yml
   responses:
     Response400:
       $ref: ./components/responses/Response400.yml
@@ -52,3 +56,5 @@ components:
       $ref: ./components/responses/ResponseTaskID.yml
     ResponseTasks:
       $ref: ./components/responses/ResponseTasks.yml
+    ResponseUserID:
+      $ref: ./components/responses/ResponseUserID.yml

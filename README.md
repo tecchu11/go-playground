@@ -6,10 +6,10 @@ go playground for tecchu11
 
 ### Gen code
 
-#### Gen tools
+#### Gen sqlc
 
 ```bash
-go generate -tags tools  ./... 
+go generate -tags sqlc  ./... 
 ```
 
 #### Gen oapi

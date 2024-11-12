@@ -1,7 +1,7 @@
-package maindb_test
+package database_test
 
 import (
-	"go-playground/cmd/api/internal/datasource/maindb"
+	"go-playground/cmd/api/internal/datasource/database"
 	"os"
 	"testing"
 
@@ -31,7 +31,7 @@ func TestNewDB(t *testing.T) {
 			for key, val := range v.envMap {
 				t.Setenv(key, val)
 			}
-			db, queries, err := maindb.NewQueryDB(os.LookupEnv)
+			db, queries, err := database.NewQueryDB(os.LookupEnv)
 			if v.expectError {
 				require.Error(t, err)
 				require.Nil(t, db)

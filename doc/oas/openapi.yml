@@ -84,6 +84,24 @@ paths:
           $ref: '#/components/responses/Response404'
         '500':
           $ref: '#/components/responses/Response500'
+  /users:
+    post:
+      tags:
+        - user
+      summary: Post user
+      description: Post user with given request body.
+      operationId: PostUser
+      requestBody:
+        $ref: '#/components/requestBodies/RequestUser'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResponseUserID'
+        '400':
+          $ref: '#/components/responses/Response400'
+        '404':
+          $ref: '#/components/responses/Response404'
+        '500':
+          $ref: '#/components/responses/Response500'
 components:
   schemas:
     Error:
@@ -173,6 +191,37 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/TaskContent'
+    RequestUser:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - givenName
+              - familyName
+              - email
+              - emailVerified
+            properties:
+              givenName:
+                type: string
+                minLength: 1
+                description: user given name
+                example: Dibbert
+              familyName:
+                type: string
+                minLength: 1
+                description: user family name
+                example: Kozey
+              email:
+                type: string
+                format: email
+                description: user email
+                example: Jonathan74@example.com
+              emailVerified:
+                type: boolean
+                description: whether email is verified
+                example: true
   responses:
     Response400:
       description: bad request
@@ -241,3 +290,18 @@ components:
                 type: string
                 description: cursor of next item.
                 example: eyJpZCI6IjAxOTIzM2Y1LTQzYzMtNzk4Yi1iMjRkLWVjYmM3NThhZTVmYiJ9
+    ResponseUserID:
+      description: saved user id.
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - id
+            properties:
+              id:
+                type: string
+                x-go-name: ID
+                format: uuid
+                description: ID of user id
+                example: 01928120-055d-7edb-a12a-2d290512266e

@@ -4,6 +4,7 @@ import (
 	"context"
 	"go-playground/cmd/api/internal/domain/entity"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -38,4 +39,13 @@ func (mck *MockTaskInteractor) CreateTask(ctx context.Context, content string) (
 func (mck *MockTaskInteractor) UpdateTask(ctx context.Context, id, content string) error {
 	args := mck.Called(ctx, id, content)
 	return args.Error(0)
+}
+
+type MockUserInteractor struct {
+	mock.Mock
+}
+
+func (mck *MockUserInteractor) CreateUser(ctx context.Context, sub string, givenName, familyName string, email string, emailVerified bool) (uuid.UUID, error) {
+	args := mck.Called(ctx, sub, givenName, familyName, email, emailVerified)
+	return args.Get(0).(uuid.UUID), args.Error(1)
 }

@@ -1,4 +1,4 @@
-package maindb
+package database
 
 import (
 	"database/sql"

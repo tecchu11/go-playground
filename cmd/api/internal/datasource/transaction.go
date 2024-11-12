@@ -3,7 +3,7 @@ package datasource
 import (
 	"context"
 	"database/sql"
-	"go-playground/cmd/api/internal/datasource/maindb"
+	"go-playground/cmd/api/internal/datasource/database"
 	"go-playground/cmd/api/internal/domain/repository"
 	"go-playground/pkg/errorx"
 	"log/slog"
@@ -11,8 +11,8 @@ import (
 
 type transactionContextKey struct{}
 
-// TransactionQueries configures *sql.tx to given queries if *sql.tx exists in context.
-func TransactionQueries(ctx context.Context, queries *maindb.Queries) *maindb.Queries {
+// txqFromContext configures *sql.tx to given queries if *sql.tx exists in context.
+func txqFromContext(ctx context.Context, queries *database.Queries) *database.Queries {
 	if tx, ok := ctx.Value(transactionContextKey{}).(*sql.Tx); ok {
 		return queries.WithTx(tx)
 	}

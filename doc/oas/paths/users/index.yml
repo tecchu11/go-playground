@@ -1,0 +1,17 @@
+post:
+  tags:
+    - user
+  summary: Post user
+  description: Post user with given request body.
+  operationId: PostUser
+  requestBody:
+    $ref: ../../components/requestBodies/RequestUser.yml
+  responses:
+    "200":
+      $ref: ../../components/responses/ResponseUserID.yml
+    "400":
+      $ref: ../../components/responses/Response400.yml
+    "404":
+      $ref: ../../components/responses/Response404.yml
+    "500":
+      $ref: ../../components/responses/Response500.yml
