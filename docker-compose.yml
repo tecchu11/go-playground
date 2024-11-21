@@ -53,7 +53,7 @@ services:
     ports:
       - "18000:8000"
   localstack:
-    image: localstack/localstack:3.8
+    image: localstack/localstack:4.0
     networks:
       default:
         aliases:
