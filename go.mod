@@ -14,7 +14,7 @@ require (
 	github.com/newrelic/go-agent/v3 v3.35.1
 	github.com/newrelic/go-agent/v3/integrations/nrmysql v1.2.2
 	github.com/oapi-codegen/runtime v1.1.1
-	github.com/pressly/goose/v3 v3.22.1
+	github.com/pressly/goose/v3 v3.23.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tecchu11/nrgo-std v0.2.1
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.34.0
@@ -103,7 +103,7 @@ require (
 	golang.org/x/crypto v0.28.0 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/sync v0.9.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
