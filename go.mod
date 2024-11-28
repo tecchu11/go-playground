@@ -16,7 +16,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/pressly/goose/v3 v3.23.0
 	github.com/stretchr/testify v1.10.0
-	github.com/tecchu11/nrgo-std v0.2.1
+	github.com/tecchu11/nrgo-std v0.2.2
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.34.0
 )
 
