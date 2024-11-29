@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     CGO_ENABLED=0 go build -o /bin/migration --ldflags="-s -w" -trimpath ./cmd/migration
 
 # latest-arm64
-FROM gcr.io/distroless/static-debian12@sha256:e2d1ce5d5a89eadf85c5562e07f74e29a8831a71947d7a37637d74c7965f3f4a AS final
+FROM gcr.io/distroless/static-debian12@sha256:50f827f875a7a4fc95ebbfcb309f20268065152926ff24672ec0eec70c162f21 AS final
 
 COPY --from=build --chown=nonroot:nonroot /bin/migration /bin/
 
