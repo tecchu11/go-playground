@@ -58,6 +58,9 @@ func TestTaskAdaptorListTasks(t *testing.T) {
 		"no result": {
 			token: "00000000-0000-1000-8000-000000000000",
 			limit: 1,
+			expected: entity.Page[entity.Task]{
+				Items: []entity.Task{},
+			},
 		},
 	}
 	adaptor := datasource.NewTaskAdaptor(database.New(db))

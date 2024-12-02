@@ -31,14 +31,14 @@ func (a *TaskAdaptor) ListTasks(ctx context.Context, next entity.TaskID, limit i
 	if err != nil {
 		return entity.Page[entity.Task]{}, errorx.NewError("cant list tasks", errorx.WithCause(err))
 	}
-	var tasks []entity.Task
-	for _, record := range rows {
-		tasks = append(tasks, entity.Task{
-			ID:        record.ID,
-			Content:   record.Content,
-			CreatedAt: record.CreatedAt,
-			UpdatedAt: record.UpdatedAt,
-		})
+	tasks := make([]entity.Task, len(rows))
+	for i, r := range rows {
+		tasks[i] = entity.Task{
+			ID:        r.ID,
+			Content:   r.Content,
+			CreatedAt: r.CreatedAt,
+			UpdatedAt: r.UpdatedAt,
+		}
 	}
 	return entity.NewPage(tasks, limit)
 }
