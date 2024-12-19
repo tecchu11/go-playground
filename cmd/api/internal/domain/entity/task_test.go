@@ -2,129 +2,159 @@ package entity_test
 
 import (
 	"go-playground/cmd/api/internal/domain/entity"
-	"go-playground/pkg/errorx"
-	"log/slog"
+	"go-playground/pkg/apperr"
+	"go-playground/pkg/testhelper"
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewTask(t *testing.T) {
-	actual, actualErr := entity.NewTask("do test")
-	assert.NoError(t, actualErr)
-	assert.NotZero(t, actual.ID)
-	assert.Equal(t, "do test", actual.Content)
-	assert.True(t, actual.CreatedAt.Equal(actual.UpdatedAt))
-}
+	type input struct {
+		content string
+	}
+	type want struct {
+		task    entity.Task
+		err     string
+		errCode apperr.Code
+	}
+	tests := map[string]struct {
+		input input
+		want  want
+	}{
+		"success to new": {
+			input: input{content: "test"},
+			want:  want{task: entity.Task{Content: "test"}},
+		},
+		"failure on validation": {
+			input: input{},
+			want:  want{err: "task content must be non empty", errCode: apperr.CodeInvalidArgument},
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err := entity.NewTask(tc.input.content)
 
-func TestNewTask_ErrorWhenContentIsBlank(t *testing.T) {
-	actual, err := entity.NewTask("  ")
-
-	assert.Zero(t, actual)
-	var myErr *errorx.Error
-	assert.ErrorAs(t, err, &myErr)
-	assert.Equal(t, 400, myErr.HTTPStatus())
-	assert.Equal(t, slog.LevelInfo, myErr.Level())
+			if tc.want.err != "" {
+				assert.Zero(t, got)
+				assert.EqualError(t, err, tc.want.err)
+				assert.True(t, apperr.IsCode(err, tc.want.errCode))
+			} else {
+				assert.NoError(t, err)
+				diff := cmp.Diff(got, tc.want.task, cmpopts.IgnoreFields(entity.Task{}, "ID", "CreatedAt", "UpdatedAt"))
+				assert.Empty(t, diff)
+				assert.NotZero(t, got.ID)
+				assert.NotZero(t, got.CreatedAt)
+				assert.NotZero(t, got.UpdatedAt)
+			}
+		})
+	}
 }
 
 func TestTask_UpdateContent(t *testing.T) {
-	task := entity.Task{
-		ID:        "test-id",
-		Content:   "do test",
-		CreatedAt: time.Date(2024, 7, 25, 0, 0, 0, 0, time.Local),
-		UpdatedAt: time.Date(2024, 7, 25, 0, 0, 0, 0, time.Local),
+	now := time.Now()
+	type input struct {
+		task       entity.Task
+		newContent string
 	}
-	expected := entity.Task{
-		ID:        "test-id",
-		Content:   "done test",
-		CreatedAt: time.Date(2024, 7, 25, 0, 0, 0, 0, time.Local),
-		UpdatedAt: time.Date(2024, 7, 25, 0, 0, 0, 0, time.Local),
+	type want struct {
+		task    entity.Task
+		err     string
+		errCode apperr.Code
 	}
-	err := task.UpdateContent("done test")
-	assert.NoError(t, err)
-	assert.Equal(t, expected, task)
+	tests := map[string]struct {
+		input input
+		want  want
+	}{
+		"success to update content": {
+			input: input{
+				task:       entity.Task{ID: "0193d862-8182-7997-971d-175160c7f7d6", Content: "do test", CreatedAt: now, UpdatedAt: now},
+				newContent: "done test",
+			},
+			want: want{
+				task: entity.Task{ID: "0193d862-8182-7997-971d-175160c7f7d6", Content: "done test", CreatedAt: now},
+			},
+		},
+		"failure to update content": {
+			input: input{
+				task:       entity.Task{ID: "0193d862-8182-7997-971d-175160c7f7d6", Content: "do test", CreatedAt: now, UpdatedAt: now},
+				newContent: "",
+			},
+			want: want{
+				err: "task content must be non empty", errCode: apperr.CodeInvalidArgument,
+			},
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			task := tc.input.task
+			err := task.UpdateContent(tc.input.newContent)
+
+			if tc.want.err != "" {
+				assert.EqualError(t, err, tc.want.err)
+				assert.True(t, apperr.IsCode(err, tc.want.errCode))
+			} else {
+				assert.NoError(t, err)
+				diff := cmp.Diff(task, tc.want.task, cmpopts.IgnoreFields(entity.Task{}, "UpdatedAt"))
+				assert.Empty(t, diff)
+				assert.Greater(t, task.UpdatedAt, tc.input.task.UpdatedAt)
+			}
+		})
+	}
 }
 
-func TestTask_UpdateContent_ErrorWhenContentIsBlank(t *testing.T) {
-	task := entity.Task{
-		ID:        "test-id",
-		Content:   "do test",
-		CreatedAt: time.Date(2024, 7, 25, 0, 0, 0, 0, time.Local),
-		UpdatedAt: time.Date(2024, 7, 25, 0, 0, 0, 0, time.Local),
-	}
-	err := task.UpdateContent(" ")
-	var myErr *errorx.Error
-	assert.ErrorAs(t, err, &myErr)
-	assert.Equal(t, 400, myErr.HTTPStatus())
-	assert.Equal(t, slog.LevelInfo, myErr.Level())
+func TestTask_EncodeCursor(t *testing.T) {
+	id := testhelper.UUIDFromString(t, "0193da97-5571-7992-8470-e831708ca57a")
+	task := entity.Task{ID: id.String()}
+
+	got, err := task.EncodeCursor()
+
+	assert.NoError(t, err)
+	assert.Equal(t, "eyJpZCI6IjAxOTNkYTk3LTU1NzEtNzk5Mi04NDcwLWU4MzE3MDhjYTU3YSJ9", got)
 }
 
 func TestDecodeTaskCursor(t *testing.T) {
+	type input struct{ token string }
+	type want struct {
+		cursor  entity.TaskCursor
+		err     string
+		errCode apperr.Code
+	}
 	tests := map[string]struct {
+		input    input
+		want     want
 		token    string
 		expected entity.TaskCursor
 	}{
 		"token is empty": {},
 		"token holds 71113d46-53f1-4ab7-a1c7-0074e707b764": {
-			token:    "eyJpZCI6IjcxMTEzZDQ2LTUzZjEtNGFiNy1hMWM3LTAwNzRlNzA3Yjc2NCJ9Cg==",
-			expected: entity.TaskCursor{ID: "71113d46-53f1-4ab7-a1c7-0074e707b764"},
+			input: input{token: "eyJpZCI6IjcxMTEzZDQ2LTUzZjEtNGFiNy1hMWM3LTAwNzRlNzA3Yjc2NCJ9Cg=="},
+			want:  want{cursor: entity.TaskCursor{ID: "71113d46-53f1-4ab7-a1c7-0074e707b764"}},
+		},
+		"not base64": {
+			input: input{token: "not base64"},
+			want:  want{err: "decode task cursor by base64: illegal base64 data at input byte 3", errCode: apperr.CodeInvalidArgument},
+		},
+		"not json": {
+			input: input{token: "e10K"},
+			want:  want{err: "decode task cursor by json: invalid character ']' looking for beginning of object key string", errCode: apperr.CodeInvalidArgument},
 		},
 	}
-	for k, v := range tests {
-		t.Run(k, func(t *testing.T) {
-			actual, actualErr := entity.DecodeTaskCursor(v.token)
-			require.NoError(t, actualErr)
-			assert.Equal(t, v.expected, actual)
-		})
-	}
-}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err := entity.DecodeTaskCursor(tc.input.token)
 
-func TestDecodeTaskCursor_Error(t *testing.T) {
-	tests := map[string]struct {
-		token    string
-		expected struct {
-			msg    string
-			level  slog.Level
-			status int
-		}
-	}{
-		"failed to decode base64": {
-			token: "not base64",
-			expected: struct {
-				msg    string
-				level  slog.Level
-				status int
-			}{
-				msg:    "failed to decode task cursor token",
-				level:  slog.LevelWarn,
-				status: 400,
-			},
-		},
-		"failed to unmarshal json": {
-			token: "e10K",
-			expected: struct {
-				msg    string
-				level  slog.Level
-				status int
-			}{
-				msg:    "failed to decode task cursor token",
-				level:  slog.LevelWarn,
-				status: 400,
-			},
-		},
-	}
-	for k, v := range tests {
-		t.Run(k, func(t *testing.T) {
-			actual, actualErr := entity.DecodeTaskCursor(v.token)
-
-			var err *errorx.Error
-			require.ErrorAs(t, actualErr, &err)
-			assert.Equal(t, v.expected.msg, err.Msg())
-			assert.Equal(t, v.expected.level, err.Level())
-			assert.Equal(t, v.expected.status, err.HTTPStatus())
-			assert.Zero(t, actual)
+			if tc.want.err != "" {
+				assert.Zero(t, got)
+				assert.EqualError(t, err, tc.want.err)
+				assert.True(t, apperr.IsCode(err, tc.want.errCode))
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.want.cursor, got)
+			}
 		})
 	}
 }

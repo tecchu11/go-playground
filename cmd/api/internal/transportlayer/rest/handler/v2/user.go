@@ -2,10 +2,10 @@ package handler
 
 import (
 	"encoding/json"
-	"go-playground/cmd/api/internal/transportlayer/rest"
 	"go-playground/cmd/api/internal/transportlayer/rest/oapi"
+	"go-playground/pkg/apperr"
 	"go-playground/pkg/ctxhelper"
-	"go-playground/pkg/errorx"
+	"log/slog"
 	"net/http"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
@@ -22,13 +22,12 @@ func (u *UserHandler) PostUser(w http.ResponseWriter, r *http.Request) {
 	ErrorHandlerFunc(w, r, func(w http.ResponseWriter, r *http.Request) error {
 		sub, ok := ctxhelper.Subject(r.Context())
 		if !ok {
-			rest.Err(w, "missing authenticated user info", http.StatusBadRequest)
-			return nil
+			return apperr.New("subject is missing but this is unexpected", "authorization failure", apperr.CodeUnAuthz, apperr.WithLevel(slog.LevelError))
 		}
 		var body oapi.RequestUser
 		err := json.NewDecoder(r.Body).Decode(&body)
 		if err != nil {
-			return errorx.NewWarn("failed to unmarshal request body of PostUser", errorx.WithCause(err), errorx.WithStatus(http.StatusBadRequest))
+			return apperr.New("unmarshal PostUser request body", "invalid request", apperr.WithCause(err), apperr.CodeInvalidArgument)
 		}
 		uid, err := u.UserInteractor.CreateUser(
 			r.Context(),

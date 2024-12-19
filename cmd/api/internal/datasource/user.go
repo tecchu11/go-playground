@@ -8,8 +8,7 @@ import (
 	"go-playground/cmd/api/internal/datasource/database"
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/cmd/api/internal/domain/repository"
-	"go-playground/pkg/errorx"
-	"net/http"
+	"go-playground/pkg/apperr"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
@@ -34,13 +33,13 @@ func (a *UserAdaptor) FindBySub(ctx context.Context, sub string) (entity.User, e
 	row, err := txq.FindUserBySub(ctx, sub)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return entity.User{}, errorx.NewInfo("user is not found", errorx.WithCause(err), errorx.WithStatus(http.StatusNotFound))
+			return entity.User{}, apperr.New("find user by sub but result set is zero", "user is not found", apperr.WithCause(err), apperr.CodeNotFound)
 		}
-		return entity.User{}, errorx.NewError("failed to find user", errorx.WithCause(err))
+		return entity.User{}, apperr.New("find user by sub", "failed to find user", apperr.WithCause(err), apperr.CodeNotFound)
 	}
 	uid, err := uuid.FromBytes(row.ID)
 	if err != nil {
-		return entity.User{}, errorx.NewError(fmt.Sprintf("failed to decode user id(%s)", string(row.ID)), errorx.WithCause(err))
+		return entity.User{}, apperr.New(fmt.Sprintf("raw user id(%s) to uuid", string(row.ID)), "failed to find user", apperr.WithCause(err))
 	}
 	return entity.User{
 		ID:            uid,
@@ -71,9 +70,9 @@ func (a *UserAdaptor) Create(ctx context.Context, user entity.User) error {
 	if err != nil {
 		var mysqlErr *mysql.MySQLError
 		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 /* duplicate entry */ {
-			return errorx.NewWarn("user is already exist", errorx.WithCause(err), errorx.WithStatus(http.StatusBadRequest))
+			return apperr.New("create user but user is already exist", "user is already exist", apperr.WithCause(err), apperr.CodeInvalidArgument)
 		}
-		return errorx.NewError("failed to create new user", errorx.WithCause(err))
+		return apperr.New("create user", "failed to create user", apperr.WithCause(err))
 	}
 	return nil
 }

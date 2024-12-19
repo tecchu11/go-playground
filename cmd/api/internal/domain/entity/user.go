@@ -1,8 +1,7 @@
 package entity
 
 import (
-	"go-playground/pkg/errorx"
-	"net/http"
+	"go-playground/pkg/apperr"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -29,7 +28,7 @@ func NewUser(
 ) (User, error) {
 	uid, err := uuid.NewV7()
 	if err != nil {
-		return User{}, errorx.NewError("failed to publish user id", errorx.WithCause(err))
+		return User{}, apperr.New("uuid new v7 for user id", "Failed to create new user", apperr.WithCause(err))
 	}
 	now := time.Now()
 	user := User{
@@ -42,15 +41,15 @@ func NewUser(
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}
-	err = user.Validate()
+	err = user.validate()
 	if err != nil {
 		return User{}, err
 	}
 	return user, nil
 }
 
-// Validate validates user entity.
-func (u User) Validate() error {
+// validate validates user entity.
+func (u User) validate() error {
 	err := validation.ValidateStruct(
 		&u,
 		validation.Field(&u.Sub, validation.Required),
@@ -59,7 +58,8 @@ func (u User) Validate() error {
 		validation.Field(&u.Email, validation.Required, is.Email),
 	)
 	if err != nil {
-		return errorx.NewWarn("user validation is failed", errorx.WithCause(err), errorx.WithStatus(http.StatusBadRequest))
+		return apperr.New("validate user entity", err.Error(), apperr.WithCause(err), apperr.CodeInvalidArgument)
 	}
+
 	return nil
 }

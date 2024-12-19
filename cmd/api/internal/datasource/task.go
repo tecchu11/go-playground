@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"go-playground/cmd/api/internal/datasource/database"
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/cmd/api/internal/domain/repository"
-	"go-playground/pkg/errorx"
+	"go-playground/pkg/apperr"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
@@ -29,7 +30,7 @@ func (a *TaskAdaptor) ListTasks(ctx context.Context, next entity.TaskID, limit i
 	queries := txqFromContext(ctx, a.queries)
 	rows, err := queries.ListTasks(ctx, database.ListTasksParams{ID: next, Limit: limit + 1})
 	if err != nil {
-		return entity.Page[entity.Task]{}, errorx.NewError("cant list tasks", errorx.WithCause(err))
+		return entity.Page[entity.Task]{}, apperr.New("list tasks", "failed to list tasks", apperr.WithCause(err))
 	}
 	tasks := make([]entity.Task, len(rows))
 	for i, r := range rows {
@@ -51,13 +52,9 @@ func (a *TaskAdaptor) FindByID(ctx context.Context, id entity.TaskID) (entity.Ta
 	row, err := queries.FindTask(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return entity.Task{}, errorx.NewInfo(
-				"not found task by id",
-				errorx.WithStatus(404),
-				errorx.WithCause(err),
-			)
+			return entity.Task{}, apperr.New(fmt.Sprintf("find task by id %q", id), "not found task", apperr.WithCause(err), apperr.CodeNotFound)
 		}
-		return entity.Task{}, errorx.NewError("Failed to find task by id", errorx.WithCause(err))
+		return entity.Task{}, apperr.New("find task", "failed to find task", apperr.WithCause(err))
 	}
 	return entity.Task{
 		ID:        row.ID,
@@ -72,16 +69,12 @@ func (a *TaskAdaptor) Create(ctx context.Context, task entity.Task) error {
 	defer newrelic.FromContext(ctx).StartSegment("datasource/TaskAdaptor/Create").End()
 
 	queries := txqFromContext(ctx, a.queries)
-	result, err := queries.CreateTask(ctx, database.CreateTaskParams{
+	_, err := queries.CreateTask(ctx, database.CreateTaskParams{
 		ID:      task.ID,
 		Content: task.Content,
 	})
 	if err != nil {
-		return errorx.NewError("Failed to create task", errorx.WithCause(err))
-	}
-	_, err = result.RowsAffected()
-	if err != nil {
-		return errorx.NewError("Failed to create task", errorx.WithCause(err))
+		return apperr.New("create new task", "failed to create new task", apperr.WithCause(err))
 	}
 	return nil
 }
@@ -91,16 +84,12 @@ func (a *TaskAdaptor) Update(ctx context.Context, task entity.Task) error {
 	defer newrelic.FromContext(ctx).StartSegment("datasource/TaskAdaptor/Update").End()
 
 	queries := txqFromContext(ctx, a.queries)
-	result, err := queries.UpdateTask(ctx, database.UpdateTaskParams{
+	_, err := queries.UpdateTask(ctx, database.UpdateTaskParams{
 		ID:      task.ID,
 		Content: task.Content,
 	})
 	if err != nil {
-		return errorx.NewError("Failed to update task")
-	}
-	_, err = result.RowsAffected()
-	if err != nil {
-		return errorx.NewError("Failed to update task", errorx.WithCause(err))
+		return apperr.New(fmt.Sprintf("update task by id %q", task.ID), "failed to update task", apperr.WithCause(err))
 	}
 	return nil
 }

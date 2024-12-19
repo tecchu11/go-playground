@@ -2,7 +2,7 @@ package handler_test
 
 import (
 	"go-playground/cmd/api/internal/transportlayer/rest/handler/v2"
-	"go-playground/pkg/errorx"
+	"go-playground/pkg/apperr"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -44,7 +44,7 @@ func TestErrorHandlerFunc(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(http.MethodGet, "http://example.com", nil),
 				handler: func(w http.ResponseWriter, r *http.Request) error {
-					return errorx.NewError("app unexpected error", errorx.WithStatus(http.StatusInternalServerError))
+					return apperr.New("dosomething", "app unexpected error", apperr.CodeInternal)
 				},
 			},
 			want: want{
@@ -57,7 +57,7 @@ func TestErrorHandlerFunc(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(http.MethodGet, "http://example.com", nil),
 				handler: func(w http.ResponseWriter, r *http.Request) error {
-					return errorx.NewWarn("app expected error", errorx.WithStatus(http.StatusBadRequest))
+					return apperr.New("do something", "app expected error", apperr.CodeInvalidArgument)
 				},
 			},
 			want: want{
@@ -75,7 +75,7 @@ func TestErrorHandlerFunc(t *testing.T) {
 			},
 			want: want{
 				status: http.StatusInternalServerError,
-				body:   `{"message":"unexpected EOF"}`,
+				body:   `{"message":"internal server error"}`,
 			},
 		},
 	}

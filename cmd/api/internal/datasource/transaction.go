@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"go-playground/cmd/api/internal/datasource/database"
 	"go-playground/cmd/api/internal/domain/repository"
-	"go-playground/pkg/errorx"
+	"go-playground/pkg/apperr"
 	"log/slog"
 )
 
@@ -33,7 +33,7 @@ func NewDBTransactionAdaptor(db *sql.DB) *DBTransactionAdaptor {
 func (a *DBTransactionAdaptor) Do(ctx context.Context, action func(context.Context) error) error {
 	tx, err := a.db.BeginTx(ctx, nil)
 	if err != nil {
-		return errorx.NewError("unexpected error was happened", errorx.WithCause(err))
+		return apperr.New("begin db transaction", "unexpected error was happened.", apperr.WithCause(err))
 	}
 	var done bool
 	defer func() {
@@ -51,7 +51,7 @@ func (a *DBTransactionAdaptor) Do(ctx context.Context, action func(context.Conte
 	done = true
 	err = tx.Commit()
 	if err != nil {
-		return errorx.NewError("unexpected error was happened", errorx.WithCause(err))
+		return apperr.New("commit to db", "unexpected error was happened.", apperr.WithCause(err))
 	}
 	return nil
 }
