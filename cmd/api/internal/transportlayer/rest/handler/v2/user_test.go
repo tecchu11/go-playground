@@ -3,8 +3,8 @@ package handler_test
 import (
 	"context"
 	"go-playground/cmd/api/internal/transportlayer/rest/handler/v2"
+	"go-playground/pkg/apperr"
 	"go-playground/pkg/ctxhelper"
-	"go-playground/pkg/errorx"
 	"go-playground/pkg/testhelper"
 	"net/http"
 	"net/http/httptest"
@@ -62,8 +62,8 @@ func TestUserHandler_PostCreate(t *testing.T) {
 			},
 			setup: func(t *testing.T) *handler.UserHandler { return new(handler.UserHandler) },
 			want: want{
-				status: http.StatusBadRequest,
-				body:   `{"message":"missing authenticated user info"}`,
+				status: http.StatusForbidden,
+				body:   `{"message":"authorization failure"}`,
 			},
 		},
 		"failure unmarshal request body": {
@@ -74,7 +74,7 @@ func TestUserHandler_PostCreate(t *testing.T) {
 			setup: func(t *testing.T) *handler.UserHandler { return new(handler.UserHandler) },
 			want: want{
 				status: http.StatusBadRequest,
-				body:   `{"message":"failed to unmarshal request body of PostUser"}`,
+				body:   `{"message":"invalid request"}`,
 			},
 		},
 		"failure interactor returns error": {
@@ -92,13 +92,13 @@ func TestUserHandler_PostCreate(t *testing.T) {
 				mck := new(MockUserInteractor)
 				mck.
 					On("CreateUser", ctxhelper.WithSubject(context.Background(), "sub1"), "sub1", "Dibbert", "Kozey", "", true).
-					Return(uuid.Nil, errorx.NewWarn("validation error", errorx.WithStatus(http.StatusBadRequest)))
+					Return(uuid.Nil, apperr.New("validation error", "email is required", apperr.CodeInvalidArgument))
 				h := handler.UserHandler{UserInteractor: mck}
 				return &h
 			},
 			want: want{
 				status: http.StatusBadRequest,
-				body:   `{"message":"validation error"}`,
+				body:   `{"message":"email is required"}`,
 			},
 		},
 	}

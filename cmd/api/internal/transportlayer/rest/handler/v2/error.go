@@ -3,7 +3,7 @@ package handler
 import (
 	"errors"
 	"go-playground/cmd/api/internal/transportlayer/rest"
-	"go-playground/pkg/errorx"
+	"go-playground/pkg/apperr"
 	"log/slog"
 	"net/http"
 
@@ -18,18 +18,18 @@ func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, fn func(http.Respo
 	if err == nil {
 		return
 	}
-	var appErr *errorx.Error
+	var appErr *apperr.Error
 	if !errors.As(err, &appErr) {
 		slog.ErrorContext(r.Context(), "caught unhandled error", slog.String("error", err.Error()))
 		txn.NoticeError(err)
-		rest.Err(w, err.Error(), http.StatusInternalServerError)
+		rest.Err(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
-	slog.Log(r.Context(), appErr.Level(), "caught error", slog.Any("error", appErr))
+	slog.Log(r.Context(), appErr.Level(), appErr.Error(), slog.Any("error", appErr.StackTrace()))
 	if appErr.Level() == slog.LevelError {
 		txn.NoticeError(appErr)
 	} else {
 		txn.NoticeExpectedError(appErr)
 	}
-	rest.Err(w, appErr.Msg(), appErr.HTTPStatus())
+	rest.Err(w, appErr.ClientMessage(), appErr.HTTPStatus())
 }

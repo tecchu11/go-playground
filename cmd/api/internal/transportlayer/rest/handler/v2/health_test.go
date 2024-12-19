@@ -52,7 +52,7 @@ func TestHealthCheck(t *testing.T) {
 			},
 			want: want{
 				status: http.StatusInternalServerError,
-				body:   `{"message":"failed to ping"}`,
+				body:   `{"message":"internal server error"}`,
 			},
 		},
 	}

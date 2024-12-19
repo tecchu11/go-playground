@@ -2,167 +2,361 @@ package usecase_test
 
 import (
 	"context"
-	"errors"
+	"database/sql"
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/cmd/api/internal/usecase"
-	"go-playground/pkg/errorx"
-	"log/slog"
+	"go-playground/pkg/apperr"
 	"testing"
+	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTaskUseCase_ListTasks(t *testing.T) {
-	mockTaskRepo := MockTaskRepository{}
-	useCase := usecase.NewTaskUseCase(&mockTaskRepo, nil)
-	expected := entity.Page[entity.Task]{
-		Items: []entity.Task{
-			{ID: "task-id-1"}, {ID: "task-id-2"},
-		},
-		HasNext:   true,
-		NextToken: "task-id-3",
+	type input struct {
+		ctx   context.Context
+		next  string
+		limit int32
 	}
-	mockTaskRepo.On("ListTasks", context.Background(), "task-id-1", int32(2)).Return(expected, nil)
-
-	actuaPage, acutalErr := useCase.ListTasks(context.Background(), "eyJpZCI6InRhc2staWQtMSJ9Cg==", 2)
-
-	assert.NoError(t, acutalErr)
-	assert.Equal(t, expected, actuaPage)
-}
-
-func TestTaskUseCase_ListTasks_LimitIsZero(t *testing.T) {
-	mockTaskRepo := MockTaskRepository{}
-	useCase := usecase.NewTaskUseCase(&mockTaskRepo, nil)
-	expected := entity.Page[entity.Task]{
-		Items: []entity.Task{
-			{ID: "task-id-1"}, {ID: "task-id-2"},
+	type want struct {
+		tasks   entity.Page[entity.Task]
+		err     string
+		errCode apperr.Code
+	}
+	type setup func(t *testing.T) *usecase.TaskUseCase
+	tests := map[string]struct {
+		input input
+		setup setup
+		want  want
+	}{
+		"success with param": {
+			input: input{ctx: context.Background(), next: "ewogICJpZCI6ICIwMTkzZGQ5Ni00N2FhLTc1NWItODA2ZS0wYjIyZDZmMTg0OWIiCn0K", limit: 2},
+			setup: func(t *testing.T) *usecase.TaskUseCase {
+				mck := new(MockTaskRepository)
+				mck.
+					On("ListTasks", context.Background(), "0193dd96-47aa-755b-806e-0b22d6f1849b", int32(2)).
+					Return(entity.Page[entity.Task]{
+						Items:     []entity.Task{{ID: "0193dd97-123b-7bbe-8229-fa6c91b07a0e"}, {ID: "0193dd97-2b48-711a-b67a-8e9dd44a2dbb"}},
+						HasNext:   true,
+						NextToken: "0193dd97-565f-755f-8161-e3265eb7a5df",
+					}, nil)
+				u := usecase.NewTaskUseCase(mck, &MockTransactionRepository{})
+				return u
+			},
+			want: want{
+				tasks: entity.Page[entity.Task]{
+					Items:     []entity.Task{{ID: "0193dd97-123b-7bbe-8229-fa6c91b07a0e"}, {ID: "0193dd97-2b48-711a-b67a-8e9dd44a2dbb"}},
+					HasNext:   true,
+					NextToken: "0193dd97-565f-755f-8161-e3265eb7a5df",
+				},
+			},
+		},
+		"success without next": {
+			input: input{ctx: context.Background(), next: "", limit: 2},
+			setup: func(t *testing.T) *usecase.TaskUseCase {
+				mck := new(MockTaskRepository)
+				mck.
+					On("ListTasks", context.Background(), "", int32(2)).
+					Return(entity.Page[entity.Task]{
+						Items:     []entity.Task{{ID: "0193dd97-123b-7bbe-8229-fa6c91b07a0e"}, {ID: "0193dd97-2b48-711a-b67a-8e9dd44a2dbb"}},
+						HasNext:   true,
+						NextToken: "0193dd97-565f-755f-8161-e3265eb7a5df",
+					}, nil)
+				u := usecase.NewTaskUseCase(mck, &MockTransactionRepository{})
+				return u
+			},
+			want: want{
+				tasks: entity.Page[entity.Task]{
+					Items:     []entity.Task{{ID: "0193dd97-123b-7bbe-8229-fa6c91b07a0e"}, {ID: "0193dd97-2b48-711a-b67a-8e9dd44a2dbb"}},
+					HasNext:   true,
+					NextToken: "0193dd97-565f-755f-8161-e3265eb7a5df",
+				},
+			},
+		},
+		"success without limit": {
+			input: input{ctx: context.Background(), next: "ewogICJpZCI6ICIwMTkzZGRhMC1iNWU1LTc2NjctYWI2OS05YjU1YjRiN2UyMGIiCn0K"},
+			setup: func(t *testing.T) *usecase.TaskUseCase {
+				mck := new(MockTaskRepository)
+				mck.
+					On("ListTasks", context.Background(), "0193dda0-b5e5-7667-ab69-9b55b4b7e20b", int32(10)).
+					Return(entity.Page[entity.Task]{
+						Items:     []entity.Task{{ID: "0193dda2-ce96-7333-87a5-94ca410d63e4"}, {ID: "0193dd97-2b48-711a-b67a-8e9dd44a2dbb"}},
+						HasNext:   false,
+						NextToken: "",
+					}, nil)
+				return usecase.NewTaskUseCase(mck, &MockTransactionRepository{})
+			},
+			want: want{
+				tasks: entity.Page[entity.Task]{
+					Items:     []entity.Task{{ID: "0193dda2-ce96-7333-87a5-94ca410d63e4"}, {ID: "0193dd97-2b48-711a-b67a-8e9dd44a2dbb"}},
+					HasNext:   false,
+					NextToken: "",
+				},
+			},
+		},
+		"failure invalid token": {
+			input: input{ctx: context.Background(), next: "invalid"},
+			setup: func(t *testing.T) *usecase.TaskUseCase {
+				return usecase.NewTaskUseCase(nil, nil)
+			},
+			want: want{err: "decode task cursor by base64: illegal base64 data at input byte 4", errCode: apperr.CodeInvalidArgument},
 		},
 	}
-	mockTaskRepo.On("ListTasks", context.Background(), "task-id-1", int32(10)).Return(expected, nil)
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			u := tc.setup(t)
 
-	actuaPage, acutalErr := useCase.ListTasks(context.Background(), "eyJpZCI6InRhc2staWQtMSJ9Cg==", 0)
+			got, err := u.ListTasks(tc.input.ctx, tc.input.next, tc.input.limit)
 
-	assert.NoError(t, acutalErr)
-	assert.Equal(t, expected, actuaPage)
-}
-
-func TestTaskUseCase_ListTasks_CursorIsInValid(t *testing.T) {
-	useCase := usecase.NewTaskUseCase(nil, nil)
-	actuaPage, acutalErr := useCase.ListTasks(context.Background(), "invalid", 0)
-
-	var err *errorx.Error
-	require.ErrorAs(t, acutalErr, &err)
-	assert.Equal(t, "failed to decode task cursor token", err.Msg())
-	assert.Equal(t, 400, err.HTTPStatus())
-	assert.Equal(t, slog.LevelWarn, err.Level())
-	assert.Zero(t, actuaPage)
+			if tc.want.err != "" {
+				assert.Zero(t, got)
+				assert.EqualError(t, err, tc.want.err)
+				assert.True(t, apperr.IsCode(err, tc.want.errCode))
+			} else {
+				assert.Equal(t, tc.want.tasks, got)
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestTaskUseCase_FindTaskByID(t *testing.T) {
-	mockTaskRepo := MockTaskRepository{}
-	useCase := usecase.NewTaskUseCase(&mockTaskRepo, nil)
-	mockTaskRepo.On("FindByID", context.Background(), "task-id").Return(entity.Task{ID: "task-id"}, nil)
+	type input struct {
+		ctx context.Context
+		id  string
+	}
+	type want struct {
+		task    entity.Task
+		err     string
+		errCode apperr.Code
+	}
+	type setup func(t *testing.T) *usecase.TaskUseCase
+	tests := map[string]struct {
+		input input
+		setup setup
+		want  want
+	}{
+		"success": {
+			input: input{ctx: context.Background(), id: "0193ddaa-6fdb-7bb6-b6ca-3ee5f131f1f4"},
+			setup: func(t *testing.T) *usecase.TaskUseCase {
+				mck := new(MockTaskRepository)
+				mck.
+					On("FindByID", context.Background(), "0193ddaa-6fdb-7bb6-b6ca-3ee5f131f1f4").
+					Return(entity.Task{ID: "0193ddaa-6fdb-7bb6-b6ca-3ee5f131f1f4"}, nil)
+				return usecase.NewTaskUseCase(mck, nil)
+			},
+			want: want{task: entity.Task{ID: "0193ddaa-6fdb-7bb6-b6ca-3ee5f131f1f4"}},
+		},
+		"failure not found task": {
+			input: input{ctx: context.Background(), id: "0193ddb0-0054-777d-a60b-cee300725c64"},
+			setup: func(t *testing.T) *usecase.TaskUseCase {
+				mck := new(MockTaskRepository)
+				mck.
+					On("FindByID", context.Background(), "0193ddb0-0054-777d-a60b-cee300725c64").
+					Return(entity.Task{}, apperr.New("find task", "task not found", apperr.WithCause(sql.ErrNoRows), apperr.CodeNotFound))
+				return usecase.NewTaskUseCase(mck, nil)
+			},
+			want: want{err: "find task: sql: no rows in result set", errCode: apperr.CodeNotFound},
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			u := tc.setup(t)
 
-	actualTask, actualErr := useCase.FindTaskByID(context.Background(), "task-id")
+			got, err := u.FindTaskByID(tc.input.ctx, tc.input.id)
 
-	mockTaskRepo.AssertExpectations(t)
-	assert.NoError(t, actualErr)
-	assert.Equal(t, entity.Task{ID: "task-id"}, actualTask)
-}
-
-func TestTaskUseCase_FindTaskByID_ErrorWhenTaskIsNotFound(t *testing.T) {
-	taskRepo := MockTaskRepository{}
-	useCase := usecase.NewTaskUseCase(&taskRepo, nil)
-	taskRepo.On("FindByID", context.Background(), "missing-id").Return(entity.Task{}, errors.New("missing"))
-
-	actualTask, actualErr := useCase.FindTaskByID(context.Background(), "missing-id")
-
-	taskRepo.AssertExpectations(t)
-	assert.Equal(t, errors.New("missing"), actualErr)
-	assert.Zero(t, actualTask)
+			if tc.want.err != "" {
+				assert.Zero(t, got)
+				assert.EqualError(t, err, tc.want.err)
+				assert.True(t, apperr.IsCode(err, tc.want.errCode))
+			} else {
+				assert.Equal(t, tc.want.task, got)
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestTask_CreateTask(t *testing.T) {
-	taskRepo := MockTaskRepository{}
-	useCase := usecase.NewTaskUseCase(&taskRepo, nil)
-	taskRepo.On("Create", context.Background(), mock.AnythingOfType("Task")).Return(nil)
+	type input struct {
+		ctx     context.Context
+		content string
+	}
+	type setup func(*testing.T, input) *usecase.TaskUseCase
+	type want struct {
+		err     string
+		errCode apperr.Code
+	}
+	tests := map[string]struct {
+		input input
+		setup setup
+		want  want
+	}{
+		"success": {
+			input: input{ctx: context.Background(), content: "do test"},
+			setup: func(t *testing.T, i input) *usecase.TaskUseCase {
+				mck := new(MockTaskRepository)
+				matcher := mock.MatchedBy(func(task entity.Task) bool {
+					diff := cmp.Diff(task, entity.Task{Content: i.content}, cmpopts.IgnoreFields(entity.Task{}, "ID", "CreatedAt", "UpdatedAt"))
+					require.Empty(t, diff)
+					require.NotZero(t, task.ID)
+					require.NotZero(t, task.CreatedAt)
+					require.NotZero(t, task.UpdatedAt)
+					return true
+				})
+				mck.
+					On("Create", context.Background(), matcher).
+					Return(nil)
+				return usecase.NewTaskUseCase(mck, nil)
+			},
+			want: want{},
+		},
+		"failure to create task when repository returned error": {
+			input: input{ctx: context.Background(), content: "do test"},
+			setup: func(t *testing.T, i input) *usecase.TaskUseCase {
+				mck := new(MockTaskRepository)
+				matcher := mock.MatchedBy(func(task entity.Task) bool {
+					diff := cmp.Diff(task, entity.Task{Content: i.content}, cmpopts.IgnoreFields(entity.Task{}, "ID", "CreatedAt", "UpdatedAt"))
+					require.Empty(t, diff)
+					require.NotZero(t, task.ID)
+					require.NotZero(t, task.CreatedAt)
+					require.NotZero(t, task.UpdatedAt)
+					return true
+				})
+				mck.On("Create", context.Background(), matcher).Return(apperr.New("failed to save", "failed to create task"))
+				return usecase.NewTaskUseCase(mck, nil)
+			},
+			want: want{err: "failed to save", errCode: apperr.CodeInternal},
+		},
+		"failure to create task when content is blank": {
+			input: input{ctx: context.Background()},
+			setup: func(t *testing.T, i input) *usecase.TaskUseCase { return usecase.NewTaskUseCase(nil, nil) },
+			want:  want{err: "task content must be non empty", errCode: apperr.CodeInvalidArgument},
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			u := tc.setup(t, tc.input)
 
-	id, err := useCase.CreateTask(context.Background(), "do test")
+			got, err := u.CreateTask(tc.input.ctx, tc.input.content)
 
-	taskRepo.AssertExpectations(t)
-	assert.NoError(t, err)
-	assert.NotZero(t, id)
-}
-
-func TestTask_CreateTask_ErrorWhenContentIsBlank(t *testing.T) {
-	useCase := usecase.NewTaskUseCase(nil, nil)
-
-	id, err := useCase.CreateTask(context.Background(), " ")
-
-	var myErr *errorx.Error
-	assert.ErrorAs(t, err, &myErr)
-	assert.Zero(t, id)
-}
-
-func TestTask_CreateTask_ErrorWhenCreating(t *testing.T) {
-	taskRepo := MockTaskRepository{}
-	useCase := usecase.NewTaskUseCase(&taskRepo, nil)
-	taskRepo.On("Create", context.Background(), mock.AnythingOfType("Task")).Return(errors.New("failed to create"))
-
-	id, err := useCase.CreateTask(context.Background(), "do test")
-
-	assert.EqualError(t, err, "failed to create")
-	assert.Zero(t, id)
+			if tc.want.err != "" {
+				assert.Zero(t, got)
+				assert.EqualError(t, err, tc.want.err)
+				assert.True(t, apperr.IsCode(err, tc.want.errCode))
+			} else {
+				assert.NotZero(t, got)
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestTask_UpdateTask(t *testing.T) {
-	taskRepo := MockTaskRepository{}
-	transaction := MockTransactionRepository{}
-	useCase := usecase.NewTaskUseCase(&taskRepo, &transaction)
-	taskRepo.On("FindByID", context.Background(), "task-id").Return(entity.Task{ID: "task-id", Content: "content"}, nil)
-	taskRepo.On("Update", context.Background(), entity.Task{ID: "task-id", Content: "new-content"}).Return(nil)
+	type input struct {
+		ctx         context.Context
+		id, content string
+	}
+	type setup func(*testing.T) *usecase.TaskUseCase
+	type want struct {
+		err     string
+		errCode apperr.Code
+	}
+	tests := map[string]struct {
+		input input
+		setup setup
+		want  want
+	}{
+		"success to update task": {
+			input: input{ctx: context.Background(), id: "0193df27-fa0e-7889-9563-2c265d14d185", content: "done test"},
+			setup: func(t *testing.T) *usecase.TaskUseCase {
+				mck := new(MockTaskRepository)
+				mck.On("FindByID", context.Background(), "0193df27-fa0e-7889-9563-2c265d14d185").Return(entity.Task{
+					ID:        "0193df27-fa0e-7889-9563-2c265d14d185",
+					Content:   "do test",
+					CreatedAt: time.Date(2024, 12, 19, 0, 0, 0, 0, time.UTC),
+					UpdatedAt: time.Date(2024, 12, 19, 0, 0, 0, 0, time.UTC),
+				}, nil)
+				matcher := mock.MatchedBy(func(task entity.Task) bool {
+					diff := cmp.Diff(task, entity.Task{
+						ID:        "0193df27-fa0e-7889-9563-2c265d14d185",
+						Content:   "done test",
+						CreatedAt: time.Date(2024, 12, 19, 0, 0, 0, 0, time.UTC),
+					}, cmpopts.IgnoreFields(entity.Task{}, "UpdatedAt"))
+					require.Empty(t, diff)
+					require.Greater(t, task.UpdatedAt, time.Date(2024, 12, 19, 0, 0, 0, 0, time.UTC))
+					return true
+				})
+				mck.On("Update", context.Background(), matcher).Return(nil)
+				return usecase.NewTaskUseCase(mck, &MockTransactionRepository{})
+			},
+			want: want{},
+		},
+		"failure to update task when repository returned error on updating": {
+			input: input{ctx: context.Background(), id: "0193df28-348c-777a-b989-0009a50791e7", content: "done test"},
+			setup: func(t *testing.T) *usecase.TaskUseCase {
+				mck := new(MockTaskRepository)
+				mck.On("FindByID", context.Background(), "0193df28-348c-777a-b989-0009a50791e7").Return(entity.Task{
+					ID:        "0193df28-348c-777a-b989-0009a50791e7",
+					Content:   "do test",
+					CreatedAt: time.Date(2024, 12, 19, 0, 0, 0, 0, time.UTC),
+					UpdatedAt: time.Date(2024, 12, 19, 0, 0, 0, 0, time.UTC),
+				}, nil)
+				matcher := mock.MatchedBy(func(task entity.Task) bool {
+					diff := cmp.Diff(task, entity.Task{
+						ID:        "0193df28-348c-777a-b989-0009a50791e7",
+						Content:   "done test",
+						CreatedAt: time.Date(2024, 12, 19, 0, 0, 0, 0, time.UTC),
+					}, cmpopts.IgnoreFields(entity.Task{}, "UpdatedAt"))
+					require.Empty(t, diff)
+					require.Greater(t, task.UpdatedAt, time.Date(2024, 12, 19, 0, 0, 0, 0, time.UTC))
+					return true
+				})
+				mck.On("Update", context.Background(), matcher).Return(apperr.New("failed to save", "failed to save"))
+				return usecase.NewTaskUseCase(mck, &MockTransactionRepository{})
+			},
+			want: want{err: "failed to save", errCode: apperr.CodeInternal},
+		},
+		"failure to update task when content is empty": {
+			input: input{ctx: context.Background(), id: "0193df31-158a-7eee-b12e-3bd316ea15dd"},
+			setup: func(t *testing.T) *usecase.TaskUseCase {
+				mck := new(MockTaskRepository)
+				mck.On("FindByID", context.Background(), "0193df31-158a-7eee-b12e-3bd316ea15dd").Return(entity.Task{
+					ID:        "0193df31-158a-7eee-b12e-3bd316ea15dd",
+					Content:   "do test",
+					CreatedAt: time.Date(2024, 12, 19, 0, 0, 0, 0, time.UTC),
+					UpdatedAt: time.Date(2024, 12, 19, 0, 0, 0, 0, time.UTC),
+				}, nil)
+				return usecase.NewTaskUseCase(mck, &MockTransactionRepository{})
+			},
+			want: want{err: "task content must be non empty", errCode: apperr.CodeInvalidArgument},
+		},
+		"failure to update task when task not found": {
+			input: input{ctx: context.Background(), id: "0193df32-f54d-7330-a242-bc72ae85d7b4", content: "not found"},
+			setup: func(t *testing.T) *usecase.TaskUseCase {
+				mck := new(MockTaskRepository)
+				mck.On("FindByID", context.Background(), "0193df32-f54d-7330-a242-bc72ae85d7b4").Return(entity.Task{}, apperr.New("find task", "task not found", apperr.CodeNotFound, apperr.WithCause(sql.ErrNoRows)))
+				return usecase.NewTaskUseCase(mck, &MockTransactionRepository{})
+			},
+			want: want{err: "find task: sql: no rows in result set", errCode: apperr.CodeNotFound},
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			u := tc.setup(t)
 
-	actualErr := useCase.UpdateTask(context.Background(), "task-id", "new-content")
+			err := u.UpdateTask(tc.input.ctx, tc.input.id, tc.input.content)
 
-	taskRepo.AssertExpectations(t)
-	assert.NoError(t, actualErr)
-}
-
-func TestTask_UpdateTask_ErrorWhenTaskIsNotFound(t *testing.T) {
-	taskRepo := MockTaskRepository{}
-	transaction := MockTransactionRepository{}
-	useCase := usecase.NewTaskUseCase(&taskRepo, &transaction)
-	taskRepo.On("FindByID", context.Background(), "invalid-id").Return(entity.Task{}, errors.New("missing task"))
-
-	actualErr := useCase.UpdateTask(context.Background(), "invalid-id", "new-content")
-
-	taskRepo.AssertExpectations(t)
-	assert.EqualError(t, actualErr, "missing task")
-}
-
-func TestTask_UpdateTask_ErrorWhenNewContentIsBlank(t *testing.T) {
-	taskRepo := MockTaskRepository{}
-	transaction := MockTransactionRepository{}
-	useCase := usecase.NewTaskUseCase(&taskRepo, &transaction)
-	taskRepo.On("FindByID", context.Background(), "task-id").Return(entity.Task{ID: "task-id", Content: "content"}, nil)
-
-	actualErr := useCase.UpdateTask(context.Background(), "task-id", " ")
-
-	taskRepo.AssertExpectations(t)
-	var myErr *errorx.Error
-	assert.ErrorAs(t, actualErr, &myErr)
-}
-
-func TestTask_UpdateTask_ErrorWhenUpdating(t *testing.T) {
-	taskRepo := MockTaskRepository{}
-	transaction := MockTransactionRepository{}
-	useCase := usecase.NewTaskUseCase(&taskRepo, &transaction)
-	taskRepo.On("FindByID", context.Background(), "task-id").Return(entity.Task{ID: "task-id", Content: "content"}, nil)
-	taskRepo.On("Update", context.Background(), entity.Task{ID: "task-id", Content: "new-content"}).Return(errors.New("failed to update"))
-
-	actualErr := useCase.UpdateTask(context.Background(), "task-id", "new-content")
-
-	assert.EqualError(t, actualErr, "failed to update")
+			if tc.want.err != "" {
+				assert.EqualError(t, err, tc.want.err)
+				assert.True(t, apperr.IsCode(err, tc.want.errCode))
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }

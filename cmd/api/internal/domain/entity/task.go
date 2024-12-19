@@ -3,7 +3,7 @@ package entity
 import (
 	"encoding/base64"
 	"encoding/json"
-	"go-playground/pkg/errorx"
+	"go-playground/pkg/apperr"
 	"strings"
 	"time"
 
@@ -30,7 +30,7 @@ func NewTask(content string) (Task, error) {
 	}
 	id, err := uuid.NewV7()
 	if err != nil {
-		return Task{}, errorx.NewError("Failed to publish task id", errorx.WithCause(err))
+		return Task{}, apperr.New("uuid new v7 for task id", "Failed to create new task.", apperr.WithCause(err))
 	}
 	now := time.Now()
 	return Task{
@@ -47,12 +47,13 @@ func (t *Task) UpdateContent(newContent string) error {
 		return err
 	}
 	t.Content = newContent
+	t.UpdatedAt = time.Now()
 	return nil
 }
 
 func validateTask(content string) error {
 	if trimmed := strings.TrimSpace(content); trimmed == "" {
-		return errorx.NewInfo("task content must be non empty", errorx.WithStatus(400))
+		return apperr.New("task content must be non empty", "Task content must be non empty", apperr.CodeInvalidArgument)
 	}
 	return nil
 }
@@ -66,7 +67,7 @@ func (t Task) EncodeCursor() (string, error) {
 	c := TaskCursor{ID: t.ID}
 	buf, err := json.Marshal(c)
 	if err != nil {
-		return "", errorx.NewError("failed to create task cursor token", errorx.WithCause(err))
+		return "", apperr.New("marshal task cursor", "Failed to create task metadata", apperr.WithCause(err))
 	}
 	return base64.StdEncoding.EncodeToString(buf), nil
 }
@@ -76,22 +77,14 @@ func DecodeTaskCursor(token string) (TaskCursor, error) {
 	if token == "" {
 		return TaskCursor{}, nil
 	}
-	var cursor TaskCursor
-	buf, err := base64.StdEncoding.DecodeString(token)
+	b, err := base64.StdEncoding.DecodeString(token)
 	if err != nil {
-		return cursor, errorx.NewWarn(
-			"failed to decode task cursor token",
-			errorx.WithCause(err),
-			errorx.WithStatus(400),
-		)
+		return TaskCursor{}, apperr.New("decode task cursor by base64", "invalid task cursor", apperr.WithCause(err), apperr.CodeInvalidArgument)
 	}
-	err = json.Unmarshal(buf, &cursor)
+	var cursor TaskCursor
+	err = json.Unmarshal(b, &cursor)
 	if err != nil {
-		return cursor, errorx.NewWarn(
-			"failed to decode task cursor token",
-			errorx.WithCause(err),
-			errorx.WithStatus(400),
-		)
+		return TaskCursor{}, apperr.New("decode task cursor by json", "invalid task cursor", apperr.WithCause(err), apperr.CodeInvalidArgument)
 	}
 	return cursor, nil
 }

@@ -2,36 +2,56 @@ package datasource_test
 
 import (
 	"context"
-	"errors"
+	"database/sql"
 	"go-playground/cmd/api/internal/datasource"
+	"go-playground/pkg/apperr"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDBTransactionAdaptorDo(t *testing.T) {
+func TestDBTransactionAdaptor_Do(t *testing.T) {
+	type input struct {
+		ctx    context.Context
+		action func(context.Context) error
+	}
+	type want struct {
+		err     string
+		errCode apperr.Code
+	}
 	tests := map[string]struct {
-		ctx      context.Context
-		action   func(context.Context) error
-		expected error
+		input input
+		want  want
 	}{
 		"success": {
-			ctx:    context.Background(),
-			action: func(ctx context.Context) error { return nil },
+			input: input{
+				ctx:    context.Background(),
+				action: func(ctx context.Context) error { return nil },
+			},
 		},
 		"failure action": {
-			ctx:      context.Background(),
-			action:   func(ctx context.Context) error { return errors.New("action error") },
-			expected: errors.New("action error"),
+			input: input{
+				ctx: context.Background(),
+				action: func(ctx context.Context) error {
+					return apperr.New("find something", "not found something.", apperr.WithCause(sql.ErrNoRows), apperr.CodeNotFound)
+				},
+			},
+			want: want{err: "find something: sql: no rows in result set", errCode: apperr.CodeNotFound},
 		},
 	}
 
 	dbTransactionAdaptor := datasource.NewDBTransactionAdaptor(db)
 
-	for k, v := range tests {
-		t.Run(k, func(t *testing.T) {
-			actual := dbTransactionAdaptor.Do(v.ctx, v.action)
-			assert.Equal(t, v.expected, actual)
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			err := dbTransactionAdaptor.Do(tc.input.ctx, tc.input.action)
+
+			if tc.want.err != "" {
+				assert.EqualError(t, err, tc.want.err)
+				assert.True(t, apperr.IsCode(err, tc.want.errCode))
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

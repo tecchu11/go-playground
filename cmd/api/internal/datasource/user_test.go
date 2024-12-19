@@ -6,9 +6,8 @@ import (
 	"go-playground/cmd/api/internal/datasource/database"
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/cmd/api/internal/domain/entity/entitytest"
-	"go-playground/pkg/errorx"
+	"go-playground/pkg/apperr"
 	"go-playground/pkg/testhelper"
-	"net/http"
 	"testing"
 	"time"
 
@@ -18,14 +17,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUserAdaptorFindByID(t *testing.T) {
+func TestUserAdaptor_FindByID(t *testing.T) {
 	type input struct {
 		sub string
 	}
 	type want struct {
-		user            entity.User
-		isErr           bool
-		httpStatusOnErr int
+		user    entity.User
+		err     string
+		errCode apperr.Code
 	}
 	tests := map[string]struct {
 		input input
@@ -48,21 +47,21 @@ func TestUserAdaptorFindByID(t *testing.T) {
 		},
 		"failure user not found": {
 			input: input{sub: "invalid-sub"},
-			want:  want{isErr: true, httpStatusOnErr: http.StatusNotFound},
+			want:  want{err: "find user by sub but result set is zero: sql: no rows in result set", errCode: apperr.CodeNotFound},
 		},
 	}
 	adaptor := datasource.NewUserAdaptor(database.New(db))
-	for k, v := range tests {
-		t.Run(k, func(t *testing.T) {
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
 			runInTx(t, func(ctx context.Context) {
-				got, err := adaptor.FindBySub(ctx, v.input.sub)
-				if v.want.isErr {
-					assert.Error(t, err)
-					var appErr *errorx.Error
-					assert.ErrorAs(t, err, &appErr)
-					assert.Equal(t, v.want.httpStatusOnErr, appErr.HTTPStatus())
+				got, err := adaptor.FindBySub(ctx, tc.input.sub)
+
+				if tc.want.err != "" {
+					assert.Zero(t, got)
+					assert.EqualError(t, err, tc.want.err)
+					assert.True(t, apperr.IsCode(err, tc.want.errCode))
 				} else {
-					assert.Equal(t, v.want.user, got)
+					assert.Equal(t, tc.want.user, got)
 					assert.NoError(t, err)
 				}
 			})
@@ -70,13 +69,13 @@ func TestUserAdaptorFindByID(t *testing.T) {
 	}
 }
 
-func TestUserAdaptorCreate(t *testing.T) {
+func TestUserAdaptor_Create(t *testing.T) {
 	type input struct {
 		user entity.User
 	}
 	type want struct {
-		isErr           bool
-		httpStatusOnErr int
+		err     string
+		errCode apperr.Code
 	}
 	tests := map[string]struct {
 		input input
@@ -87,26 +86,23 @@ func TestUserAdaptorCreate(t *testing.T) {
 		},
 		"failure duplicate sub": {
 			input: input{user: entitytest.TestUser(t, func(u *entity.User) { u.Sub = "80dbb87a-5ce8-4b45-85a0-3b8aec488b7a" })},
-			want:  want{isErr: true, httpStatusOnErr: http.StatusBadRequest},
+			want:  want{err: "create user but user is already exist: Error 1062 (23000): Duplicate entry '80dbb87a-5ce8-4b45-85a0-3b8aec488b7a' for key 'users.idx_sub'", errCode: apperr.CodeInvalidArgument},
 		},
 	}
 	adaptor := datasource.NewUserAdaptor(database.New(db))
-	for k, v := range tests {
-		t.Run(k, func(t *testing.T) {
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
 			runInTx(t, func(ctx context.Context) {
-				err := adaptor.Create(ctx, v.input.user)
+				err := adaptor.Create(ctx, tc.input.user)
 
-				if v.want.isErr {
-					assert.Error(t, err)
-					var appErr *errorx.Error
-					assert.ErrorAs(t, err, &appErr)
-					assert.Equal(t, v.want.httpStatusOnErr, appErr.HTTPStatus())
+				if tc.want.err != "" {
+					assert.EqualError(t, err, tc.want.err)
+					assert.True(t, apperr.IsCode(err, tc.want.errCode))
 				} else {
-					got, err := adaptor.FindBySub(ctx, v.input.user.Sub)
+					assert.NoError(t, err)
+					got, err := adaptor.FindBySub(ctx, tc.input.user.Sub)
 					require.NoError(t, err)
-					diff := cmp.Diff(got, v.input.user,
-						cmpopts.IgnoreFields(got, "CreatedAt", "UpdatedAt"),
-					)
+					diff := cmp.Diff(got, tc.input.user, cmpopts.IgnoreFields(entity.User{}, "CreatedAt", "UpdatedAt"))
 					assert.Empty(t, diff)
 				}
 			})

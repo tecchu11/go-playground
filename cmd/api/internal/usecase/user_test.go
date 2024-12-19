@@ -4,8 +4,7 @@ import (
 	"context"
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/cmd/api/internal/usecase"
-	"go-playground/pkg/errorx"
-	"net/http"
+	"go-playground/pkg/apperr"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,8 +18,8 @@ func TestUserUseCase_CreateUser(t *testing.T) {
 		emailVerified                     bool
 	}
 	type want struct {
-		isErr           bool
-		httpStatusOnErr int
+		err     string
+		errCode apperr.Code
 	}
 	type setup func(t *testing.T, input input) *MockUserRepository
 	tests := map[string]struct {
@@ -68,28 +67,27 @@ func TestUserUseCase_CreateUser(t *testing.T) {
 					require.Equal(t, input.emailVerified, user.EmailVerified)
 					return true
 				})
-				mck.On("Create", context.Background(), userMatcher).Return(errorx.NewError("error on save user"))
+				mck.On("Create", context.Background(), userMatcher).Return(apperr.New("internal server error", "failed to update task"))
 				return mck
 			},
-			want: want{isErr: true, httpStatusOnErr: http.StatusInternalServerError},
+			want: want{err: "internal server error", errCode: apperr.CodeInternal},
 		},
 		"failure validation error": {
 			setup: func(t *testing.T, input input) *MockUserRepository { return nil },
-			want:  want{isErr: true, httpStatusOnErr: http.StatusBadRequest},
+			want:  want{err: "validate user entity: Email: cannot be blank; FamilyName: cannot be blank; GivenName: cannot be blank; Sub: cannot be blank.", errCode: apperr.CodeInvalidArgument},
 		},
 	}
-	for k, v := range tests {
-		t.Run(k, func(t *testing.T) {
-			mck := v.setup(t, v.input)
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			mck := tc.setup(t, tc.input)
 			u := usecase.NewUserUseCase(mck)
 
-			got, err := u.CreateUser(context.Background(), v.input.sub, v.input.givenName, v.input.familyName, v.input.email, v.input.emailVerified)
+			got, err := u.CreateUser(context.Background(), tc.input.sub, tc.input.givenName, tc.input.familyName, tc.input.email, tc.input.emailVerified)
 
-			if v.want.isErr {
+			if tc.want.err != "" {
 				assert.Zero(t, got)
-				var appErr *errorx.Error
-				assert.ErrorAs(t, err, &appErr)
-				assert.Equal(t, v.want.httpStatusOnErr, appErr.HTTPStatus())
+				assert.EqualError(t, err, tc.want.err)
+				assert.True(t, apperr.IsCode(err, tc.want.errCode))
 			} else {
 				assert.NotZero(t, got)
 				assert.NoError(t, err)

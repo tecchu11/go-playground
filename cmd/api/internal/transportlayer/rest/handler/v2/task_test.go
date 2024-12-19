@@ -5,7 +5,7 @@ import (
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/cmd/api/internal/transportlayer/rest/handler/v2"
 	"go-playground/cmd/api/internal/transportlayer/rest/oapi"
-	"go-playground/pkg/errorx"
+	"go-playground/pkg/apperr"
 	"go-playground/pkg/ptr"
 	"net/http"
 	"net/http/httptest"
@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestListTasks(t *testing.T) {
+func TestTaskHandler_ListTasks(t *testing.T) {
 	type input struct {
 		w     *httptest.ResponseRecorder
 		r     *http.Request
@@ -172,7 +172,7 @@ func TestListTasks(t *testing.T) {
 			},
 			setup: func() *handler.TaskHandler {
 				mck := new(MockTaskInteractor)
-				mck.On("ListTasks", context.Background(), "", int32(0)).Return(entity.Page[entity.Task]{}, errorx.NewWarn("failed to list task", errorx.WithStatus(http.StatusBadRequest)))
+				mck.On("ListTasks", context.Background(), "", int32(0)).Return(entity.Page[entity.Task]{}, apperr.New("failed to list task", "failed to list task", apperr.CodeInvalidArgument))
 				return &handler.TaskHandler{TaskInteractor: mck}
 			},
 			want: want{
@@ -182,19 +182,19 @@ func TestListTasks(t *testing.T) {
 		},
 	}
 
-	for k, v := range tests {
-		t.Run(k, func(t *testing.T) {
-			hn := v.setup()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			hn := tc.setup()
 
-			hn.ListTasks(v.input.w, v.input.r, v.input.param)
+			hn.ListTasks(tc.input.w, tc.input.r, tc.input.param)
 
-			assert.Equal(t, v.want.status, v.input.w.Code)
-			assert.JSONEq(t, v.want.body, v.input.w.Body.String())
+			assert.Equal(t, tc.want.status, tc.input.w.Code)
+			assert.JSONEq(t, tc.want.body, tc.input.w.Body.String())
 		})
 	}
 }
 
-func TestGetTas(t *testing.T) {
+func TestTaskHandler_GetTask(t *testing.T) {
 	type input struct {
 		w   *httptest.ResponseRecorder
 		r   *http.Request
@@ -245,7 +245,7 @@ func TestGetTas(t *testing.T) {
 			},
 			setup: func() *handler.TaskHandler {
 				mck := new(MockTaskInteractor)
-				mck.On("FindTaskByID", context.Background(), "abc").Return(entity.Task{}, errorx.NewWarn("missing task by abc", errorx.WithStatus(http.StatusNotFound)))
+				mck.On("FindTaskByID", context.Background(), "abc").Return(entity.Task{}, apperr.New("missing task", "missing task by abc", apperr.CodeNotFound))
 				return &handler.TaskHandler{TaskInteractor: mck}
 			},
 			want: want{
@@ -255,19 +255,19 @@ func TestGetTas(t *testing.T) {
 		},
 	}
 
-	for k, v := range tests {
-		t.Run(k, func(t *testing.T) {
-			hn := v.setup()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			hn := tc.setup()
 
-			hn.GetTask(v.input.w, v.input.r, v.input.tid)
+			hn.GetTask(tc.input.w, tc.input.r, tc.input.tid)
 
-			assert.Equal(t, v.want.status, v.input.w.Code)
-			assert.JSONEq(t, v.want.body, v.input.w.Body.String())
+			assert.Equal(t, tc.want.status, tc.input.w.Code)
+			assert.JSONEq(t, tc.want.body, tc.input.w.Body.String())
 		})
 	}
 }
 
-func TestPostTask(t *testing.T) {
+func TestTaskHandler_PostTask(t *testing.T) {
 	type input struct {
 		w *httptest.ResponseRecorder
 		r *http.Request
@@ -304,7 +304,7 @@ func TestPostTask(t *testing.T) {
 			setup: func() *handler.TaskHandler { return &handler.TaskHandler{} },
 			want: want{
 				status: http.StatusBadRequest,
-				body:   `{"message":"failed to unmarshal request body of PostTask"}`,
+				body:   `{"message":"invalid request"}`,
 			},
 		},
 		"failure: failed to create task": {
@@ -314,29 +314,29 @@ func TestPostTask(t *testing.T) {
 			},
 			setup: func() *handler.TaskHandler {
 				mck := new(MockTaskInteractor)
-				mck.On("CreateTask", context.Background(), "failed").Return("", errorx.NewError("failed to create task"))
+				mck.On("CreateTask", context.Background(), "failed").Return("", apperr.New("internal server error", "failed to create new task", apperr.CodeInternal))
 				return &handler.TaskHandler{TaskInteractor: mck}
 			},
 			want: want{
 				status: http.StatusInternalServerError,
-				body:   `{"message":"failed to create task"}`,
+				body:   `{"message":"failed to create new task"}`,
 			},
 		},
 	}
 
-	for k, v := range tests {
-		t.Run(k, func(t *testing.T) {
-			hn := v.setup()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			hn := tc.setup()
 
-			hn.PostTask(v.input.w, v.input.r)
+			hn.PostTask(tc.input.w, tc.input.r)
 
-			assert.Equal(t, v.want.status, v.input.w.Code)
-			assert.JSONEq(t, v.want.body, v.input.w.Body.String())
+			assert.Equal(t, tc.want.status, tc.input.w.Code)
+			assert.JSONEq(t, tc.want.body, tc.input.w.Body.String())
 		})
 	}
 }
 
-func TestPutTask(t *testing.T) {
+func TestTaskHandler_PutTask(t *testing.T) {
 	type input struct {
 		w   *httptest.ResponseRecorder
 		r   *http.Request
@@ -376,7 +376,7 @@ func TestPutTask(t *testing.T) {
 			setup: func() *handler.TaskHandler { return &handler.TaskHandler{} },
 			want: want{
 				status: http.StatusBadRequest,
-				body:   `{"message":"failed to unmarshal request body of PutTask"}`,
+				body:   `{"message":"invalid request"}`,
 			},
 		},
 		"failure: failed to update task": {
@@ -387,7 +387,7 @@ func TestPutTask(t *testing.T) {
 			},
 			setup: func() *handler.TaskHandler {
 				mck := new(MockTaskInteractor)
-				mck.On("UpdateTask", context.Background(), "0192b845-7a32-706b-ae58-d46437963c0e", "failed").Return(errorx.NewError("failed to update task"))
+				mck.On("UpdateTask", context.Background(), "0192b845-7a32-706b-ae58-d46437963c0e", "failed").Return(apperr.New("internal server error", "failed to update task"))
 				return &handler.TaskHandler{TaskInteractor: mck}
 			},
 			want: want{
@@ -397,14 +397,14 @@ func TestPutTask(t *testing.T) {
 		},
 	}
 
-	for k, v := range tests {
-		t.Run(k, func(t *testing.T) {
-			hn := v.setup()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			hn := tc.setup()
 
-			hn.PutTask(v.input.w, v.input.r, v.input.tid)
+			hn.PutTask(tc.input.w, tc.input.r, tc.input.tid)
 
-			assert.Equal(t, v.want.status, v.input.w.Code)
-			assert.JSONEq(t, v.want.body, v.input.w.Body.String())
+			assert.Equal(t, tc.want.status, tc.input.w.Code)
+			assert.JSONEq(t, tc.want.body, tc.input.w.Body.String())
 		})
 	}
 }

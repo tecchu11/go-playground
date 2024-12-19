@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/cmd/api/internal/transportlayer/rest/oapi"
+	"go-playground/pkg/apperr"
 	"go-playground/pkg/collection"
-	"go-playground/pkg/errorx"
 	"net/http"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
@@ -79,7 +79,7 @@ func (t *TaskHandler) PostTask(w http.ResponseWriter, r *http.Request) {
 		var body oapi.PostTaskJSONRequestBody
 		err := json.NewDecoder(r.Body).Decode(&body)
 		if err != nil {
-			return errorx.NewWarn("failed to unmarshal request body of PostTask", errorx.WithCause(err), errorx.WithStatus(http.StatusBadRequest))
+			return apperr.New("unmarshal PostTask", "invalid request", apperr.WithCause(err), apperr.CodeInvalidArgument)
 		}
 		result, err := t.TaskInteractor.CreateTask(r.Context(), body.Content)
 		if err != nil {
@@ -99,7 +99,7 @@ func (t *TaskHandler) PutTask(w http.ResponseWriter, r *http.Request, id oapi.Ta
 		var body oapi.PutTaskJSONRequestBody
 		err := json.NewDecoder(r.Body).Decode(&body)
 		if err != nil {
-			return errorx.NewWarn("failed to unmarshal request body of PutTask", errorx.WithCause(err), errorx.WithStatus(http.StatusBadRequest))
+			return apperr.New("unmarshal PutTask body", "invalid request", apperr.WithCause(err), apperr.CodeInvalidArgument)
 		}
 		err = t.TaskInteractor.UpdateTask(r.Context(), id, body.Content)
 		if err != nil {
