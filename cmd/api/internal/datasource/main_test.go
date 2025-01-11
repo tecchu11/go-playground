@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-testfixtures/testfixtures/v3"
+	"github.com/testcontainers/testcontainers-go"
 	mysqlcontainer "github.com/testcontainers/testcontainers-go/modules/mysql"
 )
 
@@ -41,7 +42,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-type shutdownFunc func(context.Context) error
+type shutdownFunc func(context.Context, ...testcontainers.TerminateOption) error
 
 var (
 	testImage    = "mysql:8.0.36"
