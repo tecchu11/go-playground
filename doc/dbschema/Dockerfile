@@ -6,7 +6,7 @@ WORKDIR /src
 RUN --mount=type=bind,source=.tbls.yml,target=.tbls.yml \
     tbls doc
 
-FROM squidfunk/mkdocs-material:9.5  AS final
+FROM squidfunk/mkdocs-material:9.6  AS final
 
 COPY --from=build /src/dest/ /docs
 COPY mkdocs.yml .
