@@ -1,0 +1,24 @@
+name: set up go
+description: wrapper for setup-goA
+inputs:
+  go-version-file:
+   description: go version file location
+   default: go.mod
+
+runs:
+  using: composite
+  steps:
+    - name: find go version
+      id: version
+      shell: bash
+      run: |
+        version=$(sed -ne '/^toolchain /s/^toolchain go//p' ${{ inputs.go-version-file }})
+        if [ -z "$version" ]; then
+          version=$(sed -ne '/^go /s/^go //p' ${{ inputs.go-version-file }})
+          echo "Toolchain version not found in ${{ inputs.go-version-file }}, using go directive instead."
+        fi
+        echo "Go Version: $version"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+    - uses: actions/setup-go@v5
+      with:
+        go-version: ${{ steps.version.outputs.version }}
