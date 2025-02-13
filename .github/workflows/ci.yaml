@@ -59,7 +59,7 @@ jobs:
           git push
       
       - name: lint
-        uses: golangci/golangci-lint-action@v6.3.2
+        uses: golangci/golangci-lint-action@v6.3.3
         with:
           only-new-issues: true
 
