@@ -3,15 +3,16 @@
     "dockerComposeFile": "../docker-compose.yml",
     "workspaceFolder": "/app",
     "features": {
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-        "ghcr.io/devcontainers/features/aws-cli:1": {},
-        "ghcr.io/devcontainers/features/common-utils:2": {
-            "installOhMyZsh": false,
-            "installOhMyZshConfig": false
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "22"
+        },
+        "ghcr.io/devcontainers/features/go:1": {
+            "version": "latest"
         },
         "ghcr.io/devcontainers/features/terraform:1": {
-            "version": "1.9.8"
+            "version": "1.10.4"//RENOVATE_TERRAFORM
         },
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
         "ghcr.io/devcontainers/features/github-cli:1": {}
     },
     "postCreateCommand": "/bin/sh .devcontainer/postCreateCommand.sh",
@@ -21,7 +22,6 @@
                 "terminal.integrated.defaultProfile.linux": "zsh"
             },
             "extensions": [
-                "golang.go",
                 "streetsidesoftware.code-spell-checker"
             ]
         }

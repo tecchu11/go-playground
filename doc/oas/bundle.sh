@@ -1,6 +1,6 @@
 #bin/sh
 
-REDOCLY_TAG=1.25.10
+REDOCLY_TAG=1.28.5
 BASE="$(cd "$(dirname "$0")" && pwd)"
 
 docker run --rm -v $BASE:/spec --entrypoint sh redocly/cli:$REDOCLY_TAG -c "

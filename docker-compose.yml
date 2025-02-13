@@ -1,6 +1,6 @@
 services:
   app:
-    image: golang:1.24.0
+    image: mcr.microsoft.com/devcontainers/base:bookworm
     environment:
       - GOPRIVATE=github.com/tecchu11
     volumes:
