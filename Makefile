@@ -1,5 +1,8 @@
-.PHONY: setup, gen
+.PHONY: init, setup, gen
 
+init:
+	@go work init . tools
+	
 setup:
 	@asdf plugin add nodejs
 	@asdf plugin add sqlc https://github.com/tecchu11/asdf-sqlc.git

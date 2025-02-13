@@ -4,3 +4,7 @@ frontend
 .terraform
 terraform.tfstate*
 .idea
+
+# Go
+go.work
+go.work.sum

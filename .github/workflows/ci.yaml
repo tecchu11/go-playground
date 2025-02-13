@@ -20,16 +20,9 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - uses: ./.github/actions/tool-versions
-        id: tool-versions
-        
-      - uses: sqlc-dev/setup-sqlc@v4
-        with:
-          sqlc-version: ${{ steps.tool-versions.outputs.sqlc }}
-
-      - name: install oapi-codegen
-        run: | ## TODO: manage version by renovate
-          go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.4.1
+      - name: install tools
+        working-directory: ./tools
+        run: go install tool
           
       - uses: actions/create-github-app-token@v1
         id: app-token
@@ -68,7 +61,7 @@ jobs:
       - name: lint
         uses: golangci/golangci-lint-action@v6.3.2
         with:
-          version: v${{ steps.tool-versions.outputs.golangci-lint }}
+          only-new-issues: true
 
       - name: test
         run: go test ./... --race -v -cover
