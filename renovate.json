@@ -12,13 +12,14 @@
     {
       "customType": "regex",
       "fileMatch": [
-        "^.tool-versions"
+        "^.devcontainer/devcontainer.json"
       ],
       "matchStrings": [
-        "sqlc (?<currentValue>.*?)\n"
+        "\"version\":\\s*\"(?<currentValue>.*?)\"\/\/RENOVATE_TERRAFORM"
       ],
-      "datasourceTemplate": "go",
-      "packageNameTemplate": "github.com/sqlc-dev/sqlc"
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "hashicorp/terraform",
+      "depTypeTemplate": "required_version"
     }
   ],
   "packageRules": [
