@@ -1,6 +1,6 @@
 name: go playground main db
 desc: go playground main db schema definitions.
-dsn: mysql://local_user:pass@localhost:13306/go_playground_db
+dsn: mysql://local_user:pass@maindb:3306/go_playground_db
 docPath: dest/docs
 exclude:
   - goose_db_version

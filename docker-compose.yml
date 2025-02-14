@@ -32,7 +32,7 @@ services:
       retries: 5
       start_period: 30s
   migration:
-    build: 
+    build:
       context: .
       dockerfile: ./cmd/migration/Dockerfile
     env_file:
@@ -42,16 +42,24 @@ services:
         condition: service_healthy
         restart: true
   dbschema:
-    build: 
+    build:
       context: doc/dbschema
-      network: host
-      no_cache: true
     depends_on:
       migration:
         condition: service_completed_successfully
         restart: true
     ports:
       - "18000:8000"
+    volumes:
+      - ./doc/dbschema/dest:/docs
+  openapi:
+    image: redocly/redoc
+    ports:
+      - "18888:80"
+    environment:
+      SPEC_URL: openapi.yml
+    volumes:
+      - ./doc/oas/openapi.yml:/usr/share/nginx/html/openapi.yml
   localstack:
     image: localstack/localstack:4.1
     networks:
@@ -63,7 +71,7 @@ services:
           - my-bucket.s3.localhost.localstack.cloud
     ports:
       - "127.0.0.1:4566:4566"
-      - "127.0.0.1:4510-4559:4510-4559" 
+      - "127.0.0.1:4510-4559:4510-4559"
     environment:
       - DEBUG=1
     volumes:

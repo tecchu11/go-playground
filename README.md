@@ -68,3 +68,9 @@ TOKEN=$(gh auth token) && \
     --dry-run \
     tecchu11/go-playground > renovate.log
 ```
+
+## UI for OpenAPI, DB schema, Keycloak master.
+
+- [OpenAPI](http://localhost:18888)
+- [DB Schema](http://localhost:18000)
+- [Keycloak master](http://localhost:18080)
