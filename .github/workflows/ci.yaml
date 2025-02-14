@@ -39,7 +39,8 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           go fmt ./...
-          make gen
+          go generate --tags oapi ./...
+          go generate --tags sqlc ./...
           go mod tidy
 
       - name: check diff

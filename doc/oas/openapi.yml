@@ -23,6 +23,8 @@ paths:
           $ref: '#/components/responses/Response500'
   /tasks:
     get:
+      tags:
+        - task
       summary: List tasks
       description: List tasks with cursor.
       operationId: ListTasks
@@ -37,6 +39,8 @@ paths:
         '500':
           $ref: '#/components/responses/Response500'
     post:
+      tags:
+        - task
       summary: Post task
       description: Post task with given request body.
       operationId: PostTask
@@ -53,6 +57,8 @@ paths:
           $ref: '#/components/responses/Response500'
   /tasks/{taskId}:
     get:
+      tags:
+        - task
       summary: Get task
       description: Get task by id.
       operationId: GetTask
@@ -68,6 +74,8 @@ paths:
         '500':
           $ref: '#/components/responses/Response500'
     put:
+      tags:
+        - task
       summary: Put task
       description: Put task with given request body. If any create task.
       operationId: PutTask

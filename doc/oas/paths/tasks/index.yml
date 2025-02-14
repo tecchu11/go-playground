@@ -1,4 +1,6 @@
 get:
+  tags:
+    - task
   summary: List tasks
   description: List tasks with cursor.
   operationId: ListTasks
@@ -13,6 +15,8 @@ get:
     "500":
       $ref: ../../components/responses/Response500.yml
 post:
+  tags:
+    - task
   summary: Post task
   description: Post task with given request body.
   operationId: PostTask

@@ -1,4 +1,6 @@
 get:
+  tags:
+    - task
   summary: Get task
   description: Get task by id.
   operationId: GetTask
@@ -14,6 +16,8 @@ get:
     "500":
       $ref: ../../../components/responses/Response500.yml
 put:
+  tags:
+    - task
   summary: Put task
   description: Put task with given request body. If any create task.
   operationId: PutTask
