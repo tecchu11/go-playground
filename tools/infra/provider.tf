@@ -1,10 +1,14 @@
 terraform {
+  required_version = "1.10.4"
   required_providers {
     keycloak = {
-      source  = "mrparkers/keycloak"
-      version = "4.4.0"
+      source  = "keycloak/keycloak"
+      version = "5.1.1"
     }
   }
 }
 
-provider "keycloak" {}
+provider "keycloak" {
+  client_id = "admin-cli"
+  url       = "http://auth:18080"
+}
