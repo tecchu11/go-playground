@@ -15,7 +15,7 @@
         "^.devcontainer/devcontainer.json"
       ],
       "matchStrings": [
-        "\"version\":\\s*\"(?<currentValue>.*?)\" \/\/RENOVATE_TERRAFORM"
+        "\"version\":\\s*\"(?<currentValue>.*?)\" //RENOVATE_TERRAFORM"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "hashicorp/terraform",
@@ -33,6 +33,16 @@
       "matchPackageNames": [
         "go",
         "golang"
+      ]
+    },
+    {
+      "groupName": "terraform-version",
+      "matchManagers": [
+        "custom.regex",
+        "terraform"
+      ],
+      "matchPackageNames": [
+        "hashicorp/terraform"
       ]
     }
   ],
