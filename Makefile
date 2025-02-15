@@ -38,8 +38,8 @@ install-tools: ##@ Install all tools for this app.
 install-tools-go: ##@ Install tools via go install tool.
 	go install tool
 
+TBLS_VERSION=1.81.0
 install-tools-tbls: ##@ Install tbls.
-	export TBLS_VERSION=1.81.0
 	curl -o tbls.deb -L https://github.com/k1LoW/tbls/releases/download/v$(TBLS_VERSION)/tbls_$(TBLS_VERSION)-1_arm64.deb
 	sudo dpkg -i tbls.deb
 	rm tbls.deb
@@ -65,4 +65,3 @@ help: ##@ (Default) Show helps.
 			printf "\n    \033[34m%-20s\033[0m %s\n", $$1, $$2; \
 	}'
 .DEFAULT_GOAL := help
-

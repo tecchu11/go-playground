@@ -15,7 +15,7 @@
         "^.devcontainer/devcontainer.json"
       ],
       "matchStrings": [
-        "\"version\":\\s*\"(?<currentValue>.*?)\"\/\/RENOVATE_TERRAFORM"
+        "\"version\":\\s*\"(?<currentValue>.*?)\" \/\/RENOVATE_TERRAFORM"
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "hashicorp/terraform",
