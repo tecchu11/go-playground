@@ -10,10 +10,11 @@
             "version": "latest"
         },
         "ghcr.io/devcontainers/features/terraform:1": {
-            "version": "1.10.5"//RENOVATE_TERRAFORM
+            "version": "1.10.5" //RENOVATE_TERRAFORM
         },
         "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-        "ghcr.io/devcontainers/features/github-cli:1": {}
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers/features/aws-cli:1": {}
     },
     "postCreateCommand": "/bin/sh .devcontainer/postCreateCommand.sh",
     "customizations": {
@@ -22,7 +23,10 @@
                 "terminal.integrated.defaultProfile.linux": "zsh"
             },
             "extensions": [
-                "streetsidesoftware.code-spell-checker"
+                "streetsidesoftware.code-spell-checker",
+                "github.vscode-github-actions",
+                "-ms-azuretools.vscode-azureterraform",
+                "-AmazonWebServices.aws-toolkit-vscode"
             ]
         }
     }
