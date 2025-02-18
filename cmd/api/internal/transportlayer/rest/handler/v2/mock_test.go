@@ -49,3 +49,8 @@ func (mck *MockUserInteractor) CreateUser(ctx context.Context, sub string, given
 	args := mck.Called(ctx, sub, givenName, familyName, email, emailVerified)
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
+
+func (mck *MockUserInteractor) FindBySub(ctx context.Context, sub string) (entity.User, error) {
+	args := mck.Called(ctx, sub)
+	return args.Get(0).(entity.User), args.Error(1)
+}

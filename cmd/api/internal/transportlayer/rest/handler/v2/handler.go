@@ -14,6 +14,7 @@ import (
 
 	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/newrelic/go-agent/v3/newrelic"
+	"github.com/rs/cors"
 	"github.com/tecchu11/nrgo-std/nrhttp"
 )
 
@@ -66,8 +67,8 @@ func New(app *newrelic.Application, lookup func(string) (string, bool)) (http.Ha
 	if err != nil {
 		return nil, fmt.Errorf("new auth middleware: %w", err)
 	}
-
-	return oapi.HandlerWithOptions(
+	corsMiddleware := cors.AllowAll().Handler
+	svr := oapi.HandlerWithOptions(
 		&handlers{
 			TaskHandler:   task,
 			HealthHandler: health,
@@ -85,7 +86,8 @@ func New(app *newrelic.Application, lookup func(string) (string, bool)) (http.Ha
 				rest.Err(w, err.Error(), http.StatusBadRequest)
 			},
 		},
-	), nil
+	)
+	return corsMiddleware(svr), nil
 }
 
 var _ oapi.ServerInterface = (*handlers)(nil)

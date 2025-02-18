@@ -18,6 +18,7 @@ type TaskInteractor interface {
 
 // UserInteractor is interface for [usecase.UserUseCase]
 type UserInteractor interface {
+	FindBySub(ctx context.Context, sub string) (entity.User, error)
 	// CreateUser creates user with given information.
 	CreateUser(ctx context.Context, sub string, givenName, familyName string, email string, emailVerified bool) (uuid.UUID, error)
 }

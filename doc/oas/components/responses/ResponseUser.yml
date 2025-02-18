@@ -1,0 +1,5 @@
+description: get user info
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/User.yml

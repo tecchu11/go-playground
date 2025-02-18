@@ -1,0 +1,38 @@
+type: object
+required:
+  - id
+  - sub
+  - givenName
+  - familyName
+  - email
+  - emailVerified
+  - createdAt
+  - updatedAt
+properties:
+  id:
+    type: string
+    x-go-name: ID
+    example: 01928120-055d-7edb-a12a-2d290512266e
+  sub:
+    type: string
+    example: 0194f3ad-6b9b-7ddf-8b7e-c45011862c93
+  givenName:
+    type: string
+    example: tetsu
+  familyName:
+    type: string
+    example: yamakawa
+  email:
+    type: string
+    format: email
+    example: foo@example.com
+  emailVerified:
+    type: boolean
+  createdAt:
+    type: string
+    format: date-time
+    example: 2024-10-12T23:26:52Z
+  updatedAt:
+    type: string
+    format: date-time
+    example: 2024-10-12T23:26:52Z

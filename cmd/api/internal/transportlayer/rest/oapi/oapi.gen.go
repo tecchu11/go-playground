@@ -40,6 +40,18 @@ type TaskContent struct {
 	Content string `json:"content"`
 }
 
+// User defines model for User.
+type User struct {
+	CreatedAt     time.Time           `json:"createdAt"`
+	Email         openapi_types.Email `json:"email"`
+	EmailVerified bool                `json:"emailVerified"`
+	FamilyName    string              `json:"familyName"`
+	GivenName     string              `json:"givenName"`
+	ID            string              `json:"id"`
+	Sub           string              `json:"sub"`
+	UpdatedAt     time.Time           `json:"updatedAt"`
+}
+
 // Limit pagination limit size.
 type Limit = int32
 
@@ -81,6 +93,9 @@ type ResponseTasks struct {
 	// Next cursor of next item.
 	Next string `json:"next"`
 }
+
+// ResponseUser defines model for ResponseUser.
+type ResponseUser = User
 
 // ResponseUserID defines model for ResponseUserID.
 type ResponseUserID struct {
@@ -156,6 +171,9 @@ type ServerInterface interface {
 	// Post user
 	// (POST /users)
 	PostUser(w http.ResponseWriter, r *http.Request)
+	// Get own info
+	// (GET /users/me)
+	GetMe(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -294,6 +312,20 @@ func (siw *ServerInterfaceWrapper) PostUser(w http.ResponseWriter, r *http.Reque
 	handler.ServeHTTP(w, r)
 }
 
+// GetMe operation middleware
+func (siw *ServerInterfaceWrapper) GetMe(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMe(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -420,6 +452,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("GET "+options.BaseURL+"/tasks/{taskId}", wrapper.GetTask)
 	m.HandleFunc("PUT "+options.BaseURL+"/tasks/{taskId}", wrapper.PutTask)
 	m.HandleFunc("POST "+options.BaseURL+"/users", wrapper.PostUser)
+	m.HandleFunc("GET "+options.BaseURL+"/users/me", wrapper.GetMe)
 
 	return m
 }

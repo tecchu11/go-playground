@@ -1,0 +1,15 @@
+get:
+  tags:
+    - user
+  summary: Get own info
+  description: Get own info
+  operationId: GetMe
+  responses:
+    "200":
+      $ref: ../../../components/responses/ResponseUser.yml
+    "400":
+      $ref: ../../../components/responses/Response400.yml
+    "404":
+      $ref: ../../../components/responses/Response404.yml
+    "500":
+      $ref: ../../../components/responses/Response500.yml
