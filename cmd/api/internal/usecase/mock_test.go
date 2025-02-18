@@ -47,6 +47,11 @@ func (mck *MockUserRepository) Create(ctx context.Context, user entity.User) err
 	return args.Error(0)
 }
 
+func (mck *MockUserRepository) FindBySub(ctx context.Context, sub string) (entity.User, error) {
+	args := mck.Called(ctx, sub)
+	return args.Get(0).(entity.User), args.Error(1)
+}
+
 var (
 	_ repository.TransactionRepository = (*MockTransactionRepository)(nil)
 	_ repository.TaskRepository        = (*MockTaskRepository)(nil)

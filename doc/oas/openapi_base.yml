@@ -19,6 +19,8 @@ paths:
     $ref: ./paths/tasks/[taskID]/index.yml
   /users:
     $ref: ./paths/users/index.yml
+  /users/me:
+    $ref: ./paths/users/me/index.yml
 components:
   schemas:
     Error:
@@ -29,6 +31,8 @@ components:
       $ref: ./components/schemas/Simple.yml
     Task:
       $ref: ./components/schemas/Task.yml
+    User:
+      $ref: ./components/schemas/User.yml
   parameters:
     Limit:
       $ref: ./components/parameters/Limit.yml
@@ -56,5 +60,7 @@ components:
       $ref: ./components/responses/ResponseTaskID.yml
     ResponseTasks:
       $ref: ./components/responses/ResponseTasks.yml
+    ResponseUser:
+      $ref: ./components/responses/ResponseUser.yml
     ResponseUserID:
       $ref: ./components/responses/ResponseUserID.yml

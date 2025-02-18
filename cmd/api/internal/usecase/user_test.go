@@ -95,3 +95,19 @@ func TestUserUseCase_CreateUser(t *testing.T) {
 		})
 	}
 }
+
+func TestFindMe(t *testing.T) {
+	type input struct {
+		ctx context.Context
+		sub string
+	}
+	in := input{ctx: context.Background(), sub: "0195195a-2958-7ccd-b39d-c7cbe04128b1"}
+	mck := new(MockUserRepository)
+	uc := usecase.NewUserUseCase(mck)
+	mck.On("FindBySub", in.ctx, in.sub).
+		Return(entity.User{}, nil)
+
+	_, err := uc.FindBySub(in.ctx, in.sub)
+
+	assert.NoError(t, err)
+}

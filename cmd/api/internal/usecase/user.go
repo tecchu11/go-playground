@@ -19,6 +19,15 @@ func NewUserUseCase(userRepo repository.UserRepository) *UserUseCase {
 	return &UserUseCase{userRepository: userRepo}
 }
 
+func (u *UserUseCase) FindBySub(
+	ctx context.Context,
+	sub string,
+) (entity.User, error) {
+	defer newrelic.FromContext(ctx).StartSegment("usecase/UserUseCase/FindMe").End()
+
+	return u.userRepository.FindBySub(ctx, sub)
+}
+
 // CreateUser creates new user with given user information.
 func (u *UserUseCase) CreateUser(
 	ctx context.Context,

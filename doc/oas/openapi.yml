@@ -110,6 +110,22 @@ paths:
           $ref: '#/components/responses/Response404'
         '500':
           $ref: '#/components/responses/Response500'
+  /users/me:
+    get:
+      tags:
+        - user
+      summary: Get own info
+      description: Get own info
+      operationId: GetMe
+      responses:
+        '200':
+          $ref: '#/components/responses/ResponseUser'
+        '400':
+          $ref: '#/components/responses/Response400'
+        '404':
+          $ref: '#/components/responses/Response404'
+        '500':
+          $ref: '#/components/responses/Response500'
 components:
   schemas:
     Error:
@@ -155,6 +171,45 @@ components:
         content:
           type: string
           example: go  shopping
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-10-12T23:26:52Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2024-10-12T23:26:52Z'
+    User:
+      type: object
+      required:
+        - id
+        - sub
+        - givenName
+        - familyName
+        - email
+        - emailVerified
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          x-go-name: ID
+          example: 01928120-055d-7edb-a12a-2d290512266e
+        sub:
+          type: string
+          example: 0194f3ad-6b9b-7ddf-8b7e-c45011862c93
+        givenName:
+          type: string
+          example: tetsu
+        familyName:
+          type: string
+          example: yamakawa
+        email:
+          type: string
+          format: email
+          example: foo@example.com
+        emailVerified:
+          type: boolean
         createdAt:
           type: string
           format: date-time
@@ -298,6 +353,12 @@ components:
                 type: string
                 description: cursor of next item.
                 example: eyJpZCI6IjAxOTIzM2Y1LTQzYzMtNzk4Yi1iMjRkLWVjYmM3NThhZTVmYiJ9
+    ResponseUser:
+      description: get user info
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
     ResponseUserID:
       description: saved user id.
       content:
