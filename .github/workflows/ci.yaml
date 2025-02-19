@@ -23,6 +23,9 @@ jobs:
       - name: install tools
         working-directory: ./tools
         run: go install tool
+
+      - name: install redocly
+        run: make install-tools-redoc
           
       - uses: actions/create-github-app-token@v1
         id: app-token
