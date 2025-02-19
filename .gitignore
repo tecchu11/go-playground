@@ -4,6 +4,7 @@ frontend
 .terraform
 terraform.tfstate*
 .idea
+renovate.log
 
 # Go
 go.work
