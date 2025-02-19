@@ -6,8 +6,9 @@ services:
     volumes:
       - .:/app
       - go:/go
-      - cache:/root/.cache
-      - gh-config:/root/.config/gh
+      - cache:/home/vscode/.cache
+      - gh-config:/home/vscode/.config/gh
+    user: vscode
     stdin_open: true
     tty: true
   maindb:
@@ -27,10 +28,10 @@ services:
       - "13306:3306"
     healthcheck:
       test: mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD
-      interval: 10s
+      interval: 5s
       timeout: 30s
       retries: 5
-      start_period: 30s
+      start_period: 10s
   migration:
     build:
       context: .
