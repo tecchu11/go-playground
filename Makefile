@@ -27,7 +27,7 @@ gen-tbls: ##@ Generates db schema docs with tbls.
 ##@ [Install tools commands]
 ##@
 
-install-tools: install-tools-go install-tools-tbls install-tools-redoc ##@ Install all tools for this app.
+install-tools: install-tools-go install-tools-tbls install-tools-redoc install-tools-renovate ##@ Install all tools for this app.
 
 install-tools-go: ##@ Install tools via go install tool.
 	@go install tool
@@ -40,6 +40,9 @@ install-tools-tbls: ##@ Install tbls.
 
 install-tools-redoc: ##@ Install redoc.
 	@npm i -g @redocly/cli@1.29.0
+
+install-tools-renovate: ##@ Install renovate cli.
+	@npm i -g renovate
 
 ##@
 ##@ [Misc commands]
