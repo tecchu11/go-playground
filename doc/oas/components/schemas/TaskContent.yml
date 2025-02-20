@@ -3,7 +3,7 @@ required:
   - content
 properties:
   content:
-   type: string
-   minLength: 1
-   description: Content of task. Content must be not blank.
-   example: go shopping!!
+    type: string
+    minLength: 1
+    description: Content of task. Content must be not blank.
+    example: go shopping!!

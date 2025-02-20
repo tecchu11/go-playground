@@ -128,25 +128,6 @@ paths:
           $ref: '#/components/responses/Response500'
 components:
   schemas:
-    Error:
-      type: object
-      required:
-        - message
-      properties:
-        message:
-          type: string
-          description: error message
-          example: error message
-    TaskContent:
-      type: object
-      required:
-        - content
-      properties:
-        content:
-          type: string
-          minLength: 1
-          description: Content of task. Content must be not blank.
-          example: go shopping!!
     Simple:
       type: object
       required:
@@ -156,6 +137,15 @@ components:
           type: string
           description: message
           example: ok
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: error message
+          example: error message
     Task:
       type: object
       required:
@@ -179,6 +169,16 @@ components:
           type: string
           format: date-time
           example: '2024-10-12T23:26:52Z'
+    TaskContent:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          minLength: 1
+          description: Content of task. Content must be not blank.
+          example: go shopping!!
     User:
       type: object
       required:
@@ -218,7 +218,105 @@ components:
           type: string
           format: date-time
           example: '2024-10-12T23:26:52Z'
+  responses:
+    ResponseHealthCheck:
+      description: Health check response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Simple'
+    Response500:
+      description: internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ResponseTasks:
+      description: List of tasks. Items is empty-able.
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - items
+              - hasNext
+              - next
+            properties:
+              items:
+                type: array
+                description: Items of task
+                items:
+                  $ref: '#/components/schemas/Task'
+              hasNext:
+                type: boolean
+                description: whether has next items.
+              next:
+                type: string
+                description: cursor of next item.
+                example: eyJpZCI6IjAxOTIzM2Y1LTQzYzMtNzk4Yi1iMjRkLWVjYmM3NThhZTVmYiJ9
+    Response400:
+      description: bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ResponseTaskID:
+      description: saved task id.
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - id
+            properties:
+              id:
+                type: string
+                x-go-name: ID
+                description: ID of task.
+                example: 01928120-055d-7edb-a12a-2d290512266e
+    Response404:
+      description: not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ResponseTask:
+      description: get task by id response.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Task'
+    ResponseUserID:
+      description: saved user id.
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - id
+            properties:
+              id:
+                type: string
+                x-go-name: ID
+                format: uuid
+                description: ID of user id
+                example: 01928120-055d-7edb-a12a-2d290512266e
+    ResponseUser:
+      description: get user info
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
   parameters:
+    Next:
+      name: next
+      in: query
+      required: false
+      schema:
+        type: string
+        description: pagination cursor value.
+        example: eyJpZCI6MX0K
+        default: ''
     Limit:
       name: limit
       in: query
@@ -229,15 +327,6 @@ components:
         format: int32
         minimum: 1
         default: 10
-    Next:
-      name: next
-      in: query
-      required: false
-      schema:
-        type: string
-        description: pagination cursor value.
-        example: eyJpZCI6MX0K
-        default: ''
     TaskID:
       name: taskId
       x-go-name: TaskID
@@ -285,92 +374,3 @@ components:
                 type: boolean
                 description: whether email is verified
                 example: true
-  responses:
-    Response400:
-      description: bad request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Response404:
-      description: not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Response500:
-      description: internal server error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    ResponseHealthCheck:
-      description: Health check response.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Simple'
-    ResponseTask:
-      description: get task by id response.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Task'
-    ResponseTaskID:
-      description: saved task id.
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - id
-            properties:
-              id:
-                type: string
-                x-go-name: ID
-                description: ID of task.
-                example: 01928120-055d-7edb-a12a-2d290512266e
-    ResponseTasks:
-      description: List of tasks. Items is empty-able.
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - items
-              - hasNext
-              - next
-            properties:
-              items:
-                type: array
-                description: Items of task
-                items:
-                  $ref: '#/components/schemas/Task'
-              hasNext:
-                type: boolean
-                description: whether has next items.
-              next:
-                type: string
-                description: cursor of next item.
-                example: eyJpZCI6IjAxOTIzM2Y1LTQzYzMtNzk4Yi1iMjRkLWVjYmM3NThhZTVmYiJ9
-    ResponseUser:
-      description: get user info
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/User'
-    ResponseUserID:
-      description: saved user id.
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - id
-            properties:
-              id:
-                type: string
-                x-go-name: ID
-                format: uuid
-                description: ID of user id
-                example: 01928120-055d-7edb-a12a-2d290512266e

@@ -6,7 +6,7 @@ content:
       required:
         - id
       properties:
-        id: 
+        id:
           type: string
           x-go-name: ID
           description: ID of task.

@@ -1,0 +1,9 @@
+get:
+  summary: Health check API
+  description: Health check endpoint for this app.
+  operationId: HealthCheck
+  responses:
+    '200':
+      $ref: ../components/responses/ResponseHealthCheck.yml
+    '500':
+      $ref: ../components/responses/Response500.yml
