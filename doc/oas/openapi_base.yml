@@ -12,55 +12,12 @@ servers:
         default: '8080'
 paths:
   /health:
-    $ref: ./paths/health/index.yml
+    $ref: paths/health.yml
   /tasks:
-    $ref: ./paths/tasks/index.yml
+    $ref: paths/tasks.yml
   /tasks/{taskId}:
-    $ref: ./paths/tasks/[taskID]/index.yml
+    $ref: paths/tasks_{taskId}.yml
   /users:
-    $ref: ./paths/users/index.yml
+    $ref: paths/users.yml
   /users/me:
-    $ref: ./paths/users/me/index.yml
-components:
-  schemas:
-    Error:
-      $ref: ./components/schemas/Error.yml
-    TaskContent:
-      $ref: ./components/schemas/TaskContent.yml
-    Simple:
-      $ref: ./components/schemas/Simple.yml
-    Task:
-      $ref: ./components/schemas/Task.yml
-    User:
-      $ref: ./components/schemas/User.yml
-  parameters:
-    Limit:
-      $ref: ./components/parameters/Limit.yml
-    Next:
-      $ref: ./components/parameters/Next.yml
-    TaskID:
-      $ref: ./components/parameters/TaskID.yml
-  requestBodies:
-    RequestTask:
-      $ref: ./components/requestBodies/RequestTask.yml
-    RequestUser:
-      $ref: ./components/requestBodies/RequestUser.yml
-  responses:
-    Response400:
-      $ref: ./components/responses/Response400.yml
-    Response404:
-      $ref: ./components/responses/Response404.yml
-    Response500:
-      $ref: ./components/responses/Response500.yml
-    ResponseHealthCheck:
-      $ref: ./components/responses/ResponseHealthCheck.yml
-    ResponseTask:
-      $ref: ./components/responses/ResponseTask.yml
-    ResponseTaskID:
-      $ref: ./components/responses/ResponseTaskID.yml
-    ResponseTasks:
-      $ref: ./components/responses/ResponseTasks.yml
-    ResponseUser:
-      $ref: ./components/responses/ResponseUser.yml
-    ResponseUserID:
-      $ref: ./components/responses/ResponseUserID.yml
+    $ref: paths/users_me.yml

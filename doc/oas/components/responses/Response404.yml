@@ -1,5 +1,5 @@
 description: not found
 content:
   application/json:
-   schema:
-    $ref: ../schemas/Error.yml
+    schema:
+      $ref: ../schemas/Error.yml
