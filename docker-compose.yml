@@ -79,7 +79,7 @@ services:
       - localstack:/var/lib/localstack
       - /var/run/docker.socket:/var/run/docker.socket
   auth:
-    image: keycloak/keycloak:26.1.3
+    image: keycloak/keycloak:26.1.4
     env_file: .env
     command:
       - start-dev
