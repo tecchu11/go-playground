@@ -7,11 +7,11 @@ toolchain go1.24.1
 require (
 	github.com/auth0/go-jwt-middleware/v2 v2.3.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
-	github.com/go-sql-driver/mysql v1.9.0
+	github.com/go-sql-driver/mysql v1.9.1
 	github.com/go-testfixtures/testfixtures/v3 v3.14.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
-	github.com/newrelic/go-agent/v3 v3.37.0
+	github.com/newrelic/go-agent/v3 v3.38.0
 	github.com/newrelic/go-agent/v3/integrations/nrmysql v1.2.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/pressly/goose/v3 v3.24.1
