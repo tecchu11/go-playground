@@ -7,7 +7,7 @@ toolchain go1.24.2
 require (
 	github.com/auth0/go-jwt-middleware/v2 v2.3.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
-	github.com/go-sql-driver/mysql v1.9.1
+	github.com/go-sql-driver/mysql v1.9.2
 	github.com/go-testfixtures/testfixtures/v3 v3.14.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
