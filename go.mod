@@ -8,7 +8,7 @@ require (
 	github.com/auth0/go-jwt-middleware/v2 v2.3.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.9.2
-	github.com/go-testfixtures/testfixtures/v3 v3.15.0
+	github.com/go-testfixtures/testfixtures/v3 v3.16.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/newrelic/go-agent/v3 v3.39.0
@@ -43,6 +43,7 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/goccy/go-yaml v1.17.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
