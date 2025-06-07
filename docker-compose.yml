@@ -62,7 +62,7 @@ services:
     volumes:
       - ./doc/oas/openapi.yml:/usr/share/nginx/html/openapi.yml
   localstack:
-    image: localstack/localstack:4.4
+    image: localstack/localstack:4.5
     networks:
       default:
         aliases:
