@@ -62,7 +62,7 @@ services:
     volumes:
       - ./doc/oas/openapi.yml:/usr/share/nginx/html/openapi.yml
   localstack:
-    image: localstack/localstack:4.5
+    image: localstack/localstack:4.6
     networks:
       default:
         aliases:
@@ -79,7 +79,7 @@ services:
       - localstack:/var/lib/localstack
       - /var/run/docker.socket:/var/run/docker.socket
   auth:
-    image: keycloak/keycloak:26.2.5
+    image: keycloak/keycloak:26.3.0
     env_file: .env
     command:
       - start-dev
