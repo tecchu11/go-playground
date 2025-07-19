@@ -11,7 +11,7 @@ require (
 	github.com/go-testfixtures/testfixtures/v3 v3.17.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
-	github.com/newrelic/go-agent/v3 v3.39.0
+	github.com/newrelic/go-agent/v3 v3.40.1
 	github.com/newrelic/go-agent/v3/integrations/nrmysql v1.2.2
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/pressly/goose/v3 v3.24.3
