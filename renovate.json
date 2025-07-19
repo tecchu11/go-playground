@@ -11,8 +11,8 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": [
-        "^.devcontainer/devcontainer.json"
+      "managerFilePatterns": [
+        "/^.devcontainer/devcontainer.json/"
       ],
       "matchStrings": [
         "\"version\":\\s*\"(?<currentValue>.*?)\" //RENOVATE_TERRAFORM"
