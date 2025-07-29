@@ -3,7 +3,6 @@ package datasource_test
 import (
 	"context"
 	"go-playground/cmd/api/internal/datasource"
-	"go-playground/cmd/api/internal/datasource/database"
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/pkg/apperr"
 	"testing"
@@ -64,7 +63,7 @@ func TestTaskAdaptor_ListTasks(t *testing.T) {
 			want:  want{page: entity.Page[entity.Task]{Items: []entity.Task{}}},
 		},
 	}
-	adaptor := datasource.NewTaskAdaptor(database.New(db))
+	adaptor := datasource.NewTaskAdaptor(db)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			runInTx(t, func(ctx context.Context) {
@@ -104,7 +103,7 @@ func TestTaskAdaptor_FindByID(t *testing.T) {
 			want:  want{err: `find task by id "0193dd05-ea21-7ee3-9aa8-257efa35307a": sql: no rows in result set`, errCode: apperr.CodeNotFound},
 		},
 	}
-	adaptor := datasource.NewTaskAdaptor(database.New(db))
+	adaptor := datasource.NewTaskAdaptor(db)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			runInTx(t, func(ctx context.Context) {
@@ -128,7 +127,7 @@ func TestTaskAdaptor_Create(t *testing.T) {
 		ID:      "0190f34a-e069-7873-8fe1-fdf871eb3919",
 		Content: "create task",
 	}
-	adaptor := datasource.NewTaskAdaptor(database.New(db))
+	adaptor := datasource.NewTaskAdaptor(db)
 	runInTx(t, func(ctx context.Context) {
 		err := adaptor.Create(ctx, task)
 		assert.NoError(t, err)
@@ -143,7 +142,7 @@ func TestTaskAdaptor_Update(t *testing.T) {
 		ID:      "0190fe59-6618-7811-8b28-a3e67969a4ef",
 		Content: "update task",
 	}
-	adaptor := datasource.NewTaskAdaptor(database.New(db))
+	adaptor := datasource.NewTaskAdaptor(db)
 	runInTx(t, func(ctx context.Context) {
 		err := adaptor.Update(ctx, task)
 		assert.NoError(t, err)
@@ -152,5 +151,29 @@ func TestTaskAdaptor_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, task.ID, actual.ID)
 		assert.Equal(t, task.Content, actual.Content)
+	})
+}
+
+func TestTaskAdaptor_Creates(t *testing.T) {
+	tasks := []entity.Task{
+		{
+			ID:      "0198569f-abd8-7369-8fba-22f1345d99d6",
+			Content: "create task 1",
+		},
+		{
+			ID:      "0198569f-f160-76bc-ae95-1829f8e0b4c9",
+			Content: "create task 2",
+		},
+	}
+	adaptor := datasource.NewTaskAdaptor(db)
+	runInTx(t, func(ctx context.Context) {
+		err := adaptor.Creates(ctx, tasks)
+		assert.NoError(t, err)
+
+		for _, task := range tasks {
+			got, err := adaptor.FindByID(ctx, task.ID)
+			assert.NoError(t, err)
+			assert.Equal(t, task.ID, got.ID)
+		}
 	})
 }

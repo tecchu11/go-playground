@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/newrelic/go-agent/v3/integrations/nrmysql"
 )
 
-// NewQueryDB creates [sql.DB] and [Queries]. Default lookup is [os.LookupEnv].
+// NewDB creates [sql.DB] and [Queries]. Default lookup is [os.LookupEnv].
 // Error will be returned if look up failed.
 //
 // Lookup key is below.
@@ -18,7 +19,7 @@ import (
 //   - DB_PASSWORD: password
 //   - DB_ADDRESS: host and port
 //   - DB_NAME: database name
-func NewQueryDB(lookup func(string) (string, bool)) (*sql.DB, *Queries, error) {
+func NewDB(lookup func(string) (string, bool)) (*sqlx.DB, error) {
 	applier := env.New(lookup)
 	conf := mysql.Config{
 		User:                 applier.String("DB_USER"),
@@ -35,15 +36,15 @@ func NewQueryDB(lookup func(string) (string, bool)) (*sql.DB, *Queries, error) {
 		ParseTime:            true,
 	}
 	if err := applier.Err(); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	db, err := sql.Open("nrmysql", conf.FormatDSN())
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	db.SetMaxIdleConns(10)
 	db.SetMaxOpenConns(100)
 	db.SetConnMaxIdleTime(1 * time.Minute)
 	db.SetConnMaxLifetime(5 * time.Minute)
-	return db, New(db), nil
+	return sqlx.NewDb(db, "mysql"), nil
 }

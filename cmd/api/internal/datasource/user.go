@@ -12,23 +12,24 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 // UserAdaptor is implementation of [repository.UserRepository]
 type UserAdaptor struct {
-	queries *database.Queries
+	base
 }
 
 // NewUserAdaptor create UserAdaptor.
-func NewUserAdaptor(q *database.Queries) *UserAdaptor {
-	return &UserAdaptor{queries: q}
+func NewUserAdaptor(db *sqlx.DB) *UserAdaptor {
+	return &UserAdaptor{base: base{db: db}}
 }
 
 func (a *UserAdaptor) FindBySub(ctx context.Context, sub string) (entity.User, error) {
 	defer newrelic.FromContext(ctx).StartSegment("datasource/UserAdaptor/FindByID").End()
 
-	txq := txqFromContext(ctx, a.queries)
+	txq := a.queriesFromContext(ctx)
 
 	row, err := txq.FindUserBySub(ctx, sub)
 	if err != nil {
@@ -57,7 +58,7 @@ func (a *UserAdaptor) FindBySub(ctx context.Context, sub string) (entity.User, e
 func (a *UserAdaptor) Create(ctx context.Context, user entity.User) error {
 	defer newrelic.FromContext(ctx).StartSegment("datasource/UserAdaptor/Create").End()
 
-	txq := txqFromContext(ctx, a.queries)
+	txq := a.queriesFromContext(ctx)
 
 	_, err := txq.CreateUser(ctx, database.CreateUserParams{
 		ID:            user.ID[:],
