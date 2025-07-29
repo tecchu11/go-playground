@@ -26,13 +26,13 @@ type handlers struct {
 
 // New creates handler to handle requests.
 func New(app *newrelic.Application, lookup func(string) (string, bool)) (http.Handler, error) {
-	db, queries, err := database.NewQueryDB(lookup)
+	db, err := database.NewDB(lookup)
 	if err != nil {
 		return nil, fmt.Errorf("new query db: %w", err)
 	}
 	transactionAdaptor := datasource.NewDBTransactionAdaptor(db)
-	taskAdaptor := datasource.NewTaskAdaptor(queries)
-	userAdaptor := datasource.NewUserAdaptor(queries)
+	taskAdaptor := datasource.NewTaskAdaptor(db)
+	userAdaptor := datasource.NewUserAdaptor(db)
 
 	taskUseCase := usecase.NewTaskUseCase(taskAdaptor, transactionAdaptor)
 	userUseCase := usecase.NewUserUseCase(userAdaptor)

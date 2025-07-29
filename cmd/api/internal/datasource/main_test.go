@@ -10,11 +10,12 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-testfixtures/testfixtures/v3"
+	"github.com/jmoiron/sqlx"
 	"github.com/testcontainers/testcontainers-go"
 	mysqlcontainer "github.com/testcontainers/testcontainers-go/modules/mysql"
 )
 
-var db *sql.DB
+var db *sqlx.DB
 
 func TestMain(m *testing.M) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
@@ -26,16 +27,16 @@ func TestMain(m *testing.M) {
 	defer func() {
 		_ = shutdown(ctx)
 	}()
-	db = container
+	db = sqlx.NewDb(container, "mysql")
 	err = db.PingContext(ctx)
 	if err != nil {
 		panic(err)
 	}
-	err = migration.Up(ctx, db)
+	err = migration.Up(ctx, db.DB)
 	if err != nil {
 		panic(err)
 	}
-	err = prepareFixture(db)
+	err = prepareFixture(db.DB)
 	if err != nil {
 		panic(err)
 	}
@@ -109,16 +110,16 @@ func prepareFixture(db *sql.DB) error {
 func runInTx(t *testing.T, target func(context.Context)) {
 	t.Helper()
 
-	tx, err := db.Begin()
+	txx, err := db.BeginTxx(t.Context(), nil)
 	if err != nil {
 		t.Fatalf("cant start transaction because %v", err)
 	}
 	defer func() {
-		err := tx.Rollback()
+		err := txx.Rollback()
 		if err != nil {
 			t.Fatalf("cant rollback because %v", err)
 		}
 	}()
-	ctx := context.WithValue(context.Background(), datasource.TransactionContextKey{}, tx)
+	ctx := context.WithValue(context.Background(), datasource.TransactionContextKey{}, txx)
 	target(ctx)
 }

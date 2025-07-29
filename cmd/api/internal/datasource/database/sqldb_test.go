@@ -31,15 +31,13 @@ func TestNewDB(t *testing.T) {
 			for key, val := range v.envMap {
 				t.Setenv(key, val)
 			}
-			db, queries, err := database.NewQueryDB(os.LookupEnv)
+			db, err := database.NewDB(os.LookupEnv)
 			if v.expectError {
 				require.Error(t, err)
 				require.Nil(t, db)
-				require.Nil(t, queries)
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, db)
-				require.NotNil(t, queries)
 			}
 		})
 	}

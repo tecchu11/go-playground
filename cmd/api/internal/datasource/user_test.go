@@ -3,7 +3,6 @@ package datasource_test
 import (
 	"context"
 	"go-playground/cmd/api/internal/datasource"
-	"go-playground/cmd/api/internal/datasource/database"
 	"go-playground/cmd/api/internal/domain/entity"
 	"go-playground/cmd/api/internal/domain/entity/entitytest"
 	"go-playground/pkg/apperr"
@@ -50,7 +49,7 @@ func TestUserAdaptor_FindByID(t *testing.T) {
 			want:  want{err: "find user by sub but result set is zero: sql: no rows in result set", errCode: apperr.CodeNotFound},
 		},
 	}
-	adaptor := datasource.NewUserAdaptor(database.New(db))
+	adaptor := datasource.NewUserAdaptor(db)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			runInTx(t, func(ctx context.Context) {
@@ -89,7 +88,7 @@ func TestUserAdaptor_Create(t *testing.T) {
 			want:  want{err: "create user but user is already exist: Error 1062 (23000): Duplicate entry '80dbb87a-5ce8-4b45-85a0-3b8aec488b7a' for key 'users.idx_sub'", errCode: apperr.CodeInvalidArgument},
 		},
 	}
-	adaptor := datasource.NewUserAdaptor(database.New(db))
+	adaptor := datasource.NewUserAdaptor(db)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			runInTx(t, func(ctx context.Context) {

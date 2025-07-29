@@ -10,24 +10,25 @@ import (
 	"go-playground/cmd/api/internal/domain/repository"
 	"go-playground/pkg/apperr"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 // TaskAdaptor is implementation of repository.TaskRepository.
 type TaskAdaptor struct {
-	queries *database.Queries
+	base
 }
 
 // NewTaskAdaptor initializes TaskAdaptor.
-func NewTaskAdaptor(queries *database.Queries) *TaskAdaptor {
-	return &TaskAdaptor{queries}
+func NewTaskAdaptor(db *sqlx.DB) *TaskAdaptor {
+	return &TaskAdaptor{base: base{db: db}}
 }
 
 // ListTasks list all task.
 func (a *TaskAdaptor) ListTasks(ctx context.Context, next entity.TaskID, limit int32) (entity.Page[entity.Task], error) {
 	defer newrelic.FromContext(ctx).StartSegment("datasource/TaskAdaptor/ListTasks").End()
 
-	queries := txqFromContext(ctx, a.queries)
+	queries := a.queriesFromContext(ctx)
 	rows, err := queries.ListTasks(ctx, database.ListTasksParams{ID: next, Limit: limit + 1})
 	if err != nil {
 		return entity.Page[entity.Task]{}, apperr.New("list tasks", "failed to list tasks", apperr.WithCause(err))
@@ -48,7 +49,7 @@ func (a *TaskAdaptor) ListTasks(ctx context.Context, next entity.TaskID, limit i
 func (a *TaskAdaptor) FindByID(ctx context.Context, id entity.TaskID) (entity.Task, error) {
 	defer newrelic.FromContext(ctx).StartSegment("datasource/TaskAdaptor/FindByID").End()
 
-	queries := txqFromContext(ctx, a.queries)
+	queries := a.queriesFromContext(ctx)
 	row, err := queries.FindTask(ctx, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -68,7 +69,7 @@ func (a *TaskAdaptor) FindByID(ctx context.Context, id entity.TaskID) (entity.Ta
 func (a *TaskAdaptor) Create(ctx context.Context, task entity.Task) error {
 	defer newrelic.FromContext(ctx).StartSegment("datasource/TaskAdaptor/Create").End()
 
-	queries := txqFromContext(ctx, a.queries)
+	queries := a.queriesFromContext(ctx)
 	_, err := queries.CreateTask(ctx, database.CreateTaskParams{
 		ID:      task.ID,
 		Content: task.Content,
@@ -83,13 +84,24 @@ func (a *TaskAdaptor) Create(ctx context.Context, task entity.Task) error {
 func (a *TaskAdaptor) Update(ctx context.Context, task entity.Task) error {
 	defer newrelic.FromContext(ctx).StartSegment("datasource/TaskAdaptor/Update").End()
 
-	queries := txqFromContext(ctx, a.queries)
+	queries := a.queriesFromContext(ctx)
 	_, err := queries.UpdateTask(ctx, database.UpdateTaskParams{
 		ID:      task.ID,
 		Content: task.Content,
 	})
 	if err != nil {
 		return apperr.New(fmt.Sprintf("update task by id %q", task.ID), "failed to update task", apperr.WithCause(err))
+	}
+	return nil
+}
+
+// Creates creates multiple tasks.
+func (a *TaskAdaptor) Creates(ctx context.Context, tasks []entity.Task) error {
+	ext := a.extFromContext(ctx)
+
+	_, err := sqlx.NamedExec(ext, `INSERT INTO tasks (id, content) VALUES(:id, :content)`, tasks)
+	if err != nil {
+		return fmt.Errorf("named exec on creates: %w", err)
 	}
 	return nil
 }
