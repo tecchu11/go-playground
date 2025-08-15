@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.24.5 AS build
+FROM golang:1.25.0 AS build
 WORKDIR /src
 
 RUN --mount=type=cache,target=/go/pkg/mod/ \
