@@ -19,6 +19,6 @@ runs:
         fi
         echo "Go Version: $version"
         echo "version=$version" >> "$GITHUB_OUTPUT"
-    - uses: actions/setup-go@v5
+    - uses: actions/setup-go@v6
       with:
         go-version: ${{ steps.version.outputs.version }}
