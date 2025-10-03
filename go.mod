@@ -15,7 +15,7 @@ require (
 	github.com/newrelic/go-agent/v3 v3.41.0
 	github.com/newrelic/go-agent/v3/integrations/nrmysql v1.2.2
 	github.com/oapi-codegen/runtime v1.1.2
-	github.com/pressly/goose/v3 v3.25.0
+	github.com/pressly/goose/v3 v3.26.0
 	github.com/rs/cors v1.11.1
 	github.com/stretchr/testify v1.11.1
 	github.com/tecchu11/nrgo-std v0.2.5
