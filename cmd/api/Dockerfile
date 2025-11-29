@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.25.3 AS build
+FROM golang:1.25.4 AS build
 WORKDIR /src
 
 RUN --mount=type=secret,id=GITHUB_TOKEN \
