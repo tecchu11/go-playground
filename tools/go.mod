@@ -2,7 +2,7 @@ module tools
 
 go 1.24
 
-toolchain go1.25.4
+toolchain go1.25.5
 
 tool (
 	github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
