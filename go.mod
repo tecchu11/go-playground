@@ -6,7 +6,6 @@ toolchain go1.25.5
 
 require (
 	github.com/auth0/go-jwt-middleware/v2 v2.3.1
-	github.com/auth0/go-jwt-middleware/v3 v3.0.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/go-testfixtures/testfixtures/v3 v3.19.0
