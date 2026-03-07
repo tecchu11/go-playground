@@ -59,8 +59,8 @@ func New(app *newrelic.Application, lookup func(string) (string, bool)) (http.Ha
 	checkAccessToken, err := middleware.NewCheckAccessToken(
 		middleware.CheckAccessTokenConfig{
 			IssuerURL:     issuer,
-			Audiences:     []string{"account"},
-			ExclusionURLs: []string{"GET /health"},
+			Audiences:     []string{"backend"},
+			ExclusionURLs: []string{"/health"},
 			HTTPClient: &http.Client{
 				Transport: newrelic.NewRoundTripper(roundTripper),
 				Timeout:   5 * time.Second,
