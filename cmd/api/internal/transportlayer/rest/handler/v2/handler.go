@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/auth0/go-jwt-middleware/v2/jwks"
+	"github.com/auth0/go-jwt-middleware/v3/jwks"
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/rs/cors"
 	"github.com/tecchu11/nrgo-std/nrhttp"
@@ -56,11 +56,20 @@ func New(app *newrelic.Application, lookup func(string) (string, bool)) (http.Ha
 		clone.TLSHandshakeTimeout = 5 * time.Second
 		roundTripper = clone
 	}
-	auth, err := middleware.NewAuth(
-		jwks.NewCachingProvider(issuer, 5*time.Minute, jwks.WithCustomClient(&http.Client{
+	jwksProvider, err := jwks.NewCachingProvider(
+		jwks.WithIssuerURL(issuer),
+		jwks.WithCacheTTL(5*time.Minute),
+		jwks.WithCustomClient(&http.Client{
 			Transport: newrelic.NewRoundTripper(roundTripper),
 			Timeout:   5 * time.Second,
-		})),
+		}),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("new jwks provider: %w", err)
+	}
+	auth, err := middleware.NewAuth(
+		jwksProvider,
+		issuer.String(),
 		[]string{"account"},
 		middleware.WithSkipRoute("GET /health"),
 	)

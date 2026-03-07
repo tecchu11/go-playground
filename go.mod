@@ -5,7 +5,7 @@ go 1.25.0
 toolchain go1.26.1
 
 require (
-	github.com/auth0/go-jwt-middleware/v2 v2.3.1
+	github.com/auth0/go-jwt-middleware/v3 v3.0.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/go-testfixtures/testfixtures/v3 v3.19.0
@@ -38,6 +38,7 @@ require (
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/docker v28.5.1+incompatible // indirect
 	github.com/docker/go-connections v0.6.0 // indirect
@@ -47,9 +48,17 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/goccy/go-yaml v1.18.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
+	github.com/lestrrat-go/dsig v1.0.0 // indirect
+	github.com/lestrrat-go/dsig-secp256k1 v1.0.0 // indirect
+	github.com/lestrrat-go/httpcc v1.0.1 // indirect
+	github.com/lestrrat-go/httprc/v3 v3.0.3 // indirect
+	github.com/lestrrat-go/jwx/v3 v3.0.12 // indirect
+	github.com/lestrrat-go/option/v2 v2.0.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
@@ -66,12 +75,14 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
+	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/shirou/gopsutil/v4 v4.25.6 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
+	github.com/valyala/fastjson v1.6.7 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.65.0 // indirect
@@ -87,6 +98,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260217215200-42d3e9bedb6d // indirect
 	google.golang.org/grpc v1.79.1 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
-	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

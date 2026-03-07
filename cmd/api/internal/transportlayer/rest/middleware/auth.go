@@ -1,20 +1,16 @@
 package middleware
 
 import (
-	"errors"
 	"fmt"
 	"go-playground/cmd/api/internal/transportlayer/rest"
 	"go-playground/pkg/ctxhelper"
 	"net/http"
 	"strings"
 
-	jwt "github.com/auth0/go-jwt-middleware/v2"
-	"github.com/auth0/go-jwt-middleware/v2/jwks"
-	"github.com/auth0/go-jwt-middleware/v2/validator"
+	"github.com/auth0/go-jwt-middleware/v3/jwks"
+	"github.com/auth0/go-jwt-middleware/v3/validator"
 	"github.com/newrelic/go-agent/v3/newrelic"
 )
-
-var errUnexpectedClaim = errors.New("unexpected jwt claim")
 
 // Auth check access token.
 type Auth struct {
@@ -25,14 +21,15 @@ type Auth struct {
 // NewAuth creates [Auth].
 func NewAuth(
 	jwksProvider *jwks.CachingProvider,
-	audience []string,
+	issuerURL string,
+	audiences []string,
 	opts ...authOption,
 ) (*Auth, error) {
 	v, err := validator.New(
-		jwksProvider.KeyFunc,
-		validator.RS256,
-		jwksProvider.IssuerURL.String(),
-		audience,
+		validator.WithKeyFunc(jwksProvider.KeyFunc),
+		validator.WithAlgorithm(validator.RS256),
+		validator.WithIssuer(issuerURL),
+		validator.WithAudiences(audiences),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("new validator for auth: %w", err)
@@ -64,18 +61,13 @@ func (a *Auth) CheckAccessToken(next http.Handler) http.Handler {
 		}
 		validated, err := a.jwsValidator.ValidateToken(r.Context(), jws)
 		if err != nil {
-			if errors.Is(err, jwt.ErrJWTInvalid) { // TODO: correct handling.
-				rest.Err(w, "invalid access token", http.StatusUnauthorized)
-				return
-			}
-			rest.Err(w, "unexpected error when checking access token", http.StatusInternalServerError)
-			txn.NoticeError(err)
+			rest.Err(w, "invalid access token", http.StatusUnauthorized)
 			return
 		}
 		claim, ok := validated.(*validator.ValidatedClaims)
 		if !ok {
-			rest.Err(w, "unexpected claim", http.StatusInternalServerError)
-			txn.NoticeError(errUnexpectedClaim)
+			rest.Err(w, "unexpected error when checking access token", http.StatusInternalServerError)
+			txn.NoticeError(err)
 			return
 		}
 		ctx := ctxhelper.WithSubject(r.Context(), claim.RegisteredClaims.Subject)
