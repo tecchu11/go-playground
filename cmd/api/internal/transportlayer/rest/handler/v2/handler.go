@@ -9,10 +9,10 @@ import (
 	"go-playground/cmd/api/internal/transportlayer/rest/oapi"
 	"go-playground/cmd/api/internal/usecase"
 	"go-playground/pkg/env/v2"
+	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"github.com/rs/cors"
 	"github.com/tecchu11/nrgo-std/nrhttp"
@@ -56,13 +56,18 @@ func New(app *newrelic.Application, lookup func(string) (string, bool)) (http.Ha
 		clone.TLSHandshakeTimeout = 5 * time.Second
 		roundTripper = clone
 	}
-	auth, err := middleware.NewAuth(
-		jwks.NewCachingProvider(issuer, 5*time.Minute, jwks.WithCustomClient(&http.Client{
-			Transport: newrelic.NewRoundTripper(roundTripper),
-			Timeout:   5 * time.Second,
-		})),
-		[]string{"account"},
-		middleware.WithSkipRoute("GET /health"),
+	checkAccessToken, err := middleware.NewCheckAccessToken(
+		middleware.CheckAccessTokenConfig{
+			IssuerURL:     issuer,
+			Audiences:     []string{"backend"},
+			ExclusionURLs: []string{"/health"},
+			HTTPClient: &http.Client{
+				Transport: newrelic.NewRoundTripper(roundTripper),
+				Timeout:   5 * time.Second,
+			},
+			CacheTTL: 5 * time.Minute,
+			Logger:   slog.Default(),
+		},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("new auth middleware: %w", err)
@@ -76,7 +81,7 @@ func New(app *newrelic.Application, lookup func(string) (string, bool)) (http.Ha
 		},
 		oapi.StdHTTPServerOptions{
 			Middlewares: []oapi.MiddlewareFunc{
-				auth.CheckAccessToken,
+				checkAccessToken,
 				middleware.Recover,
 				nrhttp.Middleware(app),
 			},
