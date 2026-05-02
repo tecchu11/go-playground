@@ -3,7 +3,7 @@
     "dockerComposeFile": "../docker-compose.yml",
     "workspaceFolder": "/app",
     "features": {
-        "ghcr.io/devcontainers/features/node:1": {
+        "ghcr.io/devcontainers/features/node:2": {
             "version": "24"
         },
         "ghcr.io/devcontainers/features/go:1": {
