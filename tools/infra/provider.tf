@@ -1,5 +1,5 @@
 terraform {
-  required_version = "1.14.8"
+  required_version = "1.15.1"
   required_providers {
     keycloak = {
       source  = "keycloak/keycloak"
