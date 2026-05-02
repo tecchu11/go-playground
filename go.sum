@@ -169,8 +169,8 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/tecchu11/nrgo-std v0.2.5 h1:uDqweZQ1Pz2yWD5d4dWfrQln9vd74Efk07pYzbHWai8=
-github.com/tecchu11/nrgo-std v0.2.5/go.mod h1:izrQsWUWnHCcrNykxB5KIt0sgHJcxMkKrTCU0PLGYxI=
+github.com/tecchu11/nrgo-std v0.2.6 h1:NWygOqZhBrklaRpr87pz8C386cd13frB0gji/US9k4I=
+github.com/tecchu11/nrgo-std v0.2.6/go.mod h1:HX/5eil4vyy7vOh0vA0F8VKLSXmFGlr5LcrL+5Q9FV0=
 github.com/testcontainers/testcontainers-go v0.42.0 h1:He3IhTzTZOygSXLJPMX7n44XtK+qhjat1nI9cneBbUY=
 github.com/testcontainers/testcontainers-go v0.42.0/go.mod h1:vZjdY1YmUA1qEForxOIOazfsrdyORJAbhi0bp8plN30=
 github.com/testcontainers/testcontainers-go/modules/mysql v0.42.0 h1:Yhv1k7vDpyzZePntg5R5Oj4ZMCyWpAfpJeRu1ROsgiU=
