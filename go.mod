@@ -2,7 +2,7 @@ module go-playground
 
 go 1.25.7
 
-toolchain go1.26.2
+toolchain go1.26.3
 
 require (
 	github.com/auth0/go-jwt-middleware/v3 v3.1.0
