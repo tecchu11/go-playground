@@ -10,7 +10,7 @@ tool (
 )
 
 require (
-	github.com/oapi-codegen/oapi-codegen/v2 v2.7.0
+	github.com/oapi-codegen/oapi-codegen/v2 v2.7.1
 	github.com/sqlc-dev/sqlc v1.31.1
 )
 
