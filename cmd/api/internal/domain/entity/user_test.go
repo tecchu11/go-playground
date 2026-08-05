@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewUser(t *testing.T) {
@@ -118,13 +119,14 @@ func TestNewUser(t *testing.T) {
 				tc.input.emailVerified,
 			)
 			if tc.want.err != "" {
+				require.Error(t, err)
 				assert.Zero(t, u)
 				assert.Equal(t, tc.want.err, err.Error())
 				assert.True(t, apperr.IsCode(err, tc.want.errCode))
 			} else {
+				require.NoError(t, err)
 				diff := cmp.Diff(tc.want.user, u, cmpopts.IgnoreFields(entity.User{}, "ID", "CreatedAt", "UpdatedAt"))
 				assert.Empty(t, diff)
-				assert.NoError(t, err)
 			}
 		})
 	}

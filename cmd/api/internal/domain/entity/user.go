@@ -55,7 +55,8 @@ func (u User) validate() error {
 		validation.Field(&u.Sub, validation.Required),
 		validation.Field(&u.GivenName, validation.Required),
 		validation.Field(&u.FamilyName, validation.Required),
-		validation.Field(&u.Email, validation.Required, is.Email),
+		// is.Email resolves MX/A records over the network. Format check only.
+		validation.Field(&u.Email, validation.Required, is.EmailFormat),
 	)
 	if err != nil {
 		return apperr.New("validate user entity", err.Error(), apperr.WithCause(err), apperr.CodeInvalidArgument)
