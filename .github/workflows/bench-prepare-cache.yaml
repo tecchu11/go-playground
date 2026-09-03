@@ -1,0 +1,57 @@
+name: bench-prepare-cache
+
+# 方式A(docker save tar) と 方式B(podman イメージストア) のキャッシュを作る。
+# 計測ワークフローとは分離し、手動 or 週次で実行する。
+# 既に同一キーのキャッシュが存在する場合 actions/cache/save は警告を出してスキップする（失敗はしない）。
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 1"
+
+env:
+  IMAGE: mysql:8.0.36
+
+jobs:
+  docker-tar:
+    name: method A / docker save tar
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: pull and save
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/imgtar"
+          docker pull "$IMAGE"
+          # -o は無圧縮。actions/cache 側の zstd と二重圧縮にならないようにする。
+          docker save "$IMAGE" -o "$HOME/imgtar/mysql.tar"
+          ls -l "$HOME/imgtar"
+          echo "tar_bytes=$(du -sb "$HOME/imgtar" | cut -f1)"
+
+      - uses: actions/cache/save@v4
+        with:
+          path: ~/imgtar
+          key: bench-docker-tar-${{ hashFiles('.github/image-versions.txt') }}
+
+  podman-store:
+    name: method B / podman image store
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: populate additional image store
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/imgstore"
+          # 計測側の storage.conf と driver を一致させる必要があるため overlay を明示する。
+          podman --root "$HOME/imgstore" --storage-driver overlay pull "docker.io/library/${IMAGE}"
+          podman --root "$HOME/imgstore" --storage-driver overlay images
+          echo "store_bytes=$(du -sb "$HOME/imgstore" | cut -f1)"
+
+      - uses: actions/cache/save@v4
+        with:
+          path: ~/imgstore
+          key: bench-podman-store-${{ hashFiles('.github/image-versions.txt') }}
