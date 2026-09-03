@@ -81,6 +81,63 @@ T2 直後に以下でジョブを失敗させる。
 - 方式A: `docker image inspect mysql:8.0.36`
 - 方式B: `podman images` の出力に `docker.io/library/mysql:8.0.36 true`（readonly）があること
 
+## 実行して判明した事実（2026-09-03）
+
+### 1. actions/cache は「展開済みのまま」置けない
+
+`actions/cache` は保存時に必ず `tar --posix -cf cache.tzst --use-compress-program zstdmt` を実行し、
+復元時に必ず untar する。ディレクトリをそのままの形で置く手段は無い。
+
+したがって方式Bの仮説「load 相当の処理が発生しない」は、actions/cache を使う限り成立しない。
+方式Bでも復元時に展開は発生する。差が出るとすれば
+
+- 方式A: `docker load`（daemon の import API 経由でレイヤを逐次展開し overlay2 を構築）
+- 方式B: `tar -x`（zstdmt によるマルチスレッド伸長 + tar 展開）
+
+の実装差であって、展開の有無ではない。計測する価値は残るが、
+判定基準の「T2 は消えたが T1 が増えて相殺」に該当する可能性が高い前提で読むこと。
+
+### 2. rootless podman のストアは runner 権限で tar できない
+
+rootless podman のイメージストアには sub-UID にマップされたファイルが含まれる
+（例: イメージ内の `mysql:mysql` = ホスト上の uid 100998）。
+`actions/cache` は `runner` 権限で tar するため、そのままでは読めない。
+
+```
+tar: .../diff/var/log/mysqld.log: Cannot open: Permission denied
+tar: .../diff/var/lib/mysql-files: Cannot open: Permission denied
+tar: Exiting with failure status due to previous errors
+##[warning]Failed to save: "/usr/bin/tar" failed with error: exit code 2
+##[warning]Cache save failed.
+```
+
+**この失敗は warning 止まりでジョブは success になる。** 初回実行ではこれに気づかず、
+キャッシュが空のまま計測に進むところだった。
+
+対処として `bench-prepare-cache` に2ステップを追加した。
+
+- `podman unshare chown -R 0:0 "$HOME/imgstore"`
+  user namespace 内で 0:0 に平坦化する。ホスト上では `runner` 所有になり tar できる。
+  rootless podman ではコンテナ内 uid 0 = ホスト `runner` なので、
+  コンテナから見た所有者は root のままになる。
+- `tar -cf /dev/null -C "$HOME" imgstore`
+  保存前に runner 権限で読めることを確認し、読めなければジョブを落とす。
+
+ただしこの平坦化はイメージ内のファイル所有者を変える。
+mysql イメージの `/var/lib/mysql`(mysql:mysql) などが root 所有になるため、
+entrypoint の `chown` で自己修復されるかは `bench-podman-smoke` の結果で判断すること。
+ここが通らなければ方式Bは中止。
+
+### 3. 初回計測（参考値）
+
+`bench-prepare-cache` run 33781250242 より。
+
+| | 方式A | 方式B |
+|---|---|---|
+| pull + save/populate | 26 s | 9 s |
+| 生サイズ | 604,794,915 B (tar) | 604,794,915 B (store) |
+| キャッシュ保存後サイズ | 151,791,387 B | 保存失敗 |
+
 ## 判定基準
 
 | 結果 | 判断 |
