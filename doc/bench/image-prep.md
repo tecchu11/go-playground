@@ -116,12 +116,20 @@ tar: Exiting with failure status due to previous errors
 
 対処として `bench-prepare-cache` に2ステップを追加した。
 
-- `podman unshare chown -R 0:0 "$HOME/imgstore"`
-  user namespace 内で 0:0 に平坦化する。ホスト上では `runner` 所有になり tar できる。
-  rootless podman ではコンテナ内 uid 0 = ホスト `runner` なので、
+- `sudo chown -R "$(id -u):$(id -g)" "$HOME/imgstore"`
+  ホスト側の所有者を `runner` に平坦化する。
+  rootless podman ではホスト `runner` = コンテナ内 uid 0 なので、
   コンテナから見た所有者は root のままになる。
-- `tar -cf /dev/null -C "$HOME" imgstore`
+- `find "$HOME/imgstore" ! -readable -print -quit`
   保存前に runner 権限で読めることを確認し、読めなければジョブを落とす。
+
+最初は `podman unshare chown -R 0:0` を試したが、mysql 固有層は直った一方で
+ベースイメージ層の `/etc/shadow` `/etc/gshadow` などが読めないまま残り、保存は失敗した
+（run 33781833195）。ホスト側で直接 chown する方式に切り替えている。
+
+**また、当初の検証ステップ `tar -cf /dev/null -C "$HOME" imgstore` は検証になっていなかった。**
+GNU tar は出力先が `/dev/null` のときファイル内容を読まない最適化をするため、
+読めないファイルがあっても成功してしまう。`find ! -readable` に差し替えた。
 
 ただしこの平坦化はイメージ内のファイル所有者を変える。
 mysql イメージの `/var/lib/mysql`(mysql:mysql) などが root 所有になるため、

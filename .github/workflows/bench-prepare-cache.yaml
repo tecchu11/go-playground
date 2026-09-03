@@ -54,22 +54,29 @@ jobs:
       - name: flatten ownership for actions/cache
         run: |
           set -euo pipefail
-          # rootless podman のストアには sub-UID にマップされたファイル
-          # (mysql:mysql = ホスト上の 100998 等) が含まれ、runner 権限では読めない。
+          # rootless podman のストアには sub-UID にマップされたファイルが含まれ
+          # (イメージ内の mysql:mysql = ホスト上の uid 100998)、runner 権限では読めない。
           # actions/cache は runner 権限で tar するため、そのままだと
           # 「tar: Cannot open: Permission denied」で保存に失敗する。
           # しかも失敗は warning 止まりでジョブは success になるため気づけない。
-          # user namespace 内で 0:0 に平坦化するとホスト上では runner 所有になり tar できる。
-          # rootless podman では コンテナ内 uid 0 = ホスト runner なので、
-          # コンテナから見たファイル所有者は root のままになる。
-          podman unshare chown -R 0:0 "$HOME/imgstore"
+          #
+          # podman unshare chown ではベースイメージ層の /etc/shadow 等が残ったため、
+          # ホスト側で直接 chown する。rootless podman では ホスト runner = コンテナ内 uid 0
+          # なので、コンテナから見た所有者は root のままになる。
+          sudo chown -R "$(id -u):$(id -g)" "$HOME/imgstore"
 
       - name: assert store is archivable by runner
         run: |
           set -euo pipefail
           # actions/cache の保存失敗は warning 止まりなので、ここで先に落とす。
-          tar -cf /dev/null -C "$HOME" imgstore
-          echo "store is readable by $(id -un)"
+          # なお tar -cf /dev/null は GNU tar が内容を読まない最適化をするため検証にならない。
+          unreadable="$(find "$HOME/imgstore" ! -readable -print -quit)"
+          if [ -n "$unreadable" ]; then
+            echo "unreadable by $(id -un): $unreadable"
+            ls -l "$unreadable" || true
+            exit 1
+          fi
+          echo "all entries readable by $(id -un)"
 
       - uses: actions/cache/save@v4
         with:
