@@ -172,12 +172,29 @@ jobs:
         if: matrix.method == 'b'
         uses: actions/cache/restore@v4
         with:
-          path: ~/imgstore
+          path: ~/imgstore.tar
           key: ${{ needs.warm.outputs.store_key }}
           fail-on-cache-miss: true
 
       - name: T1 end
         run: echo "T1_END=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+      # --- T2a: ストア展開（方式Bのみ） ---
+      # actions/cache は必ず tar+zstd するため「展開済みのまま置く」ことはできない。
+      # さらに所有者を平坦化するとイメージが壊れる (uid 999 の mysqld が読めなくなる)。
+      # よって root 権限で作った tar を root 権限で展開し、所有者を保つ。
+      # これが方式Bにおける「イメージ投入」であり、方式Aの docker load と対になる。
+      - name: T2a start
+        if: matrix.method == 'b'
+        run: echo "T2A_START=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+      - name: extract image store
+        if: matrix.method == 'b'
+        run: sudo tar -C "$HOME" -xf "$HOME/imgstore.tar"
+
+      - name: T2a end
+        if: matrix.method == 'b'
+        run: echo "T2A_END=$(date +%s%3N)" >> "$GITHUB_ENV"
 
       # --- T0: podman ソケット起動（方式Bのみ） ---
       # 方式Aの docker daemon は常駐済みで対価を払わないため、T1+T2 とは分けて記録する。
@@ -196,6 +213,7 @@ jobs:
 
       # --- T2: イメージ投入 ---
       - name: T2 start
+        if: matrix.method == 'a'
         run: echo "T2_START=$(date +%s%3N)" >> "$GITHUB_ENV"
 
       - name: docker load
@@ -204,14 +222,23 @@ jobs:
           set -euo pipefail
           docker load -i "$HOME/imgtar/mysql.tar"
 
+      - name: T2 end
+        if: matrix.method == 'a'
+        run: echo "T2_END=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+      - name: T2b start
+        if: matrix.method == 'b'
+        run: echo "T2B_START=$(date +%s%3N)" >> "$GITHUB_ENV"
+
       - name: verify store is visible
         if: matrix.method == 'b'
         run: |
           set -euo pipefail
           podman images --format '{{.Repository}}:{{.Tag}} readonly={{.ReadOnly}}'
 
-      - name: T2 end
-        run: echo "T2_END=$(date +%s%3N)" >> "$GITHUB_ENV"
+      - name: T2b end
+        if: matrix.method == 'b'
+        run: echo "T2B_END=$(date +%s%3N)" >> "$GITHUB_ENV"
 
       # --- 投入失敗をここで落とす ---
       # 落とさないと testcontainers が Docker Hub へ pull しにいき、
@@ -266,7 +293,11 @@ jobs:
           T4_END=$(date +%s%3N)
           t0=$(( ${T0_END:-0} - ${T0_START:-0} ))
           t1=$(( ${T1_END:-0} - ${T1_START:-0} ))
-          t2=$(( ${T2_END:-0} - ${T2_START:-0} ))
+          # 方式A は docker load、方式B は展開(T2a) + ストア確認(T2b)。
+          # 使われていない側は 0 になる。
+          t2=$(( ${T2_END:-0} - ${T2_START:-0} \
+               + ${T2A_END:-0} - ${T2A_START:-0} \
+               + ${T2B_END:-0} - ${T2B_START:-0} ))
           t3=$(( ${T3_END:-0} - ${T3_START:-0} ))
           t4=$(( T4_END - T4_START ))
           # 途中で失敗すると END 側が未設定になり負値になるため 0 に丸める。
@@ -321,7 +352,7 @@ jobs:
       - name: aggregate
         run: |
           set -euo pipefail
-          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          python3 - <<'PY' | tee -a "$GITHUB_STEP_SUMMARY"
           import glob, json, statistics
 
           rows = [json.load(open(p)) for p in sorted(glob.glob("metrics/*.json"))]

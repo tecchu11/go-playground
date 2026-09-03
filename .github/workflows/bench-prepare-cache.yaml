@@ -51,45 +51,24 @@ jobs:
           podman --root "$HOME/imgstore" --storage-driver overlay images
           echo "store_bytes=$(du -sb "$HOME/imgstore" | cut -f1)"
 
-      - name: flatten ownership for actions/cache
+      - name: archive store preserving ownership
         run: |
           set -euo pipefail
-          # rootless podman のストアには sub-UID にマップされたファイルが含まれ
-          # (イメージ内の mysql:mysql = ホスト上の uid 100998)、runner 権限では読めない。
-          # actions/cache は runner 権限で tar するため、そのままだと
-          # 「tar: Cannot open: Permission denied」で保存に失敗する。
-          # しかも失敗は warning 止まりでジョブは success になるため気づけない。
+          # actions/cache は runner 権限で tar するため、rootless podman のストア
+          # (sub-UID 所有のファイルを含む) をそのままは保存できない。
           #
-          # podman unshare chown ではベースイメージ層の /etc/shadow 等が残ったため、
-          # ホスト側で直接 chown する。rootless podman では ホスト runner = コンテナ内 uid 0
-          # なので、コンテナから見た所有者は root のままになる。
-          sudo chown -R "$(id -u):$(id -g)" "$HOME/imgstore"
-          # 所有者を変えるだけでは足りない。イメージには mode 0000 のファイルがあり
-          # (Debian の /etc/shadow- /etc/gshadow-)、所有者にも DAC は適用されるため読めない。
-          # u+rX で所有者の読み取りとディレクトリの traverse を足す。
+          # 所有者を平坦化する方法は破綻した: chown/chmod でアーカイブ可能にはなるが、
+          # イメージ内の非 root ユーザー所有ファイルが container-root 所有になり、
+          # uid 999 で動く mysqld が読めず起動に失敗する (run 33784022153)。
           #
-          # 注意: これはイメージ内のファイルの所有者と権限を改変している。
-          # 方式Bは「イメージをそのまま持ち回る」ことができず、
-          # actions/cache に載せるには改変が必要、というのがここでの結論。
-          sudo chmod -R u+rX "$HOME/imgstore"
-
-      - name: assert store is archivable by runner
-        run: |
-          set -euo pipefail
-          # actions/cache の保存失敗は warning 止まりなので、ここで先に落とす。
-          # なお tar -cf /dev/null は GNU tar が内容を読まない最適化をするため検証にならない。
-          # -type f/-type d に限定するのは、-readable がシンボリックリンクのリンク先を
-          # 辿るため、イメージに含まれる壊れたリンク (/usr/lib/.build-id/* など) を
-          # 誤検出するのを避けるため。tar はリンク自体を保存するので問題にならない。
-          unreadable="$(find "$HOME/imgstore" \( -type f -o -type d \) ! -readable -print -quit)"
-          if [ -n "$unreadable" ]; then
-            echo "unreadable by $(id -un): $unreadable"
-            ls -l "$unreadable" || true
-            exit 1
-          fi
-          echo "all entries readable by $(id -un)"
+          # そこで root 権限で tar を作り、所有者を保存したまま持ち回る。
+          # actions/cache はこの tar 1 ファイルだけを扱う。
+          # 無圧縮にするのは actions/cache 側の zstd と二重圧縮しないため。
+          sudo tar -C "$HOME" -cf "$HOME/imgstore.tar" imgstore
+          sudo chown "$(id -u):$(id -g)" "$HOME/imgstore.tar"
+          echo "archive_bytes=$(stat -c %s "$HOME/imgstore.tar")"
 
       - uses: actions/cache/save@v4
         with:
-          path: ~/imgstore
+          path: ~/imgstore.tar
           key: bench-podman-store-${{ hashFiles('.github/image-versions.txt') }}

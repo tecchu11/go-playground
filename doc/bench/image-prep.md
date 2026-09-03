@@ -42,8 +42,8 @@ Testcontainers 実行前のイメージ準備コストについて、以下2方�
 | 指標 | 方式A | 方式B |
 |---|---|---|
 | T0 | 0（docker daemon は常駐済み） | podman ソケット起動 |
-| T1 | tar の DL + zstd 伸長 | ストアディレクトリの DL + zstd 伸長 |
-| T2 | `docker load` | 追加ストア参照の確認 |
+| T1 | tar の DL + zstd 伸長 | ストア tar の DL + zstd 伸長 |
+| T2 | `docker load` | `sudo tar -x`（T2a）+ 追加ストア参照の確認（T2b） |
 | T3 | 最初のコンテナ起動完了まで | 同左 |
 | T4 | ジョブ全体 | 同左 |
 | S | キャッシュサイズ（ディスク実サイズ / actions/cache 上のサイズ） | 同左 |
@@ -105,57 +105,74 @@ rootless podman のイメージストアには sub-UID にマップされたフ�
 
 ```
 tar: .../diff/var/log/mysqld.log: Cannot open: Permission denied
-tar: .../diff/var/lib/mysql-files: Cannot open: Permission denied
 tar: Exiting with failure status due to previous errors
 ##[warning]Failed to save: "/usr/bin/tar" failed with error: exit code 2
 ##[warning]Cache save failed.
 ```
 
 **この失敗は warning 止まりでジョブは success になる。** 初回実行ではこれに気づかず、
-キャッシュが空のまま計測に進むところだった。
+キャッシュが空のまま計測に進むところだった（run 33781250242）。
 
-対処として `bench-prepare-cache` に2ステップを追加した。
+### 3. 所有者の平坦化はイメージを壊す（この方向は破棄した）
 
-- `sudo chown -R "$(id -u):$(id -g)" "$HOME/imgstore"` および `sudo chmod -R u+rX`
-  ホスト側の所有者を `runner` に平坦化し、所有者の読み取り権を足す。
-  rootless podman ではホスト `runner` = コンテナ内 uid 0 なので、
-  コンテナから見た所有者は root のままになる。
+上記を回避するため `sudo chown -R runner:runner` + `sudo chmod -R u+rX` で
+アーカイブ可能にした。保存は成功した（run 33783173149）が、
+コンテナが起動しなくなった（run 33784022153、方式B 5回すべて失敗）。
 
-  chown だけでは足りない。イメージには mode `----------` (0000) のファイルがあり
-  (Debian の `/etc/shadow-` `/etc/gshadow-`)、所有者にも DAC が適用されるため
-  所有者を変えても読めない (run 33782754135)。
+```
+[ERROR] [MY-010338] Can't find error-message file '/usr/share/mysql-8.0/errmsg.sys'
+[ERROR] [MY-012576] [InnoDB] Unable to create temporary file inside "/tmp"; errno: 13
+[ERROR] [MY-013236] The designated data directory /var/lib/mysql/ is unusable.
+panic: run mysql: ... wait until ready: container exited with code 1
+```
 
-  **これはイメージ内のファイルの所有者と権限を改変している。**
-  方式Bは「イメージをそのまま持ち回る」ことができず、actions/cache に載せるには
-  改変が要る。採用するなら、この改変が許容できるかを別途判断すること。
-- `find "$HOME/imgstore" \( -type f -o -type d \) ! -readable -print -quit`
-  保存前に runner 権限で読めることを確認し、読めなければジョブを落とす。
-  `-type f/-type d` に限定するのは、`-readable` がシンボリックリンクのリンク先を辿るため。
-  mysql イメージには壊れたリンク (`/usr/lib/.build-id/*` → 別レイヤの `lib64/*.so`) が
-  含まれており、限定しないと誤検出する (run 33782309702)。tar はリンク自体を保存する。
+mysql の entrypoint は uid 999 (`mysql`) に降りて mysqld を起動する。
+所有者を平坦化するとイメージ内の非 root ユーザー所有ファイルが container-root 所有になり、
+uid 999 から読めなくなる（errno 13 = EACCES）。
 
-最初は `podman unshare chown -R 0:0` を試したが、mysql 固有層は直った一方で
-ベースイメージ層の `/etc/shadow` `/etc/gshadow` などが読めないまま残り、保存は失敗した
-（run 33781833195）。ホスト側で直接 chown する方式に切り替えている。
+到達した結論は次のとおり。
 
-**また、当初の検証ステップ `tar -cf /dev/null -C "$HOME" imgstore` は検証になっていなかった。**
-GNU tar は出力先が `/dev/null` のときファイル内容を読まない最適化をするため、
-読めないファイルがあっても成功してしまう。`find ! -readable` に差し替えた。
+- 「展開済みストアをそのまま actions/cache に置く」は**できない**（必ず tar される）
+- 「アーカイブできるよう所有者を直す」も**できない**（イメージが壊れる）
 
-ただしこの平坦化はイメージ内のファイル所有者を変える。
-mysql イメージの `/var/lib/mysql`(mysql:mysql) などが root 所有になるため、
-entrypoint の `chown` で自己修復されるかは `bench-podman-smoke` の結果で判断すること。
-ここが通らなければ方式Bは中止。
+そこで方式Bを、**所有者を保ったまま root 権限で tar を作り、復元後に root 権限で展開する**
+形に組み替えた。所有者は保たれ、比較としても意味が残る。
 
-### 3. 初回計測（参考値）
+| | 方式A | 方式B（組み替え後） |
+|---|---|---|
+| キャッシュの中身 | `docker save` の tar | `sudo tar` で固めたストアの tar |
+| T2（イメージ投入） | `docker load`（daemon の逐次展開） | `sudo tar -x` + 追加ストア参照の確認 |
 
-`bench-prepare-cache` run 33781250242 より。
+つまり測っているのは **「daemon 経由の逐次展開」対「tar 展開」** であって、
+当初の仮説にあった「展開の有無」ではない。
+
+### 4. 途中で踏んだ罠（再発防止のため記録）
+
+- `podman unshare chown -R 0:0` では mysql 固有層は直ったが、ベースイメージ層の
+  `/etc/shadow` `/etc/gshadow` が読めないまま残った（run 33781833195）。
+- `tar -cf /dev/null` は検証にならない。GNU tar は出力先が `/dev/null` のとき
+  ファイル内容を読まない最適化をするため、読めないファイルがあっても成功する。
+- `find ! -readable` はシンボリックリンクのリンク先を辿る。mysql イメージには
+  壊れたリンク（`/usr/lib/.build-id/*` → 別レイヤの `lib64/*.so`）が含まれ、
+  `-type f -o -type d` で限定しないと誤検出する（run 33782309702）。
+- 所有者を `runner` にしても mode `----------`（0000）のファイル
+  （Debian の `/etc/shadow-` `/etc/gshadow-`）は読めない。所有者にも DAC は適用される
+  （run 33782754135）。
+
+### 5. 計測結果
+
+キャッシュ生成時のサイズ（`bench-prepare-cache`）。
 
 | | 方式A | 方式B |
 |---|---|---|
-| pull + save/populate | 26 s | 9 s |
-| 生サイズ | 604,794,915 B (tar) | 604,794,915 B (store) |
-| キャッシュ保存後サイズ | 151,791,387 B | 保存失敗 |
+| 生サイズ | 604,794,915 B（`docker save` の tar） | 604,794,915 B（ストア） |
+| actions/cache 上のサイズ | 151,791,387 B | 156,379,425 B（+3.0%） |
+
+Phase 1（`bench-podman-smoke` run 33783584258）は success。
+rootless podman 上で `go test ./... --race -cover` が 92 秒で完走した。
+`Networks` の明示は無く、Ryuk 無効化で問題は出ていない。
+
+A/B 計測の結果は `bench-image-prep` の最新 run のジョブサマリを参照すること。
 
 ## 判定基準
 
