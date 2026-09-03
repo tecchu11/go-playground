@@ -120,8 +120,11 @@ tar: Exiting with failure status due to previous errors
   ホスト側の所有者を `runner` に平坦化する。
   rootless podman ではホスト `runner` = コンテナ内 uid 0 なので、
   コンテナから見た所有者は root のままになる。
-- `find "$HOME/imgstore" ! -readable -print -quit`
+- `find "$HOME/imgstore" \( -type f -o -type d \) ! -readable -print -quit`
   保存前に runner 権限で読めることを確認し、読めなければジョブを落とす。
+  `-type f/-type d` に限定するのは、`-readable` がシンボリックリンクのリンク先を辿るため。
+  mysql イメージには壊れたリンク (`/usr/lib/.build-id/*` → 別レイヤの `lib64/*.so`) が
+  含まれており、限定しないと誤検出する (run 33782309702)。tar はリンク自体を保存する。
 
 最初は `podman unshare chown -R 0:0` を試したが、mysql 固有層は直った一方で
 ベースイメージ層の `/etc/shadow` `/etc/gshadow` などが読めないまま残り、保存は失敗した

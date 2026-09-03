@@ -70,7 +70,10 @@ jobs:
           set -euo pipefail
           # actions/cache の保存失敗は warning 止まりなので、ここで先に落とす。
           # なお tar -cf /dev/null は GNU tar が内容を読まない最適化をするため検証にならない。
-          unreadable="$(find "$HOME/imgstore" ! -readable -print -quit)"
+          # -type f/-type d に限定するのは、-readable がシンボリックリンクのリンク先を
+          # 辿るため、イメージに含まれる壊れたリンク (/usr/lib/.build-id/* など) を
+          # 誤検出するのを避けるため。tar はリンク自体を保存するので問題にならない。
+          unreadable="$(find "$HOME/imgstore" \( -type f -o -type d \) ! -readable -print -quit)"
           if [ -n "$unreadable" ]; then
             echo "unreadable by $(id -un): $unreadable"
             ls -l "$unreadable" || true
