@@ -71,4 +71,4 @@ jobs:
       - uses: actions/cache/save@v4
         with:
           path: ~/imgstore.tar
-          key: bench-podman-store-${{ hashFiles('.github/image-versions.txt') }}
+          key: bench-podman-store-tar-${{ hashFiles('.github/image-versions.txt') }}

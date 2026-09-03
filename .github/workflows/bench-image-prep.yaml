@@ -80,7 +80,7 @@ jobs:
           set -euo pipefail
           {
             echo "tar_key=bench-docker-tar-${{ hashFiles('.github/image-versions.txt') }}"
-            echo "store_key=bench-podman-store-${{ hashFiles('.github/image-versions.txt') }}"
+            echo "store_key=bench-podman-store-tar-${{ hashFiles('.github/image-versions.txt') }}"
           } >> "$GITHUB_OUTPUT"
 
       - name: plan matrix
