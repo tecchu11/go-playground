@@ -68,7 +68,7 @@ jobs:
           go test -c -o "${RUNNER_TEMP}/ds.test" "./${TEST_PKG_DIR}"
           ls -l "${RUNNER_TEMP}/ds.test"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ds-test-binary
           path: ${{ runner.temp }}/ds.test
@@ -121,7 +121,7 @@ jobs:
 
       - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: ds-test-binary
           path: ${{ runner.temp }}
@@ -298,7 +298,7 @@ jobs:
             echo "| S cache | ${S_CACHE:-0} bytes |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: metrics-${{ matrix.method }}-${{ matrix.iter }}
@@ -312,7 +312,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: metrics-*
           path: metrics
