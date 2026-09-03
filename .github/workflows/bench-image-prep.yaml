@@ -1,0 +1,371 @@
+name: bench-image-prep
+
+# Phase 0(方式A) と Phase 3(方式B) の計測。
+#
+# 計測区間:
+#   T0 : podman ソケット起動（方式Bのみ。方式Aは docker daemon が常駐済みなので 0）
+#   T1 : キャッシュ復元（DL + zstd 伸長）
+#   T2 : イメージ投入（A: docker load / B: 追加ストア参照の確認）
+#   T3 : 最初のコンテナ起動完了まで（TestMain のみ実行）
+#   T4 : ジョブ全体
+#   S  : キャッシュサイズ
+#
+# 前提:
+#   - bench-prepare-cache.yaml を先に実行してキャッシュを作っておくこと
+#   - 計測ジョブでは Go のコンパイルを一切行わない（warm ジョブで作った
+#     テストバイナリを artifact 経由で受け取る）。setup-go のキャッシュキーは
+#     go.sum ハッシュのみで ci.yaml と共有されるため、計測に混ぜると
+#     --race の有無などでビルドキャッシュ内容が変わり T3/T4 が揺れる。
+#   - Ryuk は両方式で無効化する。Podman 側だけ無効にすると Ryuk コンテナの
+#     起動時間分だけ方式Aが不利になり、比較にならない。
+
+on:
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 各方式の試行回数
+        type: number
+        default: 5
+      methods:
+        description: 計測する方式
+        type: choice
+        default: both
+        options:
+          - both
+          - a
+          - b
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  IMAGE: mysql:8.0.36
+  TEST_PKG_DIR: cmd/api/internal/datasource
+  TESTCONTAINERS_RYUK_DISABLED: "true"
+
+jobs:
+  warm:
+    name: build test binary
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      tar_key: ${{ steps.keys.outputs.tar_key }}
+      store_key: ${{ steps.keys.outputs.store_key }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: compile test binary
+        run: |
+          set -euo pipefail
+          # -race を付けない。計測対象はイメージ準備であって race 検出ではない。
+          go test -c -o "${RUNNER_TEMP}/ds.test" "./${TEST_PKG_DIR}"
+          ls -l "${RUNNER_TEMP}/ds.test"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ds-test-binary
+          path: ${{ runner.temp }}/ds.test
+          retention-days: 1
+
+      - name: cache keys
+        id: keys
+        run: |
+          set -euo pipefail
+          {
+            echo "tar_key=bench-docker-tar-${{ hashFiles('.github/image-versions.txt') }}"
+            echo "store_key=bench-podman-store-${{ hashFiles('.github/image-versions.txt') }}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: plan matrix
+        id: plan
+        env:
+          ITERATIONS: ${{ inputs.iterations }}
+          METHODS: ${{ inputs.methods }}
+        run: |
+          set -euo pipefail
+          # A, B, A, B ... の交互実行になるよう include を並べる。
+          # 実行順を固定するため呼び出し側で max-parallel: 1 を指定している。
+          case "$METHODS" in
+            both) ms="a b" ;;
+            a)    ms="a" ;;
+            b)    ms="b" ;;
+          esac
+          items=""
+          for i in $(seq 1 "$ITERATIONS"); do
+            for m in $ms; do
+              items="${items}{\"method\":\"${m}\",\"iter\":${i}},"
+            done
+          done
+          echo "matrix={\"include\":[${items%,}]}" >> "$GITHUB_OUTPUT"
+
+  bench:
+    name: ${{ matrix.method }}-${{ matrix.iter }}
+    needs: warm
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      # 時間帯によるネットワーク変動を A/B で揃えるため直列・交互に流す。
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.warm.outputs.matrix) }}
+    steps:
+      - name: T4 start
+        run: echo "T4_START=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ds-test-binary
+          path: ${{ runner.temp }}
+
+      - name: prepare test binary
+        run: chmod +x "${RUNNER_TEMP}/ds.test"
+
+      # --- 方式B: ストア設定はソケット起動前に書く必要がある ---
+      - name: configure additional image store
+        if: matrix.method == 'b'
+        run: |
+          set -euo pipefail
+          # storage.conf は podman ソケット起動より前に置く必要があるが、
+          # この時点では XDG_RUNTIME_DIR が未解決なので先に確定させる
+          # （composite action 側は既存値を尊重する）。
+          dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+          if ! mkdir -p "$dir" 2>/dev/null || [ ! -w "$dir" ]; then
+            dir="$HOME/.xdg-runtime"
+            mkdir -p "$dir"
+            chmod 700 "$dir"
+          fi
+          export XDG_RUNTIME_DIR="$dir"
+          echo "XDG_RUNTIME_DIR=$dir" >> "$GITHUB_ENV"
+          mkdir -p ~/.config/containers
+          cat > ~/.config/containers/storage.conf <<EOF
+          [storage]
+          driver = "overlay"
+          graphroot = "$HOME/.local/share/containers/storage"
+          runroot = "$XDG_RUNTIME_DIR/containers"
+          [storage.options]
+          additionalimagestores = [ "$HOME/imgstore" ]
+          EOF
+          cat ~/.config/containers/storage.conf
+
+      # --- T1: キャッシュ復元 ---
+      - name: T1 start
+        run: echo "T1_START=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+      - name: restore docker tar cache
+        if: matrix.method == 'a'
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/imgtar
+          key: ${{ needs.warm.outputs.tar_key }}
+          fail-on-cache-miss: true
+
+      - name: restore podman store cache
+        if: matrix.method == 'b'
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/imgstore
+          key: ${{ needs.warm.outputs.store_key }}
+          fail-on-cache-miss: true
+
+      - name: T1 end
+        run: echo "T1_END=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+      # --- T0: podman ソケット起動（方式Bのみ） ---
+      # 方式Aの docker daemon は常駐済みで対価を払わないため、T1+T2 とは分けて記録する。
+      # ストア復元後に起動するのは、containers/storage が追加ストアの内容を
+      # 起動時に読み込む実装だった場合に取りこぼさないため。
+      - name: T0 start
+        if: matrix.method == 'b'
+        run: echo "T0_START=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+      - uses: ./.github/actions/start-podman-socket
+        if: matrix.method == 'b'
+
+      - name: T0 end
+        if: matrix.method == 'b'
+        run: echo "T0_END=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+      # --- T2: イメージ投入 ---
+      - name: T2 start
+        run: echo "T2_START=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+      - name: docker load
+        if: matrix.method == 'a'
+        run: |
+          set -euo pipefail
+          docker load -i "$HOME/imgtar/mysql.tar"
+
+      - name: verify store is visible
+        if: matrix.method == 'b'
+        run: |
+          set -euo pipefail
+          podman images --format '{{.Repository}}:{{.Tag}} readonly={{.ReadOnly}}'
+
+      - name: T2 end
+        run: echo "T2_END=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+      # --- 投入失敗をここで落とす ---
+      # 落とさないと testcontainers が Docker Hub へ pull しにいき、
+      # 「速くなったように見えて rate limit を消費していた」という最悪の結果になる。
+      - name: fail if image not available locally (a)
+        if: matrix.method == 'a'
+        run: |
+          set -euo pipefail
+          docker image inspect "$IMAGE" >/dev/null || { echo "load miss"; exit 1; }
+
+      - name: fail if image not in store (b)
+        if: matrix.method == 'b'
+        run: |
+          set -euo pipefail
+          podman images --format '{{.Repository}}:{{.Tag}} {{.ReadOnly}}' \
+            | grep -q "docker.io/library/${IMAGE} true" || { echo "store miss"; exit 1; }
+
+      # --- T3: 最初のコンテナ起動完了まで ---
+      # -test.run '^$' でテスト本体は 0 件だが TestMain は実行される。
+      # つまりコンテナ起動 + マイグレーション + フィクスチャ投入までが測られる。
+      # TestMain の context timeout は 1 分（main_test.go）。方式Bで展開が
+      # 起動時に後ろ倒しされた場合は T3 悪化ではなく panic として現れる。
+      - name: T3 start
+        run: echo "T3_START=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+      - name: start container via testcontainers
+        working-directory: cmd/api/internal/datasource
+        run: ${{ runner.temp }}/ds.test -test.run '^$' -test.v
+
+      - name: T3 end
+        run: echo "T3_END=$(date +%s%3N)" >> "$GITHUB_ENV"
+
+      # --- S: キャッシュサイズ ---
+      - name: measure cache size
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.method }}" = "a" ]; then
+            dir="$HOME/imgtar"; key="${{ needs.warm.outputs.tar_key }}"
+          else
+            dir="$HOME/imgstore"; key="${{ needs.warm.outputs.store_key }}"
+          fi
+          echo "S_DISK=$(du -sb "$dir" | cut -f1)" >> "$GITHUB_ENV"
+          size="$(gh cache list --key "$key" --json key,sizeInBytes -q '.[0].sizeInBytes' 2>/dev/null || echo 0)"
+          echo "S_CACHE=${size:-0}" >> "$GITHUB_ENV"
+
+      - name: record
+        if: always()
+        run: |
+          set -euo pipefail
+          T4_END=$(date +%s%3N)
+          t0=$(( ${T0_END:-0} - ${T0_START:-0} ))
+          t1=$(( ${T1_END:-0} - ${T1_START:-0} ))
+          t2=$(( ${T2_END:-0} - ${T2_START:-0} ))
+          t3=$(( ${T3_END:-0} - ${T3_START:-0} ))
+          t4=$(( T4_END - T4_START ))
+          # 途中で失敗すると END 側が未設定になり負値になるため 0 に丸める。
+          for v in t0 t1 t2 t3; do
+            if [ "$(eval echo \$$v)" -lt 0 ]; then eval "$v=0"; fi
+          done
+          mkdir -p "${RUNNER_TEMP}/metrics"
+          jq -n \
+            --arg method '${{ matrix.method }}' \
+            --argjson iter '${{ matrix.iter }}' \
+            --argjson t0 "$t0" --argjson t1 "$t1" --argjson t2 "$t2" \
+            --argjson t3 "$t3" --argjson t4 "$t4" \
+            --argjson s_disk "${S_DISK:-0}" --argjson s_cache "${S_CACHE:-0}" \
+            '{method:$method,iter:$iter,t0:$t0,t1:$t1,t2:$t2,t3:$t3,t4:$t4,s_disk:$s_disk,s_cache:$s_cache}' \
+            > "${RUNNER_TEMP}/metrics/${{ matrix.method }}-${{ matrix.iter }}.json"
+          cat "${RUNNER_TEMP}/metrics/${{ matrix.method }}-${{ matrix.iter }}.json"
+          {
+            echo "### ${{ matrix.method }} #${{ matrix.iter }}"
+            echo ""
+            echo "| metric | value |"
+            echo "|---|---|"
+            echo "| T0 socket start | ${t0} ms |"
+            echo "| T1 cache restore | ${t1} ms |"
+            echo "| T2 image ingest | ${t2} ms |"
+            echo "| T1+T2 | $(( t1 + t2 )) ms |"
+            echo "| T3 container start | ${t3} ms |"
+            echo "| T4 job total | ${t4} ms |"
+            echo "| S disk | ${S_DISK:-0} bytes |"
+            echo "| S cache | ${S_CACHE:-0} bytes |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: metrics-${{ matrix.method }}-${{ matrix.iter }}
+          path: ${{ runner.temp }}/metrics
+          retention-days: 7
+
+  report:
+    name: aggregate
+    needs: bench
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: metrics-*
+          path: metrics
+          merge-multiple: true
+
+      - name: aggregate
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import glob, json, statistics
+
+          rows = [json.load(open(p)) for p in sorted(glob.glob("metrics/*.json"))]
+          if not rows:
+              print("no metrics collected")
+              raise SystemExit(0)
+
+          metrics = [
+              ("t0", "T0 socket start (ms)"),
+              ("t1", "T1 cache restore (ms)"),
+              ("t2", "T2 image ingest (ms)"),
+              ("t12", "T1+T2 (ms)"),
+              ("t3", "T3 container start (ms)"),
+              ("t4", "T4 job total (ms)"),
+              ("s_disk", "S restored size (bytes)"),
+              ("s_cache", "S cache size (bytes)"),
+          ]
+          for r in rows:
+              r["t12"] = r["t1"] + r["t2"]
+
+          methods = sorted({r["method"] for r in rows})
+          print("## summary (median / min / max)\n")
+          print("| metric | " + " | ".join(f"method {m} (n={sum(1 for r in rows if r['method']==m)})" for m in methods) + " |")
+          print("|---" * (len(methods) + 1) + "|")
+          for key, label in metrics:
+              cells = []
+              for m in methods:
+                  vs = [r[key] for r in rows if r["method"] == m]
+                  cells.append(f"{int(statistics.median(vs))} / {min(vs)} / {max(vs)}" if vs else "-")
+              print(f"| {label} | " + " | ".join(cells) + " |")
+
+          if len(methods) == 2:
+              a = [r["t12"] for r in rows if r["method"] == "a"]
+              b = [r["t12"] for r in rows if r["method"] == "b"]
+              if a and b:
+                  d = statistics.median(a) - statistics.median(b)
+                  print(f"\n**T1+T2 median delta (A - B): {int(d)} ms**")
+                  a3 = statistics.median([r["t3"] for r in rows if r["method"] == "a"])
+                  b3 = statistics.median([r["t3"] for r in rows if r["method"] == "b"])
+                  print(f"\n**T3 median delta (B - A): {int(b3 - a3)} ms**")
+
+          print("\n## raw\n")
+          print("| method | iter | T0 | T1 | T2 | T1+T2 | T3 | T4 |")
+          print("|---|---|---|---|---|---|---|---|")
+          for r in sorted(rows, key=lambda r: (r["iter"], r["method"])):
+              print(f"| {r['method']} | {r['iter']} | {r['t0']} | {r['t1']} | {r['t2']} | {r['t12']} | {r['t3']} | {r['t4']} |")
+          PY
