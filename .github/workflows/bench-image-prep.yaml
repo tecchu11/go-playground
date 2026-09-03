@@ -162,7 +162,7 @@ jobs:
 
       - name: restore docker tar cache
         if: matrix.method == 'a'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ~/imgtar
           key: ${{ needs.warm.outputs.tar_key }}
@@ -170,7 +170,7 @@ jobs:
 
       - name: restore podman store cache
         if: matrix.method == 'b'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ~/imgstore
           key: ${{ needs.warm.outputs.store_key }}

@@ -30,7 +30,7 @@ jobs:
           ls -l "$HOME/imgtar"
           echo "tar_bytes=$(du -sb "$HOME/imgtar" | cut -f1)"
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v6
         with:
           path: ~/imgtar
           key: bench-docker-tar-${{ hashFiles('.github/image-versions.txt') }}
@@ -51,7 +51,7 @@ jobs:
           podman --root "$HOME/imgstore" --storage-driver overlay images
           echo "store_bytes=$(du -sb "$HOME/imgstore" | cut -f1)"
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v6
         with:
           path: ~/imgstore
           key: bench-podman-store-${{ hashFiles('.github/image-versions.txt') }}
