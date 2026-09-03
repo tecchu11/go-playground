@@ -64,6 +64,14 @@ jobs:
           # ホスト側で直接 chown する。rootless podman では ホスト runner = コンテナ内 uid 0
           # なので、コンテナから見た所有者は root のままになる。
           sudo chown -R "$(id -u):$(id -g)" "$HOME/imgstore"
+          # 所有者を変えるだけでは足りない。イメージには mode 0000 のファイルがあり
+          # (Debian の /etc/shadow- /etc/gshadow-)、所有者にも DAC は適用されるため読めない。
+          # u+rX で所有者の読み取りとディレクトリの traverse を足す。
+          #
+          # 注意: これはイメージ内のファイルの所有者と権限を改変している。
+          # 方式Bは「イメージをそのまま持ち回る」ことができず、
+          # actions/cache に載せるには改変が必要、というのがここでの結論。
+          sudo chmod -R u+rX "$HOME/imgstore"
 
       - name: assert store is archivable by runner
         run: |

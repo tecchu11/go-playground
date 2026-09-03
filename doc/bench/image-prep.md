@@ -116,10 +116,18 @@ tar: Exiting with failure status due to previous errors
 
 対処として `bench-prepare-cache` に2ステップを追加した。
 
-- `sudo chown -R "$(id -u):$(id -g)" "$HOME/imgstore"`
-  ホスト側の所有者を `runner` に平坦化する。
+- `sudo chown -R "$(id -u):$(id -g)" "$HOME/imgstore"` および `sudo chmod -R u+rX`
+  ホスト側の所有者を `runner` に平坦化し、所有者の読み取り権を足す。
   rootless podman ではホスト `runner` = コンテナ内 uid 0 なので、
   コンテナから見た所有者は root のままになる。
+
+  chown だけでは足りない。イメージには mode `----------` (0000) のファイルがあり
+  (Debian の `/etc/shadow-` `/etc/gshadow-`)、所有者にも DAC が適用されるため
+  所有者を変えても読めない (run 33782754135)。
+
+  **これはイメージ内のファイルの所有者と権限を改変している。**
+  方式Bは「イメージをそのまま持ち回る」ことができず、actions/cache に載せるには
+  改変が要る。採用するなら、この改変が許容できるかを別途判断すること。
 - `find "$HOME/imgstore" \( -type f -o -type d \) ! -readable -print -quit`
   保存前に runner 権限で読めることを確認し、読めなければジョブを落とす。
   `-type f/-type d` に限定するのは、`-readable` がシンボリックリンクのリンク先を辿るため。
