@@ -70,10 +70,10 @@ func requireRepeatableRead(t *testing.T) {
 // "<LOCK_MODE> <LOCK_DATA>" so expectations read like the mysql client output.
 type lock string
 
-// locksHeldOn opens a transaction on its own connection, runs stmt, and
-// reports the record locks it left behind on table. Table-level intention
+// locksHeldOn opens a transaction on its own connection, runs stmts in order,
+// and reports the record locks left behind on table. Table-level intention
 // locks are dropped: they are always present and never the answer.
-func locksHeldOn(t *testing.T, table, stmt string) []lock {
+func locksHeldOn(t *testing.T, table string, stmts ...string) []lock {
 	t.Helper()
 	ctx := t.Context()
 
@@ -89,19 +89,140 @@ func locksHeldOn(t *testing.T, table, stmt string) []lock {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	if _, err := tx.ExecContext(ctx, stmt); err != nil {
-		t.Fatalf("exec %q: %v", stmt, err)
+	for _, stmt := range stmts {
+		if _, err := tx.ExecContext(ctx, stmt); err != nil {
+			t.Fatalf("exec %q: %v", stmt, err)
+		}
 	}
-	return readLocks(t, table)
+	got := readLocks(t, table, connID(t, tx))
+	t.Logf("locks on %s after:\n  %s\n  => %s", table, strings.Join(stmts, "\n  "), render(got))
+	return got
 }
 
-func readLocks(t *testing.T, table string) []lock {
+// locksQuietly is locksHeldOn without the log line, for cases whose lock set
+// is too large to print.
+func locksQuietly(t *testing.T, table string, stmts ...string) []lock {
+	t.Helper()
+	ctx := t.Context()
+
+	conn, err := db.Conn(ctx)
+	if err != nil {
+		t.Fatalf("acquire connection: %v", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	tx, err := conn.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatalf("begin: %v", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	for _, stmt := range stmts {
+		if _, err := tx.ExecContext(ctx, stmt); err != nil {
+			t.Fatalf("exec: %v", err)
+		}
+	}
+	return readLocks(t, table, connID(t, tx))
+}
+
+// dumpLocks logs every record lock on table together with the transaction
+// holding it, for cases where two sessions are running at once.
+func dumpLocks(t *testing.T, label, table string) {
 	t.Helper()
 	rows, err := db.QueryContext(t.Context(), `
-		SELECT LOCK_MODE, IFNULL(LOCK_DATA, '')
+		SELECT ENGINE_TRANSACTION_ID, LOCK_MODE, LOCK_STATUS, IFNULL(LOCK_DATA, '')
 		FROM performance_schema.data_locks
 		WHERE OBJECT_NAME = ? AND LOCK_TYPE = 'RECORD'
-		ORDER BY LOCK_DATA, LOCK_MODE`, table)
+		ORDER BY ENGINE_TRANSACTION_ID, LOCK_DATA, LOCK_MODE`, table)
+	if err != nil {
+		t.Fatalf("read data_locks: %v", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var lines []string
+	for rows.Next() {
+		var trx uint64
+		var mode, status, data string
+		if err := rows.Scan(&trx, &mode, &status, &data); err != nil {
+			t.Fatalf("scan data_locks: %v", err)
+		}
+		lines = append(lines, fmt.Sprintf("trx=%d %s %s [%s]", trx, mode, status, data))
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("iterate data_locks: %v", err)
+	}
+	if len(lines) == 0 {
+		lines = []string{"(no record locks)"}
+	}
+	t.Logf("%s: locks on %s\n  %s", label, table, strings.Join(lines, "\n  "))
+}
+
+// countLockWaits reports how many lock waits are outstanding right now.
+func countLockWaits(t *testing.T) int {
+	t.Helper()
+	var n int
+	err := db.QueryRowContext(t.Context(),
+		"SELECT COUNT(*) FROM performance_schema.data_lock_waits").Scan(&n)
+	if err != nil {
+		t.Fatalf("read data_lock_waits: %v", err)
+	}
+	return n
+}
+
+// latestDeadlock returns the LATEST DETECTED DEADLOCK section of
+// SHOW ENGINE INNODB STATUS, so a reproduced deadlock can be reported with
+// the locks each transaction actually held.
+func latestDeadlock(t *testing.T) string {
+	t.Helper()
+	rows, err := db.QueryContext(t.Context(), "SHOW ENGINE INNODB STATUS")
+	if err != nil {
+		t.Fatalf("show engine innodb status: %v", err)
+	}
+	defer func() { _ = rows.Close() }()
+	if !rows.Next() {
+		t.Fatal("show engine innodb status returned no rows")
+	}
+	var typ, name, status string
+	if err := rows.Scan(&typ, &name, &status); err != nil {
+		t.Fatalf("scan innodb status: %v", err)
+	}
+	const marker = "LATEST DETECTED DEADLOCK"
+	i := strings.Index(status, marker)
+	if i < 0 {
+		return "(no deadlock recorded)"
+	}
+	section := status[i:]
+	if j := strings.Index(section, "\nTRANSACTIONS\n"); j > 0 {
+		section = section[:j]
+	}
+	return section
+}
+
+// connID reports the connection id a transaction is running on, so its locks
+// can be told apart from those of a neighbouring transaction that happens to
+// be releasing its own at the same moment.
+//
+// information_schema.innodb_trx would be the obvious source for the InnoDB
+// transaction id, but it is served from a cache refreshed at most every
+// 100ms, so a freshly started transaction reads back the previous one's id.
+// performance_schema is not cached.
+func connID(t *testing.T, tx *sql.Tx) uint64 {
+	t.Helper()
+	var id uint64
+	if err := tx.QueryRowContext(t.Context(), "SELECT CONNECTION_ID()").Scan(&id); err != nil {
+		t.Fatalf("read own connection id: %v", err)
+	}
+	return id
+}
+
+func readLocks(t *testing.T, table string, conn uint64) []lock {
+	t.Helper()
+	rows, err := db.QueryContext(t.Context(), `
+		SELECT dl.LOCK_MODE, IFNULL(dl.LOCK_DATA, '')
+		FROM performance_schema.data_locks dl
+		JOIN performance_schema.threads th ON th.THREAD_ID = dl.THREAD_ID
+		WHERE dl.OBJECT_NAME = ? AND dl.LOCK_TYPE = 'RECORD' AND th.PROCESSLIST_ID = ?
+		ORDER BY dl.LOCK_DATA, dl.LOCK_MODE`, table, conn)
 	if err != nil {
 		t.Fatalf("read data_locks: %v", err)
 	}
@@ -205,16 +326,17 @@ func TestExplainDeletePlans(t *testing.T) {
 		"EXPLAIN DELETE FROM job_attachment WHERE job_id = 1",
 	}
 	for _, stmt := range stmts {
-		accessType, key := explain(t, stmt)
-		t.Logf("%s\n  type=%s key=%s", stmt, accessType, key)
+		accessType, key, keyLen := explain(t, stmt)
+		t.Logf("%s\n  type=%s key=%s key_len=%s", stmt, accessType, key, keyLen)
 		if key != "PRIMARY" {
 			t.Errorf("%s: key = %q, want PRIMARY", stmt, key)
 		}
 	}
 }
 
-// explain returns the access type and chosen index of a single-row EXPLAIN.
-func explain(t *testing.T, stmt string) (accessType, key string) {
+// explain returns the access type, chosen index and used key length of a
+// single-row EXPLAIN.
+func explain(t *testing.T, stmt string) (accessType, key, keyLen string) {
 	t.Helper()
 	rows, err := db.QueryContext(t.Context(), stmt)
 	if err != nil {
@@ -243,9 +365,11 @@ func explain(t *testing.T, stmt string) (accessType, key string) {
 			accessType = cells[i].String
 		case "key":
 			key = cells[i].String
+		case "key_len":
+			keyLen = cells[i].String
 		}
 	}
-	return accessType, key
+	return accessType, key, keyLen
 }
 
 func equalLocks(got, want []lock) bool {

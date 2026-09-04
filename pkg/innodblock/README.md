@@ -120,3 +120,86 @@ Case 1 と Case 3/4 は実行計画が同じ `range` なのにロックが異な
 | `main_test.go` | testcontainers による MySQL 起動 |
 | `lockmode_test.go` | スキーマ定義、`data_locks` 観測、ロックモードと実行計画の検証 |
 | `deadlock_test.go` | 2セッションを交互に進めるデッドロック再現 |
+| `insertlock_test.go` | INSERT 側のロック（A-1） |
+| `sequence_test.go` | 本番シーケンス全体の並行実行（A-2） |
+| `guardrail_test.go` | 禁止パターンの逆検証と IN リスト件数（B-1 / B-2） |
+| `foreignkey_test.go` | FK 制約下での親子ロック（C-1） |
+
+---
+
+# 追加検証（INSERT 側・本番シーケンス）
+
+## A-1. INSERT 単体のロック
+
+`TestInsertLockModes` / `TestInsertedRowIsStillProtected`。
+
+| # | 文（同一TX内） | 保持ロック |
+|---|---|---|
+| A-1-a | `DELETE ord IN (1,2,3)` → `INSERT (1,1)(1,2)(1,3)` | `X,REC_NOT_GAP` ×3 |
+| A-1-b | 同上 → `INSERT (1,1)..(1,5)` | `X,REC_NOT_GAP` ×3（(1,4)(1,5) は 0 件） |
+| A-1-c | `DELETE job_id=3 ord IN (1)` → `INSERT (3,1)(3,2)` | `X,REC_NOT_GAP (3,1)` のみ |
+| 対照 | `INSERT (3,2)` のみ | ロックなし |
+
+自TXが挿入した行は `data_locks` に明示ロックを持たない（レコードに TRX_ID を書くだけで、
+競合が起きたときに初めて明示ロックへ昇格する）。よって `X,GAP` は出ない。
+
+「ロック行が無い＝無防備」ではないことを並行セッションで確認済み。
+
+| 検証 | 結果 |
+|---|---|
+| 別セッションが同じギャップの別キー `(1,6)` を INSERT | 成功 |
+| 別セッションが同じキー `(1,4)` を INSERT | 1205（重複キー防止） |
+| 別セッションがテーブル末尾 `(3,3)` を INSERT | 成功 |
+
+## A-2. 本番シーケンス全体の並行実行
+
+`TestSequenceOnAdjacentJobs` ほか。全件正常終了、1213 なし。
+
+| # | 構成 | 結果 |
+|---|---|---|
+| A-2-a | job 1 / job 2 を交互に | 各TXが自分の行に `X,REC_NOT_GAP` のみ |
+| A-2-b | 添付0件の job 10 / job 11（DELETE を発行しない） | `job_attachment` にロック 0 件 |
+| A-2-c | job 3 更新 × 新規 job 作成 | 正常終了 |
+| A-2-d | 同一 job 1 を2セッション | 親行で待ち1本、A の COMMIT 後に B が進行 |
+
+## B-1. ガードレールの逆検証
+
+`TestForUpdateOnChildSelectTakesGapLocks`。いずれも期待どおりギャップを取る。
+
+| # | 文 | 保持ロック |
+|---|---|---|
+| B-1-a | `SELECT ord ... WHERE job_id=1 FOR UPDATE` | `X (1,1)(1,2)(1,3)` + `X,GAP (2,1)` |
+| B-1-b | `SELECT MAX(ord) ... FOR UPDATE` | `X (1,3)` + `X,GAP (2,1)` |
+| B-1-c | `SELECT id FROM job WHERE id=9999 FOR UPDATE` | `X supremum pseudo-record` |
+
+B-1-c は別セッションの `INSERT INTO job` を実際にブロックする（1205 で確認）。
+
+## B-2. IN リスト件数
+
+`TestLargeInListLockModes`。決め手は件数ではなく**選択率**。
+
+| テーブル形状 | サイズ | type | key_len | ロック |
+|---|---|---|---|---|
+| job 1 が 304 行中 300 行 | 10 | range | 12 | `X,REC_NOT_GAP` ×10 |
+| 同上 | 100〜250 | **ALL** | - | **`X` ×304（全行 + supremum）** |
+| job 1 が約 5300 行中 300 行 | 10〜250 | range | 12 | `X,REC_NOT_GAP` ×N |
+
+`eq_range_index_dive_limit` は無関係（2 に下げても `X,REC_NOT_GAP` のまま）。
+選択率が悪化して `type=ALL` に落ちるとテーブル全体に next-key lock が乗る。
+
+サイズ 230 / 250 で `X supremum pseudo-record` が 1 件追加されることがあるが、
+これはページ単位の supremum。別 job への INSERT を一切ブロックしないことを確認済み
+（`TestSupremumLockFromLongInListStaysWithinTheJob`）。
+
+## C-1. FK 制約を張った場合
+
+`TestForeignKeyChildInsertLocksParent` ほか。
+
+- 子への INSERT は親行に `S,REC_NOT_GAP` を取る
+- C-1-a（親を先に `FOR UPDATE`）：各TXは自分の親行に `X,REC_NOT_GAP` のみ。S は追加されない
+- C-1-b：
+  - 別 job 同士 → 正常終了
+  - 同一 job・シーケンス順（親 UPDATE が先） → 単純な待ち（1205）
+  - 同一 job・子 INSERT が先 → **1213**。S を持ったまま X へ昇格しようとして閉路
+
+FK を張るなら、親を先にロックするか、少なくとも親 UPDATE を子書き込みより前に置くことが必須。

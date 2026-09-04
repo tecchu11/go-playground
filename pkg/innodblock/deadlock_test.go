@@ -51,6 +51,10 @@ func (s *session) exec(ctx context.Context, stmt string) error {
 	return err
 }
 
+func (s *session) commit() error {
+	return s.tx.Commit()
+}
+
 func mysqlErrNo(err error) uint16 {
 	var myErr *mysql.MySQLError
 	if errors.As(err, &myErr) {
