@@ -203,3 +203,18 @@ B-1-c は別セッションの `INSERT INTO job` を実際にブロックする�
   - 同一 job・子 INSERT が先 → **1213**。S を持ったまま X へ昇格しようとして閉路
 
 FK を張るなら、親を先にロックするか、少なくとも親 UPDATE を子書き込みより前に置くことが必須。
+
+## C-2. 他ユースケースとの競合
+
+`job_attachment` を Repository 以外の経路で読み書きする箇所、および `FOR SHARE` を
+使う参照系はいずれも存在しないことを確認済み。追加の並行テストは不要。
+
+これにより、前回挙げた TOCTOU（読み取りと削除の間に他TXが行を消す）の経路は閉じている。
+本番シーケンスが先頭で `SELECT job FOR UPDATE` を取り、同一 job の2セッションが
+そこで直列化されるため（`TestSequenceOnSameJobSerializes` で実測）。
+
+ただしこれは「Repository 以外の経路が無い」ことに依存する前提であり、
+親を `FOR UPDATE` しない経路が1つ増えるだけで崩れる。
+
+1213 のリトライは引き続き必要。`TestLargeInListLockModes` の `type=ALL` 転落
+（選択率悪化でテーブル全行に next-key lock）が残っているため。
